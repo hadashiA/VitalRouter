@@ -86,7 +86,7 @@ class UniTaskAsyncLockTest
     }
 
     [Test]
-    public async Task WaitAsync_Combined()
+    public async Task WaitAsyncAfterSync()
     {
         var x = new UniTaskAsyncLock();
 
@@ -95,22 +95,26 @@ class UniTaskAsyncLockTest
 
         var t1 = new Thread(() =>
         {
+            Task.Run(async () =>
+            {
+                await x.WaitAsync();
+                await Task.Delay(100);
+                x.Release();
+                result2 = true;
+            }).Wait();
+        });
+
+        var t2 = new Thread(() =>
+        {
             x.Wait();
-            Thread.Sleep(100);
             x.Release();
             result1 = true;
         });
-        var t2 = Task.Run(async () =>
-        {
-            await x.WaitAsync();
-            await Task.Delay(100);
-            x.Release();
-            result2 = true;
-        });
 
         t1.Start();
-        await t2;
+        t2.Start();
         t1.Join();
+        t2.Join();
 
         Assert.That(result1, Is.True);
         Assert.That(result2, Is.True);

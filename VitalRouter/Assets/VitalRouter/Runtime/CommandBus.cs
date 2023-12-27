@@ -7,48 +7,46 @@ namespace VitalRouter;
 
 public interface ICommandPublisher
 {
-    UniTask PublishAsync<T>(T msg, CancellationToken cancellation = default)
+    void Publish<T>(T msg) where T : ICommand;
+    UniTask PublishAsync<T>(T msg, CancellationToken cancellation = default) where T : ICommand;
+}
+
+public interface ICommandSubscribable
+{
+    Subscription Subscribe(ICommandSubscriber subscriber);
+}
+
+public interface ICommandSubscriber
+{
+}
+
+public interface IImmediateCommandSubscriber : ICommandSubscriber
+{
+    void Receive<T>(T command) where T : ICommand;
+}
+
+public interface IAsyncCommandSubscriber : ICommandSubscriber
+{
+    UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand;
 }
 
-// public interface ICommandSubscriber
-// {
-//     IDisposable Subscribe<T>(IAsyncCommandListener );
-// }
-
-public interface ICommandListener
-{
-    void Execute<T>(T command) where T : ICommand;
-}
-
-public interface IAsyncCommandListener
-{
-    UniTask ExecuteAsync<T>(T command, CancellationToken cancellation = default)
-        where T : ICommand;
-}
-
-public sealed class CommandBus : ICommandPublisher, IDisposable
+public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDisposable
 {
     public static readonly CommandBus Default = new();
 
-    readonly List<IAsyncCommandListener> asyncListeners = new();
-    readonly List<ICommandListener> listeners = new();
+    readonly List<ICommandSubscriber> subscribers = new();
     readonly List<UniTask> executingTasks = new();
+    readonly List<IImmediateCommandSubscriber> executingImmediateTasks = new();
 
-    long subscribing;
     bool disposed;
 
-    readonly object subscribeLock = new();
+    readonly ReusableWhenAllPromise whenAllPromise = new();
     readonly UniTaskAsyncLock publishLock = new();
-
-    ~CommandBus()
-    {
-        Dispose(false);
-    }
 
     public void Publish<T>(T command) where T : ICommand
     {
-        // TODO: performance
+        // TODO: specific implementation
         PublishAsync(command).Forget();
     }
 
@@ -57,108 +55,70 @@ public sealed class CommandBus : ICommandPublisher, IDisposable
     {
         CheckDispose();
 
-        List<Exception>? exceptions = null;
-        executingTasks.Clear();
         try
         {
             await publishLock.WaitAsync();
 
-            lock (subscribeLock)
+            executingTasks.Clear();
+            executingImmediateTasks.Clear();
+
+            lock (subscribers)
             {
-                foreach (var listener in asyncListeners)
+                foreach (var subscriber in subscribers)
                 {
-                    executingTasks.Add(listener.ExecuteAsync(command, cancellation));
+                    switch (subscriber)
+                    {
+                        case IAsyncCommandSubscriber x:
+                            executingTasks.Add(x.ReceiveAsync(command, cancellation));
+                            break;
+                        case IImmediateCommandSubscriber x:
+                            executingImmediateTasks.Add(x);
+                            break;
+                    }
                 }
             }
 
-            foreach (var task in executingTasks)
+            foreach (var immediate in executingImmediateTasks)
             {
-                try
-                {
-                    await task;
-                }
-                catch (Exception ex)
-                {
-                    (exceptions ??= new List<Exception>()).Add(ex);
-                }
+                immediate.Receive(command);
             }
 
-            foreach (var listener in listeners)
+            if (executingTasks.Count > 0)
             {
-                try
-                {
-                    listener.Execute(command);
-                }
-                catch (Exception ex)
-                {
-                    (exceptions ??= new List<Exception>()).Add(ex);
-                }
+                whenAllPromise.Reset(executingTasks);
+                await new UniTask(whenAllPromise, whenAllPromise.Version);
             }
         }
         finally
         {
             publishLock.Release();
         }
-
-        if (exceptions != null)
-        {
-            throw new AggregateException(exceptions);
-        }
     }
 
-    public Subscription Subscribe(ICommandListener listener)
+    public Subscription Subscribe(ICommandSubscriber subscriber)
     {
-        lock (subscribeLock)
+        lock (subscribers)
         {
-            listeners.Add(listener);
+            subscribers.Add(subscriber);
         }
-        return new Subscription(this, listener);
+        return new Subscription(this, subscriber);
     }
 
-    public Subscription Subscribe(IAsyncCommandListener listener)
+    public void Unsubscribe(ICommandSubscriber subscriber)
     {
-        lock (subscribeLock)
+        lock (subscribers)
         {
-            asyncListeners.Add(listener);
-        }
-        return new Subscription(this, listener);
-    }
-
-
-    public void Unsubscribe(ICommandListener listener)
-    {
-        lock (subscribeLock)
-        {
-            listeners.Remove(listener);
-        }
-    }
-
-    public void Unsubscribe(IAsyncCommandListener listener)
-    {
-        lock (subscribeLock)
-        {
-            asyncListeners.Remove(listener);
+            subscribers.Remove(subscriber);
         }
     }
 
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    public void Dispose(bool disposing)
-    {
         if (!disposed)
         {
             disposed = true;
-
-            if (disposing)
-            {
-                publishLock.Dispose();
-                asyncListeners.Clear();
-                listeners.Clear();
-            }
+            publishLock.Dispose();
+            subscribers.Clear();
         }
     }
 

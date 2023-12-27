@@ -17,6 +17,8 @@ class UniTaskAsyncLock : IDisposable
     int countOfWaitersPulsedToWake;
     bool disposed;
 
+    public bool Acquired => currentResourceCount <= 0;
+
     public void Wait()
     {
         CheckDispose();
