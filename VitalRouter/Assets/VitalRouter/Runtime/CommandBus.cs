@@ -36,13 +36,16 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
     public static readonly CommandBus Default = new();
 
     readonly List<ICommandSubscriber> subscribers = new();
+    readonly List<ICommandInterceptor> interceptors = new();
+
     readonly List<UniTask> executingTasks = new();
     readonly List<IImmediateCommandSubscriber> executingImmediateTasks = new();
 
     bool disposed;
 
-    readonly ReusableWhenAllPromise whenAllPromise = new();
+    readonly ReusableWhenAllSource whenAllSource = new();
     readonly UniTaskAsyncLock publishLock = new();
+    readonly object subscribeLock = new();
 
     public void Publish<T>(T command) where T : ICommand
     {
@@ -59,10 +62,24 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         {
             await publishLock.WaitAsync();
 
+            if (interceptors.Count > 0)
+            {
+                var context = PublishContext<T>.Rent(this, interceptors);
+                try
+                {
+                    await context.InvokeRecursiveAsync(command, cancellation);
+                }
+                finally
+                {
+                    context.Return();
+                }
+                return;
+            }
+
             executingTasks.Clear();
             executingImmediateTasks.Clear();
 
-            lock (subscribers)
+            lock (subscribeLock)
             {
                 foreach (var subscriber in subscribers)
                 {
@@ -85,8 +102,8 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
 
             if (executingTasks.Count > 0)
             {
-                whenAllPromise.Reset(executingTasks);
-                await new UniTask(whenAllPromise, whenAllPromise.Version);
+                whenAllSource.Reset(executingTasks);
+                await whenAllSource.Task;
             }
         }
         finally
@@ -109,6 +126,14 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         lock (subscribers)
         {
             subscribers.Remove(subscriber);
+        }
+    }
+
+    public void Use(ICommandInterceptor interceptor)
+    {
+        lock (subscribers)
+        {
+            interceptors.Add(interceptor);
         }
     }
 

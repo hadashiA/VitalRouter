@@ -155,7 +155,8 @@ class UniTaskAsyncLock : IDisposable
 
                 if (asyncWaitingQueue.TryDequeue(out var waitingTask))
                 {
-                    waitingTask.TrySetResult();
+                    var a = waitingTask.TrySetResult();
+                    UnityEngine.Debug.Log($"!! waitingTask.TrySetResult {a}");
                 }
             }
         }

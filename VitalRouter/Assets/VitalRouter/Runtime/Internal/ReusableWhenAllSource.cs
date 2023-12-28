@@ -6,8 +6,9 @@ using Cysharp.Threading.Tasks;
 
 namespace VitalRouter;
 
-sealed class ReusableWhenAllPromise : IUniTaskSource
+sealed class ReusableWhenAllSource : IUniTaskSource
 {
+    public UniTask Task => new(this, core.Version);
     public short Version => core.Version;
 
     int completeCount;
@@ -21,7 +22,7 @@ sealed class ReusableWhenAllPromise : IUniTaskSource
 
     class AwaiterState
     {
-        public ReusableWhenAllPromise Promise;
+        public ReusableWhenAllSource Source;
         public UniTask.Awaiter Awaiter;
     }
 
@@ -61,7 +62,7 @@ sealed class ReusableWhenAllPromise : IUniTaskSource
                 {
                     state = new AwaiterState();
                 }
-                state.Promise = this;
+                state.Source = this;
                 state.Awaiter = awaiter;
 
                 awaiter.SourceOnCompleted(state =>
@@ -69,7 +70,7 @@ sealed class ReusableWhenAllPromise : IUniTaskSource
                     var x = (AwaiterState)state;
                     try
                     {
-                        x.Promise.TryInvokeContinuation(in x.Awaiter);
+                        x.Source.TryInvokeContinuation(in x.Awaiter);
                     }
                     finally
                     {

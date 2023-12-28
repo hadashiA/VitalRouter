@@ -26,7 +26,6 @@ class UniTaskAsyncLockTest
         var run1 = Task.Run(async () =>
         {
             await x.WaitAsync();
-            await Task.Delay(100);
             x.Release();
             exec1 = true;
         });
@@ -34,7 +33,6 @@ class UniTaskAsyncLockTest
         var run2 = Task.Run(async () =>
         {
             await x.WaitAsync();
-            await Task.Delay(100);
             x.Release();
             exec2 = true;
         });
@@ -64,14 +62,12 @@ class UniTaskAsyncLockTest
         var t1 = new Thread(() =>
         {
             x.Wait();
-            Thread.Sleep(100);
             x.Release();
             result1 = true;
         });
         var t2 = new Thread(() =>
         {
             x.Wait();
-            Thread.Sleep(100);
             x.Release();
             result2 = true;
         });
@@ -86,7 +82,7 @@ class UniTaskAsyncLockTest
     }
 
     [Test]
-    public async Task WaitAsyncAfterSync()
+    public async Task WaitSyncAfterAsync()
     {
         var x = new UniTaskAsyncLock();
 
