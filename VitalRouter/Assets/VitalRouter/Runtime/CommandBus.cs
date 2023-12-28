@@ -7,25 +7,21 @@ namespace VitalRouter;
 
 public interface ICommandPublisher
 {
-    void Publish<T>(T msg) where T : ICommand;
     UniTask PublishAsync<T>(T msg, CancellationToken cancellation = default) where T : ICommand;
 }
 
 public interface ICommandSubscribable
 {
     Subscription Subscribe(ICommandSubscriber subscriber);
+    Subscription Subscribe(IAsyncCommandSubscriber subscriber);
 }
 
 public interface ICommandSubscriber
 {
-}
-
-public interface IImmediateCommandSubscriber : ICommandSubscriber
-{
     void Receive<T>(T command) where T : ICommand;
 }
 
-public interface IAsyncCommandSubscriber : ICommandSubscriber
+public interface IAsyncCommandSubscriber
 {
     UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand;
@@ -36,22 +32,18 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
     public static readonly CommandBus Default = new();
 
     readonly List<ICommandSubscriber> subscribers = new();
-    readonly List<ICommandInterceptor> interceptors = new();
+    readonly List<IAsyncCommandSubscriber> asyncSubscribers = new();
+    readonly List<IAsyncCommandInterceptor> interceptors = new();
 
+    readonly List<ICommandSubscriber> executingSubscribers = new();
     readonly List<UniTask> executingTasks = new();
-    readonly List<IImmediateCommandSubscriber> executingImmediateTasks = new();
+    readonly List<IAsyncCommandInterceptor> executingInterceptors = new();
 
     bool disposed;
 
     readonly ReusableWhenAllSource whenAllSource = new();
     readonly UniTaskAsyncLock publishLock = new();
     readonly object subscribeLock = new();
-
-    public void Publish<T>(T command) where T : ICommand
-    {
-        // TODO: specific implementation
-        PublishAsync(command).Forget();
-    }
 
     public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
@@ -62,7 +54,23 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         {
             await publishLock.WaitAsync();
 
-            if (interceptors.Count > 0)
+            lock (subscribeLock)
+            {
+                foreach (var interceptor in interceptors)
+                {
+                    executingInterceptors.Add(interceptor);
+                }
+                foreach (var subscriber in subscribers)
+                {
+                    executingSubscribers.Add(subscriber);
+                }
+                foreach (var asyncSubscriber in asyncSubscribers)
+                {
+                    executingTasks.Add(asyncSubscriber.ReceiveAsync(command, cancellation));
+                }
+            }
+
+            if (executingInterceptors.Count > 0)
             {
                 var context = PublishContext<T>.Rent(this, interceptors);
                 try
@@ -76,28 +84,9 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
                 return;
             }
 
-            executingTasks.Clear();
-            executingImmediateTasks.Clear();
-
-            lock (subscribeLock)
+            foreach (var x in executingSubscribers)
             {
-                foreach (var subscriber in subscribers)
-                {
-                    switch (subscriber)
-                    {
-                        case IAsyncCommandSubscriber x:
-                            executingTasks.Add(x.ReceiveAsync(command, cancellation));
-                            break;
-                        case IImmediateCommandSubscriber x:
-                            executingImmediateTasks.Add(x);
-                            break;
-                    }
-                }
-            }
-
-            foreach (var immediate in executingImmediateTasks)
-            {
-                immediate.Receive(command);
+                x.Receive(command);
             }
 
             if (executingTasks.Count > 0)
@@ -109,27 +98,45 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         finally
         {
             publishLock.Release();
+            executingTasks.Clear();
+            executingSubscribers.Clear();
         }
     }
 
     public Subscription Subscribe(ICommandSubscriber subscriber)
     {
-        lock (subscribers)
+        lock (subscribeLock)
         {
             subscribers.Add(subscriber);
         }
         return new Subscription(this, subscriber);
     }
 
+    public Subscription Subscribe(IAsyncCommandSubscriber subscriber)
+    {
+        lock (subscribeLock)
+        {
+            asyncSubscribers.Add(subscriber);
+        }
+        return new Subscription(this, subscriber);
+    }
+
     public void Unsubscribe(ICommandSubscriber subscriber)
     {
-        lock (subscribers)
+        lock (subscribeLock)
         {
             subscribers.Remove(subscriber);
         }
     }
+    public void Unsubscribe(IAsyncCommandSubscriber subscriber)
+    {
+        lock (subscribeLock)
+        {
+            asyncSubscribers.Remove(subscriber);
+        }
+    }
 
-    public void Use(ICommandInterceptor interceptor)
+    public void Use(IAsyncCommandInterceptor interceptor)
     {
         lock (subscribers)
         {

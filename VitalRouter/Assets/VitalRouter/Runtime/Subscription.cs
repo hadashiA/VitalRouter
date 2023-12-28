@@ -6,6 +6,7 @@ public struct Subscription : IDisposable
 {
     readonly CommandBus commandBus;
     readonly ICommandSubscriber? subscriber;
+    readonly IAsyncCommandSubscriber? asyncSubscriber;
 
     public Subscription(CommandBus commandBus, ICommandSubscriber subscriber)
     {
@@ -13,8 +14,17 @@ public struct Subscription : IDisposable
         this.subscriber = subscriber;
     }
 
+    public Subscription(CommandBus commandBus, IAsyncCommandSubscriber subscriber)
+    {
+        this.commandBus = commandBus;
+        this.asyncSubscriber = subscriber;
+    }
+
     public void Dispose()
     {
-        commandBus.Unsubscribe(subscriber);
+        if (subscriber != null)
+            commandBus.Unsubscribe(subscriber);
+        if (asyncSubscriber != null)
+            commandBus.Unsubscribe(asyncSubscriber);
     }
 }

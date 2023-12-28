@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 
 namespace VitalRouter;
 
-public interface ICommandInterceptor
+public interface IAsyncCommandInterceptor
 {
     UniTask InvokeAsync<T>(
         T command,

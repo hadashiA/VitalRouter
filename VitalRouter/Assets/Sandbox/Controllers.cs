@@ -17,7 +17,7 @@ public readonly struct CharacterExitCommand : ICommand
 {
 }
 
-public class HogeInterceptor : ICommandInterceptor
+public class HogeInterceptor : IAsyncCommandInterceptor
 {
     public UniTask InvokeAsync<T>(
         T command,
@@ -30,15 +30,15 @@ public class HogeInterceptor : ICommandInterceptor
 }
 
 [Routes]
-[RoutesBefore(typeof(HogeInterceptor))]
-[RoutesBefore(typeof(HogeInterceptor))]
+[Filter(typeof(HogeInterceptor))]
+[Filter(typeof(HogeInterceptor))]
 public partial class FooPresenter
 {
-    public async Awaitable On(CharacterMoveCommand cmd)
+    public async UniTask On(CharacterMoveCommand cmd)
     {
     }
 
-    [RoutesBefore(typeof(HogeInterceptor))]
+    [Filter(typeof(HogeInterceptor))]
     public void On(CharacterExitCommand cmd)
     {
     }
@@ -50,7 +50,7 @@ public partial class FooPresenter
 
 public partial class FooPresenter : ICommandSubscriber
 {
-    public void Execute<T>(T command) where T : ICommand
+    public void Receive<T>(T command) where T : ICommand
     {
         switch (command)
         {

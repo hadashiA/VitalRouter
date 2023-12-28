@@ -12,11 +12,11 @@ public class RoutesAttribute : PreserveAttribute
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class RoutesBeforeAttribute : Attribute
+public class FilterAttribute : Attribute
 {
     public Type InterceptorType { get; }
 
-    public RoutesBeforeAttribute(Type interceptorType)
+    public FilterAttribute(Type interceptorType)
     {
         InterceptorType = interceptorType;
     }

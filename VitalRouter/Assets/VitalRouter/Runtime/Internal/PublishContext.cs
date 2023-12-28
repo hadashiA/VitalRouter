@@ -11,7 +11,7 @@ class PublishContext<T> where T : ICommand
     static readonly ConcurrentQueue<PublishContext<T>> Pool = new();
 
     public T Command { get; set; } = default!;
-    public IReadOnlyList<ICommandInterceptor> Interceptors { get; set; } = default!;
+    public IReadOnlyList<IAsyncCommandInterceptor> Interceptors { get; set; } = default!;
     public ICommandPublisher Publisher { get; set; } = default!;
     int currentInterceptorIndex;
 
@@ -19,7 +19,7 @@ class PublishContext<T> where T : ICommand
 
     public static PublishContext<T> Rent(
         ICommandPublisher publisher,
-        IReadOnlyList<ICommandInterceptor> interceptors)
+        IReadOnlyList<IAsyncCommandInterceptor> interceptors)
     {
         if (!Pool.TryDequeue(out var value))
         {
@@ -50,7 +50,7 @@ class PublishContext<T> where T : ICommand
         Pool.Enqueue(this);
     }
 
-    bool MoveNextInterceptor(out ICommandInterceptor nextInterceptor)
+    bool MoveNextInterceptor(out IAsyncCommandInterceptor nextInterceptor)
     {
         if (++currentInterceptorIndex <= Interceptors.Count - 1)
         {
