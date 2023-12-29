@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace VitalRouter;
 
@@ -29,7 +28,7 @@ public class HogeInterceptor : IAsyncCommandInterceptor
     }
 }
 
-[Routes]
+[Routing]
 [Filter(typeof(HogeInterceptor))]
 [Filter(typeof(HogeInterceptor))]
 public partial class FooPresenter

@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using VitalRouter.Internal;
 
@@ -91,8 +90,9 @@ class UniTaskAsyncLockTest
         var result1 = false;
         var result2 = false;
 
-        var t1 = x.WaitAsync().ContinueWith(async () =>
+        var t1 = Task.Run(async () =>
         {
+            await x.WaitAsync();
             await Task.Delay(100);
             x.Release();
             Volatile.Write(ref result1, true);
