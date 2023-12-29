@@ -11,4 +11,11 @@ public interface IAsyncCommandInterceptor
         CancellationToken cancellation,
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand;
+
+    // UniTask InvokeAsync<T, TResult>(
+    //     T command,
+    //     CancellationToken cancellation,
+    //     Func<TResult, CancellationToken, UniTask> next)
+    //     where T : ICommand
+    //     where TResult : ICommand;
 }

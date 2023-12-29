@@ -4,7 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace VitalRouter;
+namespace VitalRouter.Internal;
 
 class UniTaskAsyncLock : IDisposable
 {
@@ -16,8 +16,6 @@ class UniTaskAsyncLock : IDisposable
     int waitCount;
     int countOfWaitersPulsedToWake;
     bool disposed;
-
-    public bool Acquired => currentResourceCount <= 0;
 
     public void Wait()
     {
@@ -37,7 +35,6 @@ class UniTaskAsyncLock : IDisposable
                 // lessen that extra expense of doing a proper wait.
                 // var spinCount = SpinWait.SpinCountforSpinBeforeWait * 4;
                 var spinCount = 35 * 4;
-
                 SpinWait spinner = default;
                 while (spinner.Count < spinCount)
                 {
@@ -155,8 +152,7 @@ class UniTaskAsyncLock : IDisposable
 
                 if (asyncWaitingQueue.TryDequeue(out var waitingTask))
                 {
-                    var a = waitingTask.TrySetResult();
-                    UnityEngine.Debug.Log($"!! waitingTask.TrySetResult {a}");
+                    waitingTask.TrySetResult();
                 }
             }
         }

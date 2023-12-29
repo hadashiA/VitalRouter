@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
-namespace VitalRouter;
+namespace VitalRouter.Internal;
 
 sealed class ReusableWhenAllSource : IUniTaskSource
 {
     public UniTask Task => new(this, core.Version);
-    public short Version => core.Version;
 
     int completeCount;
     int tasksLength;

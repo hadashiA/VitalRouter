@@ -1,6 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+using VitalRouter.Internal;
 
 namespace VitalRouter.Tests;
 
@@ -82,34 +84,29 @@ class UniTaskAsyncLockTest
     }
 
     [Test]
-    public async Task WaitSyncAfterAsync()
+    public async Task WaitSyncWithAsync()
     {
         var x = new UniTaskAsyncLock();
 
         var result1 = false;
         var result2 = false;
 
-        var t1 = new Thread(() =>
+        var t1 = x.WaitAsync().ContinueWith(async () =>
         {
-            Task.Run(async () =>
-            {
-                await x.WaitAsync();
-                await Task.Delay(100);
-                x.Release();
-                result2 = true;
-            }).Wait();
+            await Task.Delay(100);
+            x.Release();
+            Volatile.Write(ref result1, true);
         });
 
         var t2 = new Thread(() =>
         {
             x.Wait();
             x.Release();
-            result1 = true;
+            Volatile.Write(ref result2, true);
         });
 
-        t1.Start();
         t2.Start();
-        t1.Join();
+        await t1;
         t2.Join();
 
         Assert.That(result1, Is.True);

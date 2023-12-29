@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
-namespace VitalRouter;
+namespace VitalRouter.Internal;
 
 class PublishContext<T> where T : ICommand
 {
@@ -12,14 +12,14 @@ class PublishContext<T> where T : ICommand
 
     public T Command { get; set; } = default!;
     public IReadOnlyList<IAsyncCommandInterceptor> Interceptors { get; set; } = default!;
-    public ICommandPublisher Publisher { get; set; } = default!;
+    public CommandBus Publisher { get; set; } = default!;
     int currentInterceptorIndex;
 
     readonly Func<T, CancellationToken, UniTask> nextDelegate;
 
     public static PublishContext<T> Rent(
-        ICommandPublisher publisher,
-        IReadOnlyList<IAsyncCommandInterceptor> interceptors)
+        CommandBus publisher,
+        ExpandBuffer<IAsyncCommandInterceptor> interceptors)
     {
         if (!Pool.TryDequeue(out var value))
         {
@@ -42,7 +42,7 @@ class PublishContext<T> where T : ICommand
         {
             return interceptor.InvokeAsync(command, cancellation, nextDelegate);
         }
-        return Publisher.PublishAsync(command, cancellation);
+        return Publisher.PublishCoreAsync(command, cancellation);
     }
 
     public void Return()
