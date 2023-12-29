@@ -147,7 +147,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         }
     }
 
-    internal async UniTask PublishCoreAsync<T>(T command, CancellationToken cancellation = default)
+    internal UniTask PublishCoreAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
     {
         try
@@ -169,8 +169,9 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
             if (executingTasks.Count > 0)
             {
                 whenAllSource.Reset(executingTasks);
-                await whenAllSource.Task;
+                return whenAllSource.Task;
             }
+            return UniTask.CompletedTask;
         }
         finally
         {

@@ -119,7 +119,7 @@ class UniTaskAsyncLock : IDisposable
             // Signal to any synchronous waiters, taking into account how many waiters have previously been pulsed to wake
             // but have not yet woken
             var waitCount = this.waitCount;
-            var waitersToNotify = Math.Min(currentResourceCount, waitCount) - countOfWaitersPulsedToWake;
+            var waitersToNotify = Math.Min(count, waitCount) - countOfWaitersPulsedToWake;
             if (waitersToNotify > 0)
             {
                 // Ideally, limiting to a maximum of releaseCount would not be necessary and could be an assert instead, but
@@ -148,13 +148,13 @@ class UniTaskAsyncLock : IDisposable
             var maxAsyncToRelease = count;
             for (var i = 0; i < maxAsyncToRelease; i++)
             {
-                --currentResourceCount;
-
                 if (asyncWaitingQueue.TryDequeue(out var waitingTask))
                 {
+                    --count;
                     waitingTask.TrySetResult();
                 }
             }
+            currentResourceCount = count;
         }
     }
 
