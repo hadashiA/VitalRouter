@@ -16,7 +16,7 @@ public static class CommandBusAnonymousExtensions
     }
 }
 
-class AnonymousInterceptor<T> : IAsyncCommandInterceptor where T : ICommand
+class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
 {
     readonly Func<T, CancellationToken, Func<T, CancellationToken, UniTask>, UniTask> callback;
 

@@ -16,7 +16,7 @@ public readonly struct CharacterExitCommand : ICommand
 {
 }
 
-public class HogeInterceptor : IAsyncCommandInterceptor
+public class HogeInterceptor : ICommandInterceptor
 {
     public UniTask InvokeAsync<T>(
         T command,
@@ -46,19 +46,19 @@ public partial class FooPresenter
     {
     }
 }
-
-public partial class FooPresenter : ICommandSubscriber
-{
-    public void Receive<T>(T command) where T : ICommand
-    {
-        switch (command)
-        {
-            case CharacterEnterCommand cmd:
-                On(cmd);
-                break;
-            case CharacterExitCommand cmd:
-                On(cmd);
-                break;
-        }
-    }
-}
+//
+// public partial class FooPresenter : ICommandSubscriber
+// {
+//     public void Receive<T>(T command) where T : ICommand
+//     {
+//         switch (command)
+//         {
+//             case CharacterEnterCommand cmd:
+//                 On(cmd);
+//                 break;
+//             case CharacterExitCommand cmd:
+//                 On(cmd);
+//                 break;
+//         }
+//     }
+// }

@@ -30,7 +30,7 @@ class TestAsyncSubscriber : IAsyncCommandSubscriber
     }
 }
 
-class TestInterceptor : IAsyncCommandInterceptor
+class TestInterceptor : ICommandInterceptor
 {
     public int Calls { get; private set; }
 
@@ -42,7 +42,7 @@ class TestInterceptor : IAsyncCommandInterceptor
     }
 }
 
-class TestStopperInterceptor : IAsyncCommandInterceptor
+class TestStopperInterceptor : ICommandInterceptor
 {
     public UniTask InvokeAsync<T>(T command, CancellationToken cancellation,
         Func<T, CancellationToken, UniTask> next) where T : ICommand

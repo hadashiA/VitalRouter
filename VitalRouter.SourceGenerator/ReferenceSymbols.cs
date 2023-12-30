@@ -16,6 +16,9 @@ public class ReferenceSymbols
             FilterAttribute = compilation.GetTypeByMetadataName("VitalRouter.FilterAttribute")!,
             CommandInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommand")!,
             UniTaskType = compilation.GetTypeByMetadataName("Cysharp.Threading.Tasks.UniTask"),
+            AwaitableType = compilation.GetTypeByMetadataName("UnityEngine.Awaitable"),
+            TaskType = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task"),
+            ValueTaskType = compilation.GetTypeByMetadataName("System.Threading.Tasks.ValueTask"),
         };
     }
 
@@ -23,4 +26,8 @@ public class ReferenceSymbols
     public INamedTypeSymbol FilterAttribute { get; private set; } = default!;
     public INamedTypeSymbol CommandInterface { get; private set; } = default!;
     public INamedTypeSymbol? UniTaskType { get; private set; } = default!;
+    public INamedTypeSymbol? AwaitableType { get; private set; } = default!;
+    public INamedTypeSymbol? TaskType { get; private set; } = default!;
+    public INamedTypeSymbol? ValueTaskType { get; private set; } = default!;
+    public INamedTypeSymbol CancellationTokenType { get; private set; } = default!;
 }

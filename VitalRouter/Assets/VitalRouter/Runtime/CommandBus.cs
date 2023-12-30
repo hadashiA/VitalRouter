@@ -33,19 +33,17 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
 
     readonly ExpandBuffer<ICommandSubscriber> subscribers = new(8);
     readonly ExpandBuffer<IAsyncCommandSubscriber> asyncSubscribers = new(8);
-    readonly ExpandBuffer<IAsyncCommandInterceptor> interceptors = new(4);
+    readonly ExpandBuffer<ICommandInterceptor> interceptors = new(4);
 
     readonly ExpandBuffer<ICommandSubscriber> executingSubscribers = new(8);
     readonly ExpandBuffer<UniTask> executingTasks = new(8);
-    readonly ExpandBuffer<IAsyncCommandInterceptor> executingInterceptors = new(4);
+    readonly ExpandBuffer<ICommandInterceptor> executingInterceptors = new(4);
 
     bool disposed;
 
     readonly ReusableWhenAllSource whenAllSource = new();
     readonly UniTaskAsyncLock publishLock = new();
-
     readonly object subscribeLock = new();
-    SpinLock interceptorsLock;
 
     public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
@@ -129,7 +127,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         }
     }
 
-    public void Use(IAsyncCommandInterceptor interceptor)
+    public void Use(ICommandInterceptor interceptor)
     {
         lock (subscribers)
         {

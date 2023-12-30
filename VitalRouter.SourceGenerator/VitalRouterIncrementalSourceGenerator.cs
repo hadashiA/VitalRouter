@@ -1,20 +1,14 @@
+using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.DotnetRuntime.Extensions;
-using Microsoft.CodeAnalysis.Text;
 using GeneratorAttributeSyntaxContext = Microsoft.CodeAnalysis.DotnetRuntime.Extensions.GeneratorAttributeSyntaxContext;
-
 
 namespace VitalRouter.SourceGenerator;
 
-/// <summary>
-/// A sample source generator that creates a custom report based on class properties. The target class should be annotated with the 'Generators.ReportAttribute' attribute.
-/// When using the source code as a baseline, an incremental source generator is preferable because it reduces the performance overhead.
-/// </summary>
 [Generator]
 public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 {
@@ -39,10 +33,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
             .ForAttributeWithMetadataName(
                 context,
                 "VitalRouter.RoutingAttribute",
-                static (node, cancellation) =>
-                {
-                    return node is ClassDeclarationSyntax;
-                },
+                static (node, cancellation) => node is ClassDeclarationSyntax,
                 static (context, cancellation) => context)
             .Combine(context.CompilationProvider)
             .WithComparer(Comparer.Instance);
@@ -59,6 +50,8 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                     return;
                 }
 
+                var stringBuilder = new StringBuilder();
+
                 foreach (var (x, _) in list)
                 {
                     var typeMeta = new TypeMeta(
@@ -67,97 +60,199 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                         x.Attributes.First(),
                         references);
 
-                    if (TryEmit(typeMeta, codeWriter, references, sourceProductionContext))
+                    if (TryEmit(typeMeta, stringBuilder, sourceProductionContext))
                     {
                         var fullType = typeMeta.FullTypeName
                             .Replace("global::", "")
                             .Replace("<", "_")
                             .Replace(">", "_");
 
-                        sourceProductionContext.AddSource($"{fullType}.Routing.g.cs", codeWriter.ToString());
+                        sourceProductionContext.AddSource($"{fullType}.g.cs", stringBuilder.ToString());
                     }
-                    codeWriter.Clear();
+                    stringBuilder.Clear();
                 }
             });
     }
 
-    /// <summary>
-    /// Checks whether the Node is annotated with the [Report] attribute and maps syntax context to the specific node type (ClassDeclarationSyntax).
-    /// </summary>
-    /// <param name="context">Syntax context, based on CreateSyntaxProvider predicate</param>
-    /// <returns>The specific cast and whether the attribute was found.</returns>
-    private static (ClassDeclarationSyntax, bool reportAttributeFound) GetClassDeclarationForSourceGen(
-        GeneratorSyntaxContext context)
+    [ThreadStatic]
+    static List<string>? interfacesBuffer;
+
+    static bool TryEmit(TypeMeta typeMeta, StringBuilder builder, in SourceProductionContext context)
     {
-        var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
-
-        // Go through all attributes of the class.
-        foreach (AttributeListSyntax attributeListSyntax in classDeclarationSyntax.AttributeLists)
-        foreach (AttributeSyntax attributeSyntax in attributeListSyntax.Attributes)
+        try
         {
-            if (context.SemanticModel.GetSymbolInfo(attributeSyntax).Symbol is not IMethodSymbol attributeSymbol)
-                continue; // if we can't get the symbol, ignore it
+            var error = false;
 
-            string attributeName = attributeSymbol.ContainingType.ToDisplayString();
+            // verify is partial
+            if (!typeMeta.IsPartial())
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.MustBePartial,
+                    typeMeta.Syntax.Identifier.GetLocation(),
+                    typeMeta.Symbol.Name));
+                error = true;
+            }
 
-            // Check the full name of the [Report] attribute.
-            if (attributeName == $"{Namespace}.{AttributeName}")
-                return (classDeclarationSyntax, true);
-        }
+            // nested is not allowed
+            if (typeMeta.IsNested())
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.NestedNotAllow,
+                    typeMeta.Syntax.Identifier.GetLocation(),
+                    typeMeta.Symbol.Name));
+                error = true;
+            }
 
-        return (classDeclarationSyntax, false);
-    }
+            if (error)
+            {
+                return false;
+            }
 
-    /// <summary>
-    /// Generate code action.
-    /// It will be executed on specific nodes (ClassDeclarationSyntax annotated with the [Report] attribute) changed by the user.
-    /// </summary>
-    /// <param name="context">Source generation context used to add source files.</param>
-    /// <param name="compilation">Compilation used to provide access to the Semantic Model.</param>
-    /// <param name="classDeclarations">Nodes annotated with the [Report] attribute that trigger the generate action.</param>
-    private void GenerateCode(SourceProductionContext context, Compilation compilation,
-        ImmutableArray<ClassDeclarationSyntax> classDeclarations)
-    {
-        // Go through all filtered class declarations.
-        foreach (var classDeclarationSyntax in classDeclarations)
-        {
-            // We need to get semantic model of the class to retrieve metadata.
-            var semanticModel = compilation.GetSemanticModel(classDeclarationSyntax.SyntaxTree);
+            foreach (var nonRoutableMethod in typeMeta.NonRoutableMethodSymbols)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.NoRoutablePublicMethodDefined,
+                    nonRoutableMethod.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
+                    nonRoutableMethod.Name));
+            }
 
-            // Symbols allow us to get the compile-time information.
-            if (semanticModel.GetDeclaredSymbol(classDeclarationSyntax) is not INamedTypeSymbol classSymbol)
-                continue;
+            if (typeMeta.RouteMethodMetas.Count < 1)
+            {
+                return false;
+            }
 
-            var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
-
-            // 'Identifier' means the token of the node. Get class name from the syntax node.
-            var className = classDeclarationSyntax.Identifier.Text;
-
-            // Go through all class members with a particular type (property) to generate method lines.
-            var methodBody = classSymbol.GetMembers()
-                .OfType<IPropertySymbol>()
-                .Select(p =>
-                    $@"        yield return $""{p.Name}:{{this.{p.Name}}}"";"); // e.g. yield return $"Id:{this.Id}";
-
-            // Build up the source code
-            var code = $@"// <auto-generated/>
+            builder.AppendLine("""
+// <auto-generated />
+#nullable enable
+#pragma warning disable CS0162 // Unreachable code
+#pragma warning disable CS0219 // Variable assigned but never used
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8601 // Possible null reference assignment
+#pragma warning disable CS8602 // Possible null return
+#pragma warning disable CS8604 // Possible null reference argument for parameter
+#pragma warning disable CS8631 // The type cannot be used as type parameter in the generic type or method
 
 using System;
-using System.Collections.Generic;
+using VitalRouter;
+""");
 
-namespace {namespaceName};
+            var ns = typeMeta.Symbol.ContainingNamespace;
+            if (!ns.IsGlobalNamespace)
+            {
+                builder.AppendLine($$"""
+namespace {{ns}} 
+{
+""");
+            }
 
-partial class {className}
-{{
-    public IEnumerable<string> Report()
-    {{
-{string.Join("\n", methodBody)}
-    }}
-}}
-";
+            var interfaces = (interfacesBuffer ??= []);
+            interfaces.Clear();
+            if (typeMeta.RouteMethodMetas.Count > 0)
+            {
+                interfaces.Add("ICommandSubscriber");
+            }
+            if (typeMeta.AsyncRouteMethodMetas.Count > 0)
+            {
+                interfaces.Add("IAsyncCommandSubscriber");
+            }
 
-            // Add the source code to the compilation.
-            context.AddSource($"{className}.g.cs", SourceText.From(code, Encoding.UTF8));
+            if (!TryEmitSubscriber(typeMeta, builder))
+            {
+                return false;
+            }
+            if (!TryEmitAsyncSubscriber(typeMeta, builder))
+            {
+                return false;
+            }
+
+            builder.AppendLine($$"""
+partial class {{typeMeta.TypeName}} : {{string.Join(", ", interfaces)}}
+{
+""");
+            if (!ns.IsGlobalNamespace)
+            {
+                builder.AppendLine("}");
+            }
+
+            builder.AppendLine($$"""
+#pragma warning restore CS0162 // Unreachable code
+#pragma warning restore CS0219 // Variable assigned but never used
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8601 // Possible null reference assignment
+#pragma warning restore CS8602 // Possible null return
+#pragma warning restore CS8604 // Possible null reference argument for parameter
+#pragma warning restore CS8631 // The type cannot be used as type parameter in the generic type or method
+""");
+            return true;
         }
+        catch (Exception ex)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.UnexpectedErrorDescriptor,
+                Location.None,
+                ex.ToString()));
+            return false;
+        }
+    }
+
+    static bool TryEmitSubscriber(TypeMeta typeMeta, StringBuilder builder)
+    {
+        builder.AppendLine($$"""
+        public void Receive<T>(T command) where T : ICommand
+        {
+            switch (command)
+            {
+""");
+        foreach (var methodMeta in typeMeta.RouteMethodMetas)
+        {
+            builder.AppendLine($$"""
+                case {{methodMeta.CommandFullTypeName}} x:
+                    {methodMeta.MethodSymbol.Name}(x);
+                    break;
+""");
+        }
+        builder.AppendLine($$"""
+                default:
+                    break;
+            }
+        }
+
+""");
+        return true;
+    }
+
+    static bool TryEmitAsyncSubscriber(TypeMeta typeMeta, StringBuilder builder)
+    {
+        builder.AppendLine($$"""
+        public UniTask ReceiveAsync<T>(T command, global::System.Threading.CancellationToken cancellation = default) where T : ICommand
+        {
+            switch (command)
+            {
+""");
+        foreach (var methodMeta in typeMeta.RouteMethodMetas)
+        {
+            if (methodMeta.TakeCancellationToken)
+            {
+                builder.AppendLine($$"""
+                case {{methodMeta.CommandFullTypeName}} x:
+                    return {{methodMeta.Symbol.Name}}(x, cancellation);
+""");
+            }
+            else
+            {
+                builder.AppendLine($$"""
+                case {{methodMeta.CommandFullTypeName}} x:
+                    return {{methodMeta.Symbol.Name}}(x);
+""");
+            }
+            builder.AppendLine($$"""
+                default:
+                    break;
+            }
+        }
+
+""");
+        }
+        return true;
     }
 }

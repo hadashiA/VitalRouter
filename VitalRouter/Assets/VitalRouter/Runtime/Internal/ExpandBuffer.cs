@@ -19,7 +19,7 @@ class ExpandBuffer<T> : IReadOnlyList<T>
         }
 
         public T Current => source[currentIndex];
-        object IEnumerator.Current => Current;
+        object IEnumerator.Current => Current!;
 
         public bool MoveNext() => ++currentIndex <= source.Count - 1;
 

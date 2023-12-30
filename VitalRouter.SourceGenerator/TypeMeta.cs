@@ -11,13 +11,18 @@ class TypeMeta
     public TypeDeclarationSyntax Syntax { get; }
     public INamedTypeSymbol Symbol { get; }
     public AttributeData RoutingAttribute { get; }
+    public INamedTypeSymbol[] FilterTypeSymbols { get; }
     public string TypeName { get; }
     public string FullTypeName { get; }
 
-    public IReadOnlyList<MemberMeta> MemberMetas => memberMetas ??= GetRuoteMembers();
+    public IReadOnlyList<RouteMethodMeta> RouteMethodMetas => routeMethodMetas;
+    public IReadOnlyList<RouteMethodMeta> AsyncRouteMethodMetas => AsyncRouteMethodMetas;
+    public IReadOnlyList<IMethodSymbol> NonRoutableMethodSymbols => nonRoutableMethodSymbols;
 
-    ReferenceSymbols references;
-    MemberMeta[]? memberMetas;
+    readonly ReferenceSymbols references;
+    readonly List<RouteMethodMeta> routeMethodMetas = [];
+    readonly List<RouteMethodMeta> asyncRouteMethodMetas = [];
+    readonly List<IMethodSymbol> nonRoutableMethodSymbols = [];
 
     public TypeMeta(
         TypeDeclarationSyntax syntax,
@@ -33,6 +38,12 @@ class TypeMeta
         FullTypeName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
         RoutingAttribute = routingAttribute;
+
+        FilterTypeSymbols = symbol.GetAttributes()
+            .Where(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, references.FilterAttribute) &&
+                        x.ConstructorArguments is [{ Kind: TypedConstantKind.Type }, ..])
+            .Select(x => (INamedTypeSymbol)x.ConstructorArguments[0].Value!)
+            .ToArray();
     }
 
     public bool IsPartial()
@@ -45,22 +56,44 @@ class TypeMeta
         return Syntax.Parent is TypeDeclarationSyntax;
     }
 
-    MemberMeta[] GetRuotesMembers()
+    void CllectMembers()
     {
-        if (memberMetas == null)
+        var i = 0;
+        foreach (var member in Symbol.GetAllMembers())
         {
-            memberMetas = Symbol.GetMembers() // iterate includes parent type
-                .Where(x =>
+            if (member is IMethodSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public } method)
+            {
+                if (method.Parameters.Length is <= 0 or >= 3)
+                    continue;
+
+                var commandParam = method.Parameters[0];
+                if (!commandParam.Type.AllInterfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.CommandInterface)))
                 {
-                    if (x is IMethodSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public } methodSymbol)
+                    continue;
+                }
+
+                // sync
+                if (method is { ReturnsVoid: true, Parameters.Length: 1 })
+                {
+                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
+                }
+                // async
+                else if (SymbolEqualityComparer.Default.Equals(method.ReturnType, references.UniTaskType) ||
+                         SymbolEqualityComparer.Default.Equals(method.ReturnType, references.AwaitableType) ||
+                         SymbolEqualityComparer.Default.Equals(method.ReturnType, references.TaskType) ||
+                         SymbolEqualityComparer.Default.Equals(method.ReturnType, references.ValueTaskType))
+                {
+                    asyncRouteMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
+                }
+                // not routable
+                else
+                {
+                    if (SymbolEqualityComparer.Default.Equals(method.ContainingType, Symbol))
                     {
-                        return true;
+                        nonRoutableMethodSymbols.Add(method);
                     }
-                    return false;
-                })
-                .Select((x, i) => new MemberMeta((IMethodSymbol)x, references, i))
-                .ToArray();
+                }
+            }
         }
-        return memberMetas;
     }
 }

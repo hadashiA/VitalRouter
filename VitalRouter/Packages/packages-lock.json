@@ -66,12 +66,6 @@
       },
       "hash": "af7bd4ecabaf6ea3f9e58ecc4352dd5296e5ef29"
     },
-    "com.unity.modules.accessibility": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
-      "dependencies": {}
-    },
     "com.unity.modules.animation": {
       "version": "1.0.0",
       "depth": 0,

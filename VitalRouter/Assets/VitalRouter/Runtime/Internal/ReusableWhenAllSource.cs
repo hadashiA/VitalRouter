@@ -21,7 +21,7 @@ sealed class ReusableWhenAllSource : IUniTaskSource
 
     class AwaiterState
     {
-        public ReusableWhenAllSource Source;
+        public ReusableWhenAllSource Source = default!;
         public UniTask.Awaiter Awaiter;
     }
 
