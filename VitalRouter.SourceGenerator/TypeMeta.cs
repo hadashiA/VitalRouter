@@ -16,7 +16,7 @@ class TypeMeta
     public string FullTypeName { get; }
 
     public IReadOnlyList<RouteMethodMeta> RouteMethodMetas => routeMethodMetas;
-    public IReadOnlyList<RouteMethodMeta> AsyncRouteMethodMetas => AsyncRouteMethodMetas;
+    public IReadOnlyList<RouteMethodMeta> AsyncRouteMethodMetas => asyncRouteMethodMetas;
     public IReadOnlyList<IMethodSymbol> NonRoutableMethodSymbols => nonRoutableMethodSymbols;
 
     readonly ReferenceSymbols references;
@@ -44,6 +44,8 @@ class TypeMeta
                         x.ConstructorArguments is [{ Kind: TypedConstantKind.Type }, ..])
             .Select(x => (INamedTypeSymbol)x.ConstructorArguments[0].Value!)
             .ToArray();
+
+        CollectMembers();
     }
 
     public bool IsPartial()
@@ -56,7 +58,7 @@ class TypeMeta
         return Syntax.Parent is TypeDeclarationSyntax;
     }
 
-    void CllectMembers()
+    void CollectMembers()
     {
         var i = 0;
         foreach (var member in Symbol.GetAllMembers())

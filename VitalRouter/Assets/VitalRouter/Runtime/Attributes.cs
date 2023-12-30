@@ -2,12 +2,12 @@ using System;
 
 namespace VitalRouter;
 
-public class PreserveAttribute : Attribute
-{
-}
+// public class PreserveAttribute : Attribute
+// {
+// }
 
 [AttributeUsage(AttributeTargets.Class)]
-public class RoutingAttribute : PreserveAttribute
+public class RoutingAttribute : Attribute
 {
 }
 

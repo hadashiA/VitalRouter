@@ -134,6 +134,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 
 using System;
 using VitalRouter;
+
 """);
 
             var ns = typeMeta.Symbol.ContainingNamespace;
@@ -156,6 +157,11 @@ namespace {{ns}}
                 interfaces.Add("IAsyncCommandSubscriber");
             }
 
+            builder.AppendLine($$"""
+partial class {{typeMeta.TypeName}} : {{string.Join(", ", interfaces)}}
+{
+""");
+
             if (!TryEmitSubscriber(typeMeta, builder))
             {
                 return false;
@@ -165,9 +171,8 @@ namespace {{ns}}
                 return false;
             }
 
-            builder.AppendLine($$"""
-partial class {{typeMeta.TypeName}} : {{string.Join(", ", interfaces)}}
-{
+            builder.AppendLine("""
+}
 """);
             if (!ns.IsGlobalNamespace)
             {
@@ -198,24 +203,24 @@ partial class {{typeMeta.TypeName}} : {{string.Join(", ", interfaces)}}
     static bool TryEmitSubscriber(TypeMeta typeMeta, StringBuilder builder)
     {
         builder.AppendLine($$"""
-        public void Receive<T>(T command) where T : ICommand
+    public void Receive<T>(T command) where T : ICommand
+    {
+        switch (command)
         {
-            switch (command)
-            {
 """);
         foreach (var methodMeta in typeMeta.RouteMethodMetas)
         {
             builder.AppendLine($$"""
-                case {{methodMeta.CommandFullTypeName}} x:
-                    {methodMeta.MethodSymbol.Name}(x);
-                    break;
+            case {{methodMeta.CommandFullTypeName}} x:
+                {{methodMeta.Symbol.Name}}(x);
+                break;
 """);
         }
         builder.AppendLine($$"""
-                default:
-                    break;
-            }
+            default:
+                break;
         }
+    }
 
 """);
         return true;
@@ -224,35 +229,34 @@ partial class {{typeMeta.TypeName}} : {{string.Join(", ", interfaces)}}
     static bool TryEmitAsyncSubscriber(TypeMeta typeMeta, StringBuilder builder)
     {
         builder.AppendLine($$"""
-        public UniTask ReceiveAsync<T>(T command, global::System.Threading.CancellationToken cancellation = default) where T : ICommand
+    public global::Cysharp.Threading.Tasks.UniTask ReceiveAsync<T>(T command, global::System.Threading.CancellationToken cancellation = default) where T : ICommand
+    {
+        switch (command)
         {
-            switch (command)
-            {
 """);
-        foreach (var methodMeta in typeMeta.RouteMethodMetas)
+        foreach (var methodMeta in typeMeta.AsyncRouteMethodMetas)
         {
             if (methodMeta.TakeCancellationToken)
             {
                 builder.AppendLine($$"""
-                case {{methodMeta.CommandFullTypeName}} x:
-                    return {{methodMeta.Symbol.Name}}(x, cancellation);
+            case {{methodMeta.CommandFullTypeName}} x:
+                return {{methodMeta.Symbol.Name}}(x, cancellation);
 """);
             }
             else
             {
                 builder.AppendLine($$"""
-                case {{methodMeta.CommandFullTypeName}} x:
-                    return {{methodMeta.Symbol.Name}}(x);
+            case {{methodMeta.CommandFullTypeName}} x:
+                return {{methodMeta.Symbol.Name}}(x);
 """);
             }
-            builder.AppendLine($$"""
-                default:
-                    break;
-            }
         }
-
+        builder.AppendLine($$"""
+            default:
+                return global::Cysharp.Threading.Tasks.UniTask.CompletedTask;
+        }
+    }
 """);
-        }
         return true;
     }
 }

@@ -28,6 +28,8 @@ public class HogeInterceptor : ICommandInterceptor
     }
 }
 
+
+
 [Routing]
 [Filter(typeof(HogeInterceptor))]
 [Filter(typeof(HogeInterceptor))]
