@@ -59,8 +59,6 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                     return;
                 }
 
-                var codeWriter = new CodeWriter();
-
                 foreach (var (x, _) in list)
                 {
                     var typeMeta = new TypeMeta(
@@ -76,7 +74,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                             .Replace("<", "_")
                             .Replace(">", "_");
 
-                        sourceProductionContext.AddSource($"{fullType}.YamlFormatter.g.cs", codeWriter.ToString());
+                        sourceProductionContext.AddSource($"{fullType}.Routing.g.cs", codeWriter.ToString());
                     }
                     codeWriter.Clear();
                 }

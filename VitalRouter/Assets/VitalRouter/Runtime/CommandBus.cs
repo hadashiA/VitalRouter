@@ -58,7 +58,10 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
 
             lock (subscribeLock)
             {
-                interceptors.CopyAndSetLengthTo(executingInterceptors);
+                if (interceptors.Count > 0)
+                {
+                    interceptors.CopyAndSetLengthTo(executingInterceptors);
+                }
             }
 
             if (executingInterceptors.Count > 0)
