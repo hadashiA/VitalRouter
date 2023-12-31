@@ -103,6 +103,32 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                 error = true;
             }
 
+            // check duplicates of the command argument
+            foreach (var methodMeta in typeMeta.RouteMethodMetas)
+            {
+                if (typeMeta.RouteMethodMetas.Any(x => x != methodMeta && SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)) ||
+                    typeMeta.AsyncRouteMethodMetas.Any(x => SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        DiagnosticDescriptors.DuplicateRouteMethodDefined,
+                        methodMeta.Symbol.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
+                        methodMeta.Symbol.Name));
+                    error = true;
+                }
+            }
+            foreach (var methodMeta in typeMeta.AsyncRouteMethodMetas)
+            {
+                if (typeMeta.RouteMethodMetas.Any(x => x != methodMeta && SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)) ||
+                    typeMeta.AsyncRouteMethodMetas.Any(x => SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        DiagnosticDescriptors.DuplicateRouteMethodDefined,
+                        methodMeta.Symbol.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
+                        methodMeta.Symbol.Name));
+                    error = true;
+                }
+            }
+
             if (error)
             {
                 return false;

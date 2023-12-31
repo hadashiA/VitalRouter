@@ -58,6 +58,10 @@ class TypeMeta
         return Syntax.Parent is TypeDeclarationSyntax;
     }
 
+    void CollectInterceptors()
+    {
+    }
+
     void CollectMembers()
     {
         var i = 0;

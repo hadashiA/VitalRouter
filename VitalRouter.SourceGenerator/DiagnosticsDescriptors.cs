@@ -39,4 +39,12 @@ static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor DuplicateRouteMethodDefined = new(
+        id: "VITALROUTER004",
+        title: "The VitalRouter routing target must not define more than one routing of the same command type",
+        messageFormat: "The public method '{0}' of the [Routing] class of VitalRouter duplicates other public methods in the command type it takes as an argument",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }

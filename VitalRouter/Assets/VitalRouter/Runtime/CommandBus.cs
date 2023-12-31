@@ -31,6 +31,8 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
 {
     public static readonly CommandBus Default = new();
 
+    // public ICommandPool CommandPool { get; set; } = ConcurrentQueueCommandPool.Shared;
+
     readonly ExpandBuffer<ICommandSubscriber> subscribers = new(8);
     readonly ExpandBuffer<IAsyncCommandSubscriber> asyncSubscribers = new(8);
     readonly ExpandBuffer<ICommandInterceptor> interceptors = new(4);
@@ -44,6 +46,8 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
     readonly ReusableWhenAllSource whenAllSource = new();
     readonly UniTaskAsyncLock publishLock = new();
     readonly object subscribeLock = new();
+
+    readonly IAsyncCommandSubscriber publishCore;
 
     public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
@@ -76,7 +80,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
             }
             else
             {
-                await PublishCoreAsync(command, cancellation);
+                await publishCore.ReceiveAsync(command, cancellation);
             }
         }
         finally
@@ -115,6 +119,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
             }
         }
     }
+
     public void Unsubscribe(IAsyncCommandSubscriber subscriber)
     {
         lock (subscribeLock)

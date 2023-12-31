@@ -10,24 +10,24 @@ class PublishContext<T> where T : ICommand
 {
     static readonly ConcurrentQueue<PublishContext<T>> Pool = new();
 
-    public T Command { get; set; } = default!;
-    public IReadOnlyList<ICommandInterceptor> Interceptors { get; set; } = default!;
-    public CommandBus Publisher { get; set; } = default!;
+    IReadOnlyList<ICommandInterceptor> interceptors = default!;
+    CommandBus commandBus = default!;
     int currentInterceptorIndex;
 
     readonly Func<T, CancellationToken, UniTask> nextDelegate;
 
     public static PublishContext<T> Rent(
-        CommandBus publisher,
-        ExpandBuffer<ICommandInterceptor> interceptors)
+        CommandBus commandBus,
+        IReadOnlyList<ICommandInterceptor> interceptors)
     {
         if (!Pool.TryDequeue(out var value))
         {
             value = new PublishContext<T>();
         }
+
+        value.commandBus = commandBus;
         value.currentInterceptorIndex = -1;
-        value.Publisher = publisher;
-        value.Interceptors = interceptors;
+        value.interceptors = interceptors;
         return value;
     }
 
@@ -42,7 +42,7 @@ class PublishContext<T> where T : ICommand
         {
             return interceptor.InvokeAsync(command, cancellation, nextDelegate);
         }
-        return Publisher.PublishCoreAsync(command, cancellation);
+        return commandBus.PublishCoreAsync(command, cancellation);
     }
 
     public void Return()
@@ -52,9 +52,9 @@ class PublishContext<T> where T : ICommand
 
     bool MoveNextInterceptor(out ICommandInterceptor nextInterceptor)
     {
-        if (++currentInterceptorIndex <= Interceptors.Count - 1)
+        if (++currentInterceptorIndex <= interceptors.Count - 1)
         {
-            nextInterceptor = Interceptors[currentInterceptorIndex];
+            nextInterceptor = interceptors[currentInterceptorIndex];
             return true;
         }
         nextInterceptor = default!;
