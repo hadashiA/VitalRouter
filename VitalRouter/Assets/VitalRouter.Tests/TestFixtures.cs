@@ -6,25 +6,31 @@ namespace VitalRouter.Tests;
 
 class AInterceptor : ICommandInterceptor
 {
+    public int Calls { get; private set; }
+
     public UniTask InvokeAsync<T>(
         T command,
         CancellationToken cancellation,
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        Calls++;
+        return next(command, cancellation);
     }
 }
 
 public class BInterceptor : ICommandInterceptor
 {
+    public int Calls { get; private set; }
+
     public UniTask InvokeAsync<T>(
         T command,
         CancellationToken cancellation,
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        Calls++;
+        return next(command, cancellation);
     }
 }
 
@@ -75,7 +81,7 @@ partial class SimpleSyncPresenter
 [Routing]
 partial class SimpleAsyncPresenter
 {
-    public UniTask On(CharacterEnterCommand cmd)
+    public UniTask On(CommandA cmd)
     {
         return default;
     }
@@ -84,11 +90,11 @@ partial class SimpleAsyncPresenter
 [Routing]
 partial class SimpleCombinedPresenter
 {
-    public void On(CharacterEnterCommand cmd)
+    public void On(CommandA cmd)
     {
     }
 
-    public UniTask On(CharacterMoveCommand cmd)
+    public UniTask On(CommandB cmd)
     {
         return default;
     }

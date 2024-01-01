@@ -143,7 +143,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 #pragma warning disable CS8631 // The type cannot be used as type parameter in the generic type or method
 
 using System;
-using System.Threading.Tasks;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter;
 
@@ -214,8 +214,8 @@ partial class {{typeMeta.TypeName}}
             .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.FullTypeName} {x.VariableName}"));
 
         builder.AppendLine($$"""
-    [Preserve]
-    public void MapRoutes({{string.Join(", ", parameters)}}
+    [global::VitalRouter.Preserve]
+    public void MapRoutes({{string.Join(", ", parameters)}})
     {
 """);
         if (typeMeta.SyncRouteMethodMetas.Count > 0)
@@ -230,7 +230,7 @@ partial class {{typeMeta.TypeName}}
         subscribable.Subscribe(new __AsyncSubscriber__(this));
 """);
         }
-        if (typeMeta.SyncRouteMethodMetas.Count > 0)
+        if (typeMeta.InterceptRouteMethodMetas.Count > 0)
         {
             var arguments = new[] { "this" }
                 .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.VariableName}"));
@@ -240,6 +240,7 @@ partial class {{typeMeta.TypeName}}
         }
         builder.AppendLine($$"""
     }
+
 """);
         return true;
     }
@@ -273,7 +274,6 @@ partial class {{typeMeta.TypeName}}
                 builder.AppendLine($$"""
                 case {{methodMeta.CommandFullTypeName}} x:
                     return source.{{methodMeta.Symbol.Name}}(x, cancellation);
-                    break;
 """);
             }
             else
@@ -281,7 +281,6 @@ partial class {{typeMeta.TypeName}}
                 builder.AppendLine($$"""
                 case {{methodMeta.CommandFullTypeName}} x:
                     return source.{{methodMeta.Symbol.Name}}(x);
-                    break;
 """);
             }
         }
