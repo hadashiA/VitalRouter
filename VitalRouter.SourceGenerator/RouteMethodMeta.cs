@@ -8,10 +8,13 @@ class RouteMethodMeta
 {
     public IMethodSymbol Symbol { get; }
     public ITypeSymbol CommandTypeSymbol { get; }
-    public INamedTypeSymbol[] FilterTypeSymbols { get; }
+    public InterceptorMeta[] InterceptorMetas { get; }
     public int SequentialOrder { get; }
     public string CommandFullTypeName { get; }
+    public string CommandTypePrefix { get; }
     public bool TakeCancellationToken { get; }
+
+    public bool IsAsync => Symbol.IsAsync || !Symbol.ReturnsVoid;
 
     public RouteMethodMeta(
         IMethodSymbol symbol,
@@ -23,13 +26,18 @@ class RouteMethodMeta
         CommandTypeSymbol = commandTypeSymbol;
         SequentialOrder = sequentialOrder;
 
-        FilterTypeSymbols = symbol.GetAttributes()
+        InterceptorMetas = symbol.GetAttributes()
             .Where(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, references.FilterAttribute) &&
                         x.ConstructorArguments is [{ Kind: TypedConstantKind.Type }, ..])
-            .Select(x => (INamedTypeSymbol)x.ConstructorArguments[0].Value!)
+            .Select(x => new InterceptorMeta((INamedTypeSymbol)x.ConstructorArguments[0].Value!))
             .ToArray();
 
         CommandFullTypeName = commandTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        CommandTypePrefix = CommandFullTypeName
+            .Replace("global::", "")
+            .Replace("<", "_")
+            .Replace(">", "_");
+        commandTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
         if (symbol.Parameters.Length > 1)
         {

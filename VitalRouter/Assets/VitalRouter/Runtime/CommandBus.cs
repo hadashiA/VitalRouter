@@ -49,6 +49,11 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
 
     readonly IAsyncCommandSubscriber publishCore;
 
+    public CommandBus()
+    {
+        publishCore = new PublishCore(this);
+    }
+
     public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
     {
@@ -68,7 +73,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
 
             if (executingInterceptors.Count > 0)
             {
-                var context = PublishContext<T>.Rent(this, executingInterceptors);
+                var context = InvokeContext<T>.Rent(publishCore, executingInterceptors);
                 try
                 {
                     await context.InvokeRecursiveAsync(command, cancellation);
@@ -96,6 +101,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         {
             subscribers.Add(subscriber);
         }
+
         return new Subscription(this, subscriber);
     }
 
@@ -105,6 +111,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         {
             asyncSubscribers.Add(subscriber);
         }
+
         return new Subscription(this, subscriber);
     }
 
@@ -153,44 +160,57 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
         }
     }
 
-    internal UniTask PublishCoreAsync<T>(T command, CancellationToken cancellation = default)
-        where T : ICommand
-    {
-        try
-        {
-            lock (subscribeLock)
-            {
-                subscribers.CopyAndSetLengthTo(executingSubscribers);
-                for (var i = 0; i < asyncSubscribers.Count; i++)
-                {
-                    executingTasks.Add(asyncSubscribers[i].ReceiveAsync(command, cancellation));
-                }
-            }
-
-            for (var i = 0; i < executingSubscribers.Count; i++)
-            {
-                executingSubscribers[i].Receive(command);
-            }
-
-            if (executingTasks.Count > 0)
-            {
-                whenAllSource.Reset(executingTasks);
-                return whenAllSource.Task;
-            }
-            return UniTask.CompletedTask;
-        }
-        finally
-        {
-            executingTasks.Clear(true);
-            executingSubscribers.Clear(true);
-        }
-    }
-
     void CheckDispose()
     {
         if (disposed)
         {
             throw new ObjectDisposedException(nameof(UniTaskAsyncLock));
+        }
+    }
+
+    class PublishCore : IAsyncCommandSubscriber
+    {
+        readonly CommandBus source;
+
+        public PublishCore(CommandBus source)
+        {
+            this.source = source;
+        }
+
+        public UniTask ReceiveAsync<T>(
+            T command,
+            CancellationToken cancellation = default)
+            where T : ICommand
+        {
+            try
+            {
+                lock (source.subscribeLock)
+                {
+                    source.subscribers.CopyAndSetLengthTo(source.executingSubscribers);
+                    for (var i = 0; i < source.asyncSubscribers.Count; i++)
+                    {
+                        source.executingTasks.Add(source.asyncSubscribers[i].ReceiveAsync(command, cancellation));
+                    }
+                }
+
+                for (var i = 0; i < source.executingSubscribers.Count; i++)
+                {
+                    source.executingSubscribers[i].Receive(command);
+                }
+
+                if (source.executingTasks.Count > 0)
+                {
+                    source.whenAllSource.Reset(source.executingTasks);
+                    return source.whenAllSource.Task;
+                }
+
+                return UniTask.CompletedTask;
+            }
+            finally
+            {
+                source.executingTasks.Clear(true);
+                source.executingSubscribers.Clear(true);
+            }
         }
     }
 }

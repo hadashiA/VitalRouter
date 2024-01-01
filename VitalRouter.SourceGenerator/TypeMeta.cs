@@ -11,17 +11,19 @@ class TypeMeta
     public TypeDeclarationSyntax Syntax { get; }
     public INamedTypeSymbol Symbol { get; }
     public AttributeData RoutingAttribute { get; }
-    public INamedTypeSymbol[] FilterTypeSymbols { get; }
     public string TypeName { get; }
     public string FullTypeName { get; }
 
-    public IReadOnlyList<RouteMethodMeta> RouteMethodMetas => routeMethodMetas;
+    public InterceptorMeta[] DefaultInterceptorMetas { get; }
+    public IReadOnlyList<RouteMethodMeta> SyncRouteMethodMetas => syncRouteMethodMetas;
     public IReadOnlyList<RouteMethodMeta> AsyncRouteMethodMetas => asyncRouteMethodMetas;
+    public IReadOnlyList<RouteMethodMeta> InterceptRouteMethodMetas => interceptRouteMethodMetas;
     public IReadOnlyList<IMethodSymbol> NonRoutableMethodSymbols => nonRoutableMethodSymbols;
 
     readonly ReferenceSymbols references;
-    readonly List<RouteMethodMeta> routeMethodMetas = [];
+    readonly List<RouteMethodMeta> syncRouteMethodMetas = [];
     readonly List<RouteMethodMeta> asyncRouteMethodMetas = [];
+    readonly List<RouteMethodMeta> interceptRouteMethodMetas = [];
     readonly List<IMethodSymbol> nonRoutableMethodSymbols = [];
 
     public TypeMeta(
@@ -39,10 +41,10 @@ class TypeMeta
 
         RoutingAttribute = routingAttribute;
 
-        FilterTypeSymbols = symbol.GetAttributes()
+        DefaultInterceptorMetas = symbol.GetAttributes()
             .Where(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, references.FilterAttribute) &&
                         x.ConstructorArguments is [{ Kind: TypedConstantKind.Type }, ..])
-            .Select(x => (INamedTypeSymbol)x.ConstructorArguments[0].Value!)
+            .Select(x => new InterceptorMeta((INamedTypeSymbol)x.ConstructorArguments[0].Value!))
             .ToArray();
 
         CollectMembers();
@@ -58,8 +60,11 @@ class TypeMeta
         return Syntax.Parent is TypeDeclarationSyntax;
     }
 
-    void CollectInterceptors()
+    public IEnumerable<RouteMethodMeta> AllRouteMethodMetas()
     {
+        return SyncRouteMethodMetas
+            .Concat(AsyncRouteMethodMetas)
+            .Concat(InterceptRouteMethodMetas);
     }
 
     void CollectMembers()
@@ -81,7 +86,15 @@ class TypeMeta
                 // sync
                 if (method is { ReturnsVoid: true, Parameters.Length: 1 })
                 {
-                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
+                    var methodMeta = new RouteMethodMeta(method, commandParam.Type, references, i++);
+                    if (DefaultInterceptorMetas.Length > 0 || methodMeta.InterceptorMetas.Length > 0)
+                    {
+                        interceptRouteMethodMetas.Add(methodMeta);
+                    }
+                    else
+                    {
+                        syncRouteMethodMetas.Add(methodMeta);
+                    }
                 }
                 // async
                 else if (SymbolEqualityComparer.Default.Equals(method.ReturnType, references.UniTaskType) ||
@@ -89,7 +102,15 @@ class TypeMeta
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.TaskType) ||
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.ValueTaskType))
                 {
-                    asyncRouteMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
+                    var methodMeta = new RouteMethodMeta(method, commandParam.Type, references, i++);
+                    if (DefaultInterceptorMetas.Length > 0 || methodMeta.InterceptorMetas.Length > 0)
+                    {
+                        interceptRouteMethodMetas.Add(methodMeta);
+                    }
+                    else
+                    {
+                        asyncRouteMethodMetas.Add(methodMeta);
+                    }
                 }
                 // not routable
                 else
