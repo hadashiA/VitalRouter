@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine.Scripting;
 
 namespace VitalRouter;
 
@@ -51,6 +52,7 @@ class BInterceptor : ICommandInterceptor
         [Filter(typeof(BInterceptor))]
         public UniTask On(CharacterMoveCommand cmd)
         {
+            return default;
         }
 
         public void On(CharacterExitCommand cmd)
@@ -58,20 +60,20 @@ class BInterceptor : ICommandInterceptor
         }
     }
 
-    public partial class SamplePresenter : IRoutable
+    public partial class SamplePresenter
     {
-        public Type[] SubscriberTypes => new []
-        {
-            typeof(__Subscriber__),
-            typeof(__AsyncSubscriber__),
-            typeof(__InterceptSubscriber__),
-        };
-
+        [Preserve]
         public void MapRoutes(ICommandSubscribable subscribable)
+        {
+            MapRoutes(subscribable, new AInterceptor(), new BInterceptor());
+        }
+
+        [Preserve]
+        public void MapRoutes(ICommandSubscribable subscribable, AInterceptor aInterceptor, BInterceptor bInterceptor)
         {
             subscribable.Subscribe(new __Subscriber__(this));
             subscribable.Subscribe(new __AsyncSubscriber__(this));
-            subscribable.Subscribe(new __InterceptSubscriber__(this, new AInterceptor(), new BInterceptor()));
+            subscribable.Subscribe(new __InterceptSubscriber__(this, aInterceptor, bInterceptor));
         }
 
         class __Subscriber__ : ICommandSubscriber
@@ -117,7 +119,6 @@ class BInterceptor : ICommandInterceptor
 
         class __InterceptSubscriber__ : IAsyncCommandSubscriber
         {
-            readonly SamplePresenter source;
             readonly __AsyncSubscriber__ core;
 
             readonly ICommandInterceptor[] interceptorStackDefault;
@@ -125,7 +126,6 @@ class BInterceptor : ICommandInterceptor
 
             public __InterceptSubscriber__(SamplePresenter source, AInterceptor aInterceptor, BInterceptor bInterceptor)
             {
-                this.source = source;
                 core = new __AsyncSubscriber__(source);
                 interceptorStackDefault = new ICommandInterceptor[]
                 {

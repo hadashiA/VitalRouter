@@ -27,7 +27,7 @@ public interface IAsyncCommandSubscriber
         where T : ICommand;
 }
 
-public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDisposable
+public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable, IDisposable
 {
     public static readonly CommandBus Default = new();
 
@@ -73,7 +73,7 @@ public sealed class CommandBus : ICommandPublisher, ICommandSubscribable, IDispo
 
             if (executingInterceptors.Count > 0)
             {
-                var context = InvokeContext<T>.Rent(publishCore, executingInterceptors);
+                var context = InvokeContext<T>.Rent(executingInterceptors, publishCore);
                 try
                 {
                     await context.InvokeRecursiveAsync(command, cancellation);

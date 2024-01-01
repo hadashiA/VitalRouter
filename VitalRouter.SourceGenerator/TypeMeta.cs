@@ -67,6 +67,11 @@ class TypeMeta
             .Concat(InterceptRouteMethodMetas);
     }
 
+    public IEnumerable<InterceptorMeta> AllInterceptorMetas()
+    {
+        return DefaultInterceptorMetas.Concat(InterceptRouteMethodMetas.SelectMany(x => x.InterceptorMetas));
+    }
+
     void CollectMembers()
     {
         var i = 0;

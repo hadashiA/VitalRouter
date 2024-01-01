@@ -208,9 +208,40 @@ partial class {{typeMeta.TypeName}}
         }
     }
 
-    static bool TryEmitMAppingMethod(TypeMeta typeMeta, StringBuilder builder)
+    static bool TryEmitMappingMethod(TypeMeta typeMeta, StringBuilder builder)
     {
+        var parameters = new[] { "ICommandSubscribable subscribable" }
+            .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.FullTypeName} {x.VariableName}"));
 
+        builder.AppendLine($$"""
+    [Preserve]
+    public void MapRoutes({{string.Join(", ", parameters)}}
+    {
+""");
+        if (typeMeta.SyncRouteMethodMetas.Count > 0)
+        {
+            builder.AppendLine($$"""
+        subscribable.Subscribe(new __Subscriber__(this));
+""");
+        }
+        if (typeMeta.AsyncRouteMethodMetas.Count > 0)
+        {
+            builder.AppendLine($$"""
+        subscribable.Subscribe(new __AsyncSubscriber__(this));
+""");
+        }
+        if (typeMeta.SyncRouteMethodMetas.Count > 0)
+        {
+            var arguments = new[] { "this" }
+                .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.VariableName}"));
+            builder.AppendLine($$"""
+        subscribable.Subscribe(new __InterceptSubscriber__({{string.Join(", ", arguments)}}));
+""");
+        }
+        builder.AppendLine($$"""
+    }
+""");
+        return true;
     }
 
     static bool TryEmitAsyncSubscriber(TypeMeta typeMeta, StringBuilder builder)
@@ -313,10 +344,7 @@ partial class {{typeMeta.TypeName}}
             return true;
         }
 
-        var interceptorParams = typeMeta.DefaultInterceptorMetas
-            .Concat(typeMeta.InterceptRouteMethodMetas.SelectMany(x => x.InterceptorMetas))
-            .Select(x => $"{x.FullTypeName} {x.VariableName}");
-
+        var interceptorParams = typeMeta.AllInterceptorMetas().Select(x => $"{x.FullTypeName} {x.VariableName}");
         var constructorParams = new[] { $"{typeMeta.FullTypeName} source" }
             .Concat(interceptorParams);
 
