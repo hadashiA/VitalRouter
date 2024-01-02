@@ -15,15 +15,12 @@ class TypeMeta
     public string FullTypeName { get; }
 
     public InterceptorMeta[] DefaultInterceptorMetas { get; }
-    public IReadOnlyList<RouteMethodMeta> SyncRouteMethodMetas => syncRouteMethodMetas;
-    public IReadOnlyList<RouteMethodMeta> AsyncRouteMethodMetas => asyncRouteMethodMetas;
-    public IReadOnlyList<RouteMethodMeta> InterceptRouteMethodMetas => interceptRouteMethodMetas;
+    public IReadOnlyList<InterceptorMeta> AllInterceptorMetas { get; }
+    public IReadOnlyList<RouteMethodMeta> RouteMethodMetas => routeMethodMetas;
     public IReadOnlyList<IMethodSymbol> NonRoutableMethodSymbols => nonRoutableMethodSymbols;
 
     readonly ReferenceSymbols references;
-    readonly List<RouteMethodMeta> syncRouteMethodMetas = [];
-    readonly List<RouteMethodMeta> asyncRouteMethodMetas = [];
-    readonly List<RouteMethodMeta> interceptRouteMethodMetas = [];
+    readonly List<RouteMethodMeta> routeMethodMetas = [];
     readonly List<IMethodSymbol> nonRoutableMethodSymbols = [];
 
     public TypeMeta(
@@ -48,6 +45,12 @@ class TypeMeta
             .ToArray();
 
         CollectMembers();
+
+        AllInterceptorMetas = DefaultInterceptorMetas
+            .Concat(RouteMethodMetas.SelectMany(x => x.InterceptorMetas))
+            .Distinct(InterceptorMetaEqualityComparer.Instance)
+            .ToArray();
+
     }
 
     public bool IsPartial()
@@ -58,21 +61,6 @@ class TypeMeta
     public bool IsNested()
     {
         return Syntax.Parent is TypeDeclarationSyntax;
-    }
-
-    public IEnumerable<RouteMethodMeta> AllRouteMethodMetas()
-    {
-        return SyncRouteMethodMetas
-            .Concat(AsyncRouteMethodMetas)
-            .Concat(InterceptRouteMethodMetas)
-            .Distinct(RouteMethodMetaEqualityComparer.Instance);
-    }
-
-    public IEnumerable<InterceptorMeta> AllInterceptorMetas()
-    {
-        return DefaultInterceptorMetas
-            .Concat(InterceptRouteMethodMetas.SelectMany(x => x.InterceptorMetas))
-            .Distinct(InterceptorMetaEqualityComparer.Instance);
     }
 
     void CollectMembers()
@@ -94,11 +82,9 @@ class TypeMeta
                 // sync
                 if (method is { ReturnsVoid: true, Parameters.Length: 1 })
                 {
-                    var methodMeta = new RouteMethodMeta(method, commandParam.Type, references, i++);
-                    syncRouteMethodMetas.Add(methodMeta);
-                    if (DefaultInterceptorMetas.Length > 0 || methodMeta.InterceptorMetas.Length > 0)
+                    if (!routeMethodMetas.Any(x => SymbolEqualityComparer.Default.Equals(method, x.Symbol)))
                     {
-                        interceptRouteMethodMetas.Add(methodMeta);
+                        routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
                     }
                 }
                 // async
@@ -107,11 +93,9 @@ class TypeMeta
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.TaskType) ||
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.ValueTaskType))
                 {
-                    var methodMeta = new RouteMethodMeta(method, commandParam.Type, references, i++);
-                    asyncRouteMethodMetas.Add(methodMeta);
-                    if (DefaultInterceptorMetas.Length > 0 || methodMeta.InterceptorMetas.Length > 0)
+                    if (!routeMethodMetas.Any(x => SymbolEqualityComparer.Default.Equals(method, x.Symbol)))
                     {
-                        interceptRouteMethodMetas.Add(methodMeta);
+                        routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
                     }
                 }
                 // not routable

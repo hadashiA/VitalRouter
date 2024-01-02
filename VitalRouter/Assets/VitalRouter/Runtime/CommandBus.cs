@@ -14,6 +14,8 @@ public interface ICommandSubscribable
 {
     Subscription Subscribe(ICommandSubscriber subscriber);
     Subscription Subscribe(IAsyncCommandSubscriber subscriber);
+    void Unsubscribe(ICommandSubscriber subscriber);
+    void Unsubscribe(IAsyncCommandSubscriber subscriber);
 }
 
 public interface ICommandSubscriber

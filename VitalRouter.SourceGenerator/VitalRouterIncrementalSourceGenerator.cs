@@ -101,9 +101,9 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
             }
 
             // check duplicates of the command argument
-            foreach (var methodMeta in typeMeta.AllRouteMethodMetas())
+            foreach (var methodMeta in typeMeta.RouteMethodMetas)
             {
-                if (typeMeta.AllRouteMethodMetas().Any(x => x != methodMeta && SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)))
+                if (typeMeta.RouteMethodMetas.Any(x => x != methodMeta && SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)))
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
                         DiagnosticDescriptors.DuplicateRouteMethodDefined,
@@ -114,7 +114,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
             }
 
             // check interceptor type
-            foreach (var interceptorMeta in typeMeta.AllInterceptorMetas())
+            foreach (var interceptorMeta in typeMeta.AllInterceptorMetas)
             {
                 if (!interceptorMeta.Symbol.Interfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.InterceptorInterface)))
                 {
@@ -139,7 +139,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                     nonRoutableMethod.Name));
             }
 
-            if (!typeMeta.AllRouteMethodMetas().Any())
+            if (typeMeta.RouteMethodMetas.Count <= 0)
             {
                 return false;
             }
@@ -187,7 +187,7 @@ partial class {{typeMeta.TypeName}}
             {
                 return false;
             }
-            if (!TryEmitInterceptSubscriber(typeMeta, builder))
+            if (!TryEmitAsyncSubscriberCore(typeMeta, builder))
             {
                 return false;
             }
@@ -224,39 +224,47 @@ partial class {{typeMeta.TypeName}}
     static bool TryEmitMappingMethod(TypeMeta typeMeta, StringBuilder builder)
     {
         var parameters = new[] { "ICommandSubscribable subscribable" }
-            .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.FullTypeName} {x.VariableName}"));
+            .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}"));
 
         builder.AppendLine($$"""
-    CompositeSubscription? __subscription__;
+    Subscription? __subscription__;
 
     [global::VitalRouter.Preserve]
     public void MapRoutes({{string.Join(", ", parameters)}})
     {
         UnmapRoutes();
-        __subscription__ = new CompositeSubscription();
+
 """);
-        if (typeMeta.DefaultInterceptorMetas.Length <= 0 && typeMeta.SyncRouteMethodMetas.Any(x => x.InterceptorMetas.Length <= 0))
+        var hasSubscriber = typeMeta.DefaultInterceptorMetas.Length <= 0 &&
+                            typeMeta.RouteMethodMetas.Any(x => !x.IsAsync && x.InterceptorMetas.Length <= 0);
+        var hasAsyncSubscriber = typeMeta.DefaultInterceptorMetas.Length > 0 ||
+                                 typeMeta.RouteMethodMetas.Any(x => x.IsAsync || x.InterceptorMetas.Length > 0);
+        if (hasSubscriber)
         {
             builder.AppendLine($$"""
-        __subscription__.Add(subscribable.Subscribe(new __Subscriber__(this)));
-""");
-        }
-        if (typeMeta.DefaultInterceptorMetas.Length <= 0 && typeMeta.AsyncRouteMethodMetas.Any(x => x.InterceptorMetas.Length <= 0))
-        {
-            builder.AppendLine($$"""
-        __subscription__.Add(subscribable.Subscribe(new __AsyncSubscriber__(this)));
+        var subscriber = new __Subscriber__(this);
 """);
         }
-        if (typeMeta.InterceptRouteMethodMetas.Count > 0)
+        if (hasAsyncSubscriber)
         {
-            var arguments = new[] { "this" }
-                .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.VariableName}"));
+            var asyncSubscriberArgs = new[] { "this" }
+                .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.VariableName}"));
+
             builder.AppendLine($$"""
-        __subscription__.Add(subscribable.Subscribe(new __InterceptAsyncSubscriber__({{string.Join(", ", arguments)}})));
+        var asyncSubscriber  = new __AsyncSubscriber__({{string.Join(", ", asyncSubscriberArgs)}});
 """);
         }
 
+        var subscriptionArgs = (hasSubscriber, hasAsyncSubscriber) switch
+        {
+            (true, true) => "subscriber, asyncSubscriber",
+            (true, false) => "subscriber",
+            (false, true) => "asyncSubscriber",
+            _ => throw new InvalidOperationException()
+        };
+
         builder.AppendLine($$"""
+        __subscription__ = new Subscription(subscribable, {{subscriptionArgs}});
     }
 
     public void UnmapRoutes()
@@ -269,59 +277,15 @@ partial class {{typeMeta.TypeName}}
         return true;
     }
 
-    static bool TryEmitAsyncSubscriber(TypeMeta typeMeta, StringBuilder builder)
+    static bool TryEmitSubscriber(TypeMeta typeMeta, StringBuilder builder)
     {
-        if (typeMeta.AsyncRouteMethodMetas.Count <= 0)
+        if (typeMeta.DefaultInterceptorMetas.Length > 0)
         {
             return true;
         }
 
-        builder.AppendLine($$"""
-    class __AsyncSubscriber__ : IAsyncCommandSubscriber
-    {
-        readonly {{typeMeta.TypeName}} source;
-    
-        public __AsyncSubscriber__({{typeMeta.TypeName}} source)
-        {
-            this.source = source;
-        }
-    
-        public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
-        {
-            switch (command)
-            {
-""");
-        foreach (var methodMeta in typeMeta.AsyncRouteMethodMetas)
-        {
-            if (methodMeta.TakeCancellationToken)
-            {
-                builder.AppendLine($$"""
-                case {{methodMeta.CommandFullTypeName}} x:
-                    return source.{{methodMeta.Symbol.Name}}(x, cancellation);
-""");
-            }
-            else
-            {
-                builder.AppendLine($$"""
-                case {{methodMeta.CommandFullTypeName}} x:
-                    return source.{{methodMeta.Symbol.Name}}(x);
-""");
-            }
-        }
-        builder.AppendLine($$"""
-                default:
-                    return UniTask.CompletedTask;
-            }
-        }
-    }
-
-""");
-        return true;
-    }
-
-    static bool TryEmitSubscriber(TypeMeta typeMeta, StringBuilder builder)
-    {
-        if (typeMeta.SyncRouteMethodMetas.Count <= 0)
+        var methods = typeMeta.RouteMethodMetas.Where(x => x is { IsAsync: false, InterceptorMetas.Length: <= 0 });
+        if (!methods.Any())
         {
             return true;
         }
@@ -341,7 +305,7 @@ partial class {{typeMeta.TypeName}}
             switch (command)
             {
 """);
-        foreach (var methodMeta in typeMeta.SyncRouteMethodMetas)
+        foreach (var methodMeta in methods)
         {
             builder.AppendLine($$"""
                 case {{methodMeta.CommandFullTypeName}} x:
@@ -360,31 +324,29 @@ partial class {{typeMeta.TypeName}}
         return true;
     }
 
-    static bool TryEmitInterceptSubscriber(TypeMeta typeMeta, StringBuilder builder)
+    static bool TryEmitAsyncSubscriber(TypeMeta typeMeta, StringBuilder builder)
     {
-        if (typeMeta.InterceptRouteMethodMetas.Count <= 0)
+        var methods = typeMeta.DefaultInterceptorMetas.Length > 0
+            ? typeMeta.RouteMethodMetas
+            : typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0 || x.IsAsync);
+
+        if (!methods.Any())
         {
             return true;
         }
 
-        var interceptorParams = typeMeta.AllInterceptorMetas().Select(x => $"{x.FullTypeName} {x.VariableName}");
-        var constructorParams = new[] { $"{typeMeta.TypeName} source" }
-            .Concat(interceptorParams);
+        var interceptorParams = typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}");
+        var constructorParams = new[] { $"{typeMeta.TypeName} source" }.Concat(interceptorParams);
 
          builder.AppendLine($$"""
-    class __InterceptAsyncSubscriber__ : IAsyncCommandSubscriber
+    class __AsyncSubscriber__ : IAsyncCommandSubscriber
     {
+         readonly {{typeMeta.TypeName}} source;
 """);
-         if (typeMeta.InterceptRouteMethodMetas.Any(x => !x.IsAsync))
+         if (typeMeta.AllInterceptorMetas.Count > 0)
          {
              builder.AppendLine($"""
-        readonly __Subscriber__ syncSource;
-""");
-         }
-         if (typeMeta.InterceptRouteMethodMetas.Any(x => x.IsAsync))
-         {
-             builder.AppendLine($"""
-        readonly __AsyncSubscriber__ asyncSource;
+        readonly __AsyncSubscriberCore__ core;
 """);
          }
          if (typeMeta.DefaultInterceptorMetas.Length > 0)
@@ -393,7 +355,7 @@ partial class {{typeMeta.TypeName}}
          readonly ICommandInterceptor[] interceptorStackDefault;
 """);
          }
-         foreach (var method in typeMeta.InterceptRouteMethodMetas)
+         foreach (var method in typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0))
          {
              if (method.InterceptorMetas.Length > 0)
              {
@@ -403,21 +365,16 @@ partial class {{typeMeta.TypeName}}
              }
          }
 
-builder.AppendLine($$"""
+        builder.AppendLine($$"""
 
-        public __InterceptAsyncSubscriber__({{string.Join(", ", constructorParams)}})
+        public __AsyncSubscriber__({{string.Join(", ", constructorParams)}})
         {
+            this.source = source;
 """);
-        if (typeMeta.InterceptRouteMethodMetas.Any(x => !x.IsAsync))
+        if (typeMeta.AllInterceptorMetas.Count > 0)
         {
             builder.AppendLine($$"""
-            syncSource = new __Subscriber__(source);
-""");
-        }
-        if (typeMeta.InterceptRouteMethodMetas.Any(x => x.IsAsync))
-        {
-            builder.AppendLine($$"""
-            asyncSource = new __AsyncSubscriber__(source);
+            this.core = new __AsyncSubscriberCore__(source);
 """);
         }
 
@@ -427,7 +384,7 @@ builder.AppendLine($$"""
             interceptorStackDefault = new ICommandInterceptor[] { {{string.Join(", ", typeMeta.DefaultInterceptorMetas.Select(x => x.VariableName))}} };
 """);
         }
-        foreach (var method in typeMeta.InterceptRouteMethodMetas)
+        foreach (var method in typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0))
         {
             if (method.InterceptorMetas.Length > 0)
             {
@@ -445,14 +402,15 @@ builder.AppendLine($$"""
             switch (command)
             {
 """);
-        foreach (var methodMeta in typeMeta.InterceptRouteMethodMetas)
+        foreach (var method in methods)
         {
-            var invokerName = methodMeta.IsAsync ? "asyncSource" : "syncSource";
-            var interceptorStackName = methodMeta.InterceptorMetas.Length > 0 ? $"interceptorStack{methodMeta.CommandTypePrefix}" : "interceptorStackDefault";
-            builder.AppendLine($$"""
-                case {{methodMeta.CommandFullTypeName}} x:
+            if (typeMeta.DefaultInterceptorMetas.Length > 0 || method.InterceptorMetas.Length > 0)
+            {
+                var interceptorStackName = method.InterceptorMetas.Length > 0 ? $"interceptorStack{method.CommandTypePrefix}" : "interceptorStackDefault";
+                builder.AppendLine($$"""
+                case {{method.CommandFullTypeName}} x:
                 {
-                    var context = InvokeContext<T>.Rent({{interceptorStackName}}, {{invokerName}});
+                    var context = InvokeContext<T>.Rent({{interceptorStackName}}, core);
                     try
                     {
                         return context.InvokeRecursiveAsync(command, cancellation);
@@ -463,6 +421,35 @@ builder.AppendLine($$"""
                     }
                 }
 """);
+            }
+            else if (method.IsAsync)
+            {
+                if (method.IsAsync)
+                {
+                    if (method.TakeCancellationToken)
+                    {
+                        builder.AppendLine($$"""
+                case {{method.CommandFullTypeName}} x:
+                    return source.{{method.Symbol.Name}}(x, cancellation);
+""");
+                    }
+                    else
+                    {
+                        builder.AppendLine($$"""
+                case {{method.CommandFullTypeName}} x:
+                    return source.{{method.Symbol.Name}}(x);
+""");
+                    }
+                }
+                else
+                {
+                    builder.AppendLine($$"""
+                case {{method.CommandFullTypeName}} x:
+                    source.{{method.Symbol.Name}}(x);
+                    return UniTask.CompletedTask;
+""");
+                }
+            }
         }
         builder.AppendLine($$"""
                 default:
@@ -470,6 +457,72 @@ builder.AppendLine($$"""
             }
         }
     }
+
+""");
+        return true;
+    }
+
+    static bool TryEmitAsyncSubscriberCore(TypeMeta typeMeta, StringBuilder builder)
+    {
+        var methods = typeMeta.DefaultInterceptorMetas.Length > 0
+            ? typeMeta.RouteMethodMetas
+            : typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0);
+
+        if (!methods.Any())
+        {
+            return true;
+        }
+
+        builder.AppendLine($$"""
+    class __AsyncSubscriberCore__ : IAsyncCommandSubscriber
+    {
+        readonly {{typeMeta.TypeName}} source;
+    
+        public __AsyncSubscriberCore__({{typeMeta.TypeName}} source)
+        {
+            this.source = source;
+        }
+    
+        public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+        {
+            switch (command)
+            {
+""");
+        foreach (var methodMeta in methods)
+        {
+            if (methodMeta.IsAsync)
+            {
+                if (methodMeta.TakeCancellationToken)
+                {
+                    builder.AppendLine($$"""
+                case {{methodMeta.CommandFullTypeName}} x:
+                    return source.{{methodMeta.Symbol.Name}}(x, cancellation);
+""");
+                }
+                else
+                {
+                    builder.AppendLine($$"""
+                case {{methodMeta.CommandFullTypeName}} x:
+                    return source.{{methodMeta.Symbol.Name}}(x);
+""");
+                }
+            }
+            else
+            {
+                    builder.AppendLine($$"""
+                case {{methodMeta.CommandFullTypeName}} x:
+                    source.{{methodMeta.Symbol.Name}}(x);
+                    return UniTask.CompletedTask;
+""");
+            }
+        }
+        builder.AppendLine($$"""
+                default:
+                    return UniTask.CompletedTask;
+            }
+        }
+    }
+
 """);
         return true;
     }
