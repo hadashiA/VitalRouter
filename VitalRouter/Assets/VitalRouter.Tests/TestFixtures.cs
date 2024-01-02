@@ -65,6 +65,41 @@ class DInterceptor : ICommandInterceptor
     }
 }
 
+class ThrowInterceptor : ICommandInterceptor
+{
+    public UniTask InvokeAsync<T>(T command, CancellationToken cancellation, Func<T, CancellationToken, UniTask> next)
+        where T : ICommand
+    {
+        throw new TestException();
+    }
+}
+
+class ErrorHandlingInterceptor : ICommandInterceptor
+{
+    public Exception Exception { get; private set; }
+
+    public UniTask InvokeAsync<T>(
+        T command,
+        CancellationToken cancellation,
+        Func<T, CancellationToken, UniTask> next)
+        where T : ICommand
+    {
+        try
+        {
+            return next(command, cancellation);
+        }
+        catch (Exception ex)
+        {
+            Exception = ex;
+            return UniTask.CompletedTask;
+        }
+    }
+}
+
+class TestException : Exception
+{
+}
+
 class CommandA : ICommand
 {
     public int Value { get; }

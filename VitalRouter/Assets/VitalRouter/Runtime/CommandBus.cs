@@ -48,7 +48,7 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
     readonly UniTaskAsyncLock publishLock = new();
     readonly object subscribeLock = new();
 
-    readonly IAsyncCommandSubscriber publishCore;
+    readonly ICommandInterceptor publishCore;
 
     public CommandBus()
     {
@@ -74,7 +74,8 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
 
             if (executingInterceptors.Count > 0)
             {
-                var context = InvokeContext<T>.Rent(executingInterceptors, publishCore);
+                executingInterceptors.Add(publishCore);
+                var context = InvokeContext<T>.Rent(executingInterceptors);
                 try
                 {
                     await context.InvokeRecursiveAsync(command, cancellation);
@@ -86,7 +87,7 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
             }
             else
             {
-                await publishCore.ReceiveAsync(command, cancellation);
+                await publishCore.InvokeAsync(command, cancellation, null!);
             }
         }
         finally
@@ -179,7 +180,7 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
         }
     }
 
-    class PublishCore : IAsyncCommandSubscriber
+    class PublishCore : ICommandInterceptor
     {
         readonly CommandBus source;
 
@@ -188,9 +189,10 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
             this.source = source;
         }
 
-        public UniTask ReceiveAsync<T>(
+        public UniTask InvokeAsync<T>(
             T command,
-            CancellationToken cancellation = default)
+            CancellationToken cancellation,
+            Func<T, CancellationToken, UniTask> _)
             where T : ICommand
         {
             try

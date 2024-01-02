@@ -261,7 +261,7 @@ partial class {{typeMeta.TypeName}}
             .Distinct();
 
         builder.AppendLine($$"""
-    Subscription? __subscription__;
+    Subscription? vitalRouterGeneratedSubscription;
 
     [global::VitalRouter.Preserve]
     public void MapRoutes({{string.Join(", ", parameters)}})
@@ -276,7 +276,7 @@ partial class {{typeMeta.TypeName}}
         if (hasSubscriber)
         {
             builder.AppendLine($$"""
-        var subscriber = new __Subscriber__(this);
+        var subscriber = new VitalRouterGeneratedSubscriber(this);
         subscribable.Subscribe(subscriber);
 """);
         }
@@ -287,7 +287,7 @@ partial class {{typeMeta.TypeName}}
                 .Distinct();
 
             builder.AppendLine($$"""
-        var asyncSubscriber  = new __AsyncSubscriber__({{string.Join(", ", asyncSubscriberArgs)}});
+        var asyncSubscriber  = new VitalRouterGeneratedAsyncSubscriber({{string.Join(", ", asyncSubscriberArgs)}});
         subscribable.Subscribe(asyncSubscriber);
 """);
         }
@@ -301,13 +301,13 @@ partial class {{typeMeta.TypeName}}
         };
 
         builder.AppendLine($$"""
-        __subscription__ = new Subscription(subscribable, {{subscriptionArgs}});
+        vitalRouterGeneratedSubscription = new Subscription(subscribable, {{subscriptionArgs}});
     }
 
     public void UnmapRoutes()
     {
-        __subscription__?.Dispose();
-        __subscription__ = null;
+        vitalRouterGeneratedSubscription?.Dispose();
+        vitalRouterGeneratedSubscription = null;
     }
 
 """);
@@ -328,11 +328,11 @@ partial class {{typeMeta.TypeName}}
         }
 
         builder.AppendLine($$"""
-    class __Subscriber__ : ICommandSubscriber
+    class VitalRouterGeneratedSubscriber : ICommandSubscriber
     {
         readonly {{typeMeta.TypeName}} source;
     
-        public __Subscriber__({{typeMeta.TypeName}} source)
+        public VitalRouterGeneratedSubscriber({{typeMeta.TypeName}} source)
         {
             this.source = source;
         }
@@ -378,14 +378,14 @@ partial class {{typeMeta.TypeName}}
         var constructorParams = new[] { $"{typeMeta.TypeName} source" }.Concat(interceptorParams);
 
          builder.AppendLine($$"""
-    class __AsyncSubscriber__ : IAsyncCommandSubscriber
+    class VitalRouterGeneratedAsyncSubscriber : IAsyncCommandSubscriber
     {
          readonly {{typeMeta.TypeName}} source;
 """);
          if (typeMeta.AllInterceptorMetas.Count > 0)
          {
              builder.AppendLine($"""
-        readonly __AsyncSubscriberCore__ core;
+        readonly VitalRouterGeneratedAsyncSubscriberCore core;
 """);
          }
          if (typeMeta.DefaultInterceptorMetas.Length > 0)
@@ -406,21 +406,21 @@ partial class {{typeMeta.TypeName}}
 
         builder.AppendLine($$"""
 
-        public __AsyncSubscriber__({{string.Join(", ", constructorParams)}})
+        public VitalRouterGeneratedAsyncSubscriber({{string.Join(", ", constructorParams)}})
         {
             this.source = source;
 """);
         if (typeMeta.AllInterceptorMetas.Count > 0)
         {
             builder.AppendLine($$"""
-            this.core = new __AsyncSubscriberCore__(source);
+            this.core = new VitalRouterGeneratedAsyncSubscriberCore(source);
 """);
         }
 
         if (typeMeta.DefaultInterceptorMetas.Length > 0)
         {
             builder.AppendLine($$"""
-            interceptorStackDefault = new ICommandInterceptor[] { {{string.Join(", ", typeMeta.DefaultInterceptorMetas.Select(x => x.VariableName))}} };
+            interceptorStackDefault = new ICommandInterceptor[] { {{string.Join(", ", typeMeta.DefaultInterceptorMetas.Select(x => x.VariableName))}}, core };
 """);
         }
         foreach (var method in typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0))
@@ -428,7 +428,7 @@ partial class {{typeMeta.TypeName}}
             if (method.InterceptorMetas.Length > 0)
             {
                 builder.AppendLine($$"""
-            interceptorStack{{method.CommandTypePrefix}} = new ICommandInterceptor[] { {{string.Join(", ", typeMeta.DefaultInterceptorMetas.Concat(method.InterceptorMetas).Select(x => x.VariableName))}} };
+            interceptorStack{{method.CommandTypePrefix}} = new ICommandInterceptor[] { {{string.Join(", ", typeMeta.DefaultInterceptorMetas.Concat(method.InterceptorMetas).Select(x => x.VariableName))}}, core };
 """);
             }
         }
@@ -449,7 +449,7 @@ partial class {{typeMeta.TypeName}}
                 builder.AppendLine($$"""
                 case {{method.CommandFullTypeName}} x:
                 {
-                    var context = InvokeContext<T>.Rent({{interceptorStackName}}, core);
+                    var context = InvokeContext<T>.Rent({{interceptorStackName}});
                     try
                     {
                         return context.InvokeRecursiveAsync(command, cancellation);
@@ -513,16 +513,19 @@ partial class {{typeMeta.TypeName}}
         }
 
         builder.AppendLine($$"""
-    class __AsyncSubscriberCore__ : IAsyncCommandSubscriber
+    class VitalRouterGeneratedAsyncSubscriberCore : ICommandInterceptor
     {
         readonly {{typeMeta.TypeName}} source;
     
-        public __AsyncSubscriberCore__({{typeMeta.TypeName}} source)
+        public VitalRouterGeneratedAsyncSubscriberCore({{typeMeta.TypeName}} source)
         {
             this.source = source;
         }
     
-        public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+        public UniTask InvokeAsync<T>(
+            T command, 
+            CancellationToken cancellation,
+            Func<T, CancellationToken, UniTask> _) where T : ICommand
         {
             switch (command)
             {

@@ -51,6 +51,14 @@ class TestStopperInterceptor : ICommandInterceptor
     }
 }
 
+class TestThrowSubscriber : ICommandSubscriber
+{
+    public void Receive<T>(T command) where T : ICommand
+    {
+        throw new TestException();
+    }
+}
+
 struct TestCommand1 : ICommand
 {
     public int X;
@@ -122,5 +130,18 @@ public class CommandBusTest
 
         Assert.That(interceptor1.Calls, Is.EqualTo(1));
         Assert.That(subscriber1.Calls, Is.Zero);
+    }
+
+    [Test]
+    public async Task ErrorHandlingInterceptor()
+    {
+        var commandBus = new CommandBus();
+        var errorHandler = new ErrorHandlingInterceptor();
+        commandBus.Use(errorHandler);
+        commandBus.Subscribe(new TestThrowSubscriber());
+
+        await commandBus.PublishAsync(new TestCommand1());
+
+        Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
     }
 }

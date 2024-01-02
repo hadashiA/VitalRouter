@@ -130,6 +130,31 @@ public class GeneratedRoutingTest
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandC>());
         Assert.That(x.Receives.Count, Is.Zero);
     }
+
+    [Test]
+    public async Task ErrorHandler()
+    {
+        var x = new ErrorHandlingInterceptorPresenter();
+        var errorHandler = new ErrorHandlingInterceptor();
+        x.MapRoutes(commandBus, errorHandler);
+
+        await commandBus.PublishAsync(new CommandA(1));
+
+        Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
+    }
+
+    [Test]
+    public async Task ErrorFromInterceptorHandler()
+    {
+        var x = new ErrorHandlingInterceptorPresenter2();
+        var errorHandler = new ErrorHandlingInterceptor();
+        var throwInterceptor = new ThrowInterceptor();
+        x.MapRoutes(commandBus, errorHandler, throwInterceptor);
+
+        await commandBus.PublishAsync(new CommandA(1));
+
+        Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
+    }
 }
 
 [Routing]
@@ -245,6 +270,27 @@ partial class ComplexInterceptorPresenter
     public UniTask On(CommandC cmd)
     {
         Receives.Enqueue(cmd);
+        return default;
+    }
+}
+
+[Routing]
+[Filter(typeof(ErrorHandlingInterceptor))]
+partial class ErrorHandlingInterceptorPresenter
+{
+    public UniTask On(CommandA cmd)
+    {
+        throw new TestException();
+    }
+}
+
+[Routing]
+[Filter(typeof(ErrorHandlingInterceptor))]
+[Filter(typeof(ThrowInterceptor))]
+partial class ErrorHandlingInterceptorPresenter2
+{
+    public UniTask On(CommandA cmd)
+    {
         return default;
     }
 }
