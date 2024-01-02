@@ -13,7 +13,7 @@ public class InvokeContext<T> where T : ICommand
     IReadOnlyList<ICommandInterceptor> interceptors = default!;
     IAsyncCommandSubscriber? asyncInvoker;
     ICommandSubscriber? invoker;
-    int currentInterceptorIndex;
+    int currentInterceptorIndex = -1;
 
     readonly Func<T, CancellationToken, UniTask> nextDelegate;
 

@@ -1,8 +1,24 @@
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
 namespace VitalRouter.SourceGenerator;
 
-public class InterceptorMeta
+class InterceptorMetaEqualityComparer : IEqualityComparer<InterceptorMeta>
+{
+    public static readonly InterceptorMetaEqualityComparer Instance = new();
+
+    public bool Equals(InterceptorMeta x, InterceptorMeta y)
+    {
+        return SymbolEqualityComparer.Default.Equals(x.Symbol, y.Symbol);
+    }
+
+    public int GetHashCode(InterceptorMeta obj)
+    {
+        return SymbolEqualityComparer.Default.GetHashCode(obj.Symbol);
+    }
+}
+
+class InterceptorMeta
 {
     public INamedTypeSymbol Symbol { get; }
     public string FullTypeName { get; }

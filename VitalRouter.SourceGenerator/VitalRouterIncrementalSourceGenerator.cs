@@ -252,7 +252,7 @@ partial class {{typeMeta.TypeName}}
             var arguments = new[] { "this" }
                 .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.VariableName}"));
             builder.AppendLine($$"""
-        __subscription__.Add(subscribable.Subscribe(new __InterceptAsyncSubscriber__({{string.Join(", ", arguments)}}));
+        __subscription__.Add(subscribable.Subscribe(new __InterceptAsyncSubscriber__({{string.Join(", ", arguments)}})));
 """);
         }
 
@@ -264,6 +264,7 @@ partial class {{typeMeta.TypeName}}
         __subscription__?.Dispose();
         __subscription__ = null;
     }
+
 """);
         return true;
     }

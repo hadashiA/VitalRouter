@@ -1,8 +1,24 @@
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace VitalRouter.SourceGenerator;
+
+class RouteMethodMetaEqualityComparer : IEqualityComparer<RouteMethodMeta>
+{
+    public static readonly RouteMethodMetaEqualityComparer Instance = new();
+
+    public bool Equals(RouteMethodMeta x, RouteMethodMeta y)
+    {
+        return SymbolEqualityComparer.Default.Equals(x.Symbol, y.Symbol);
+    }
+
+    public int GetHashCode(RouteMethodMeta obj)
+    {
+        return SymbolEqualityComparer.Default.GetHashCode(obj.Symbol);
+    }
+}
 
 class RouteMethodMeta
 {

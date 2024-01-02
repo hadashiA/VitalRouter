@@ -94,3 +94,13 @@ class CommandC : ICommand
         Value = value;
     }
 }
+
+class CommandD : ICommand
+{
+    public int Value { get; }
+
+    public CommandD(int value)
+    {
+        Value = value;
+    }
+}

@@ -7,7 +7,7 @@ namespace VitalRouter;
 
 public interface ICommandPublisher
 {
-    UniTask PublishAsync<T>(T msg, CancellationToken cancellation = default) where T : ICommand;
+    UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
 }
 
 public interface ICommandSubscribable
@@ -23,8 +23,7 @@ public interface ICommandSubscriber
 
 public interface IAsyncCommandSubscriber
 {
-    UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default)
-        where T : ICommand;
+    UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
 }
 
 public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable, IDisposable
@@ -139,6 +138,15 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
         }
     }
 
+    public void UnsubscribeAll()
+    {
+        lock (subscribeLock)
+        {
+            subscribers.Clear(true);
+            asyncSubscribers.Clear(true);
+        }
+    }
+
     public void Use(ICommandInterceptor interceptor)
     {
         lock (subscribers)
@@ -154,6 +162,7 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
             disposed = true;
             publishLock.Dispose();
             subscribers.Clear(true);
+            asyncSubscribers.Clear(true);
             executingTasks.Clear(true);
             executingSubscribers.Clear(true);
             executingInterceptors.Clear(true);

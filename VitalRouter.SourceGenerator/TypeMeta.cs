@@ -64,12 +64,15 @@ class TypeMeta
     {
         return SyncRouteMethodMetas
             .Concat(AsyncRouteMethodMetas)
-            .Concat(InterceptRouteMethodMetas);
+            .Concat(InterceptRouteMethodMetas)
+            .Distinct(RouteMethodMetaEqualityComparer.Instance);
     }
 
     public IEnumerable<InterceptorMeta> AllInterceptorMetas()
     {
-        return DefaultInterceptorMetas.Concat(InterceptRouteMethodMetas.SelectMany(x => x.InterceptorMetas));
+        return DefaultInterceptorMetas
+            .Concat(InterceptRouteMethodMetas.SelectMany(x => x.InterceptorMetas))
+            .Distinct(InterceptorMetaEqualityComparer.Instance);
     }
 
     void CollectMembers()
