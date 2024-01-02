@@ -243,6 +243,7 @@ partial class {{typeMeta.TypeName}}
         {
             builder.AppendLine($$"""
         var subscriber = new __Subscriber__(this);
+        subscribable.Subscribe(subscriber);
 """);
         }
         if (hasAsyncSubscriber)
@@ -252,6 +253,7 @@ partial class {{typeMeta.TypeName}}
 
             builder.AppendLine($$"""
         var asyncSubscriber  = new __AsyncSubscriber__({{string.Join(", ", asyncSubscriberArgs)}});
+        subscribable.Subscribe(asyncSubscriber);
 """);
         }
 
