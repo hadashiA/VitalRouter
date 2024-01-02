@@ -46,7 +46,7 @@ class CInterceptor : ICommandInterceptor
         where T : ICommand
     {
         Receives.Enqueue(command);
-        return default;
+        return next(command, cancellation);
     }
 }
 
@@ -61,7 +61,7 @@ class DInterceptor : ICommandInterceptor
         where T : ICommand
     {
         Receives.Enqueue(command);
-        return default;
+        return next(command, cancellation);
     }
 }
 

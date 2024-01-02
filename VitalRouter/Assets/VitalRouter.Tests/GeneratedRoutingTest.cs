@@ -71,17 +71,63 @@ public class GeneratedRoutingTest
     {
         var x = new PerMethodInterceptorPresenter();
         var interceptorA = new AInterceptor();
-        x.MapRoutes(commandBus, interceptorA);
+        var interceptorB = new BInterceptor();
+        x.MapRoutes(commandBus, interceptorA, interceptorB);
 
-        await commandBus.PublishAsync(new CommandA(111));
-        await commandBus.PublishAsync(new CommandB(222));
+        await commandBus.PublishAsync(new CommandA(1));
+        await commandBus.PublishAsync(new CommandB(2));
+        await commandBus.PublishAsync(new CommandC(3));
+        await commandBus.PublishAsync(new CommandD(4));
 
         Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandA>());
-        Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandB>());
         Assert.That(interceptorA.Receives.Count, Is.Zero);
+
+        Assert.That(interceptorB.Receives.Dequeue(), Is.InstanceOf<CommandB>());
+        Assert.That(interceptorB.Receives.Count, Is.Zero);
 
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandB>());
+        Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandC>());
+        Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandD>());
+        Assert.That(x.Receives.Count, Is.Zero);
+    }
+
+    [Test]
+    public async Task DefaultAndPerMethodInterceptors()
+    {
+        var x = new ComplexInterceptorPresenter();
+        var interceptorA = new AInterceptor();
+        var interceptorB = new BInterceptor();
+        var interceptorC = new CInterceptor();
+        var interceptorD = new DInterceptor();
+        x.MapRoutes(commandBus, interceptorA, interceptorB, interceptorC, interceptorD);
+
+        await commandBus.PublishAsync(new CommandA(1));
+        await commandBus.PublishAsync(new CommandB(2));
+        await commandBus.PublishAsync(new CommandC(3));
+        await commandBus.PublishAsync(new CommandD(4));
+
+        Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+        Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandB>());
+        Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandC>());
+        Assert.That(interceptorA.Receives.Count, Is.Zero);
+
+        Assert.That(interceptorB.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+        Assert.That(interceptorB.Receives.Dequeue(), Is.InstanceOf<CommandB>());
+        Assert.That(interceptorB.Receives.Dequeue(), Is.InstanceOf<CommandC>());
+        Assert.That(interceptorB.Receives.Count, Is.Zero);
+
+        Assert.That(interceptorC.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+        Assert.That(interceptorC.Receives.Dequeue(), Is.InstanceOf<CommandB>());
+        Assert.That(interceptorC.Receives.Count, Is.Zero);
+
+        Assert.That(interceptorD.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+        Assert.That(interceptorD.Receives.Dequeue(), Is.InstanceOf<CommandB>());
+        Assert.That(interceptorD.Receives.Count, Is.Zero);
+
+        Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+        Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandB>());
+        Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandC>());
         Assert.That(x.Receives.Count, Is.Zero);
     }
 }
@@ -156,7 +202,7 @@ partial class PerMethodInterceptorPresenter
         return default;
     }
 
-    [Filter(typeof(AInterceptor))]
+    [Filter(typeof(BInterceptor))]
     public void On(CommandB cmd)
     {
         Receives.Enqueue(cmd);
@@ -171,6 +217,35 @@ partial class PerMethodInterceptorPresenter
     public void On(CommandD cmd)
     {
         Receives.Enqueue(cmd);
+    }
+}
+
+[Routing]
+[Filter(typeof(AInterceptor))]
+[Filter(typeof(BInterceptor))]
+partial class ComplexInterceptorPresenter
+{
+    public Queue<ICommand> Receives { get; } = new();
+
+    [Filter(typeof(CInterceptor))]
+    [Filter(typeof(DInterceptor))]
+    public UniTask On(CommandA cmd)
+    {
+        Receives.Enqueue(cmd);
+        return default;
+    }
+
+    [Filter(typeof(CInterceptor))]
+    [Filter(typeof(DInterceptor))]
+    public void On(CommandB cmd)
+    {
+        Receives.Enqueue(cmd);
+    }
+
+    public UniTask On(CommandC cmd)
+    {
+        Receives.Enqueue(cmd);
+        return default;
     }
 }
 

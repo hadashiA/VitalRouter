@@ -116,15 +116,48 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
             // check interceptor type
             foreach (var interceptorMeta in typeMeta.AllInterceptorMetas)
             {
-                if (!interceptorMeta.Symbol.Interfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.InterceptorInterface)))
+                if (!interceptorMeta.TypeSymbol.Interfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.InterceptorInterface)))
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
                         DiagnosticDescriptors.InvalidInterceptorType,
-                        interceptorMeta.Symbol.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
-                        interceptorMeta.Symbol.Name));
+                        interceptorMeta.AttributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? typeMeta.Syntax.GetLocation(),
+                        interceptorMeta.TypeSymbol.Name));
                     error = true;
                 }
             }
+
+            // check redundant
+            foreach (var interceptorMeta in typeMeta.DefaultInterceptorMetas)
+            {
+                var redundant = typeMeta.AllInterceptorMetas
+                    .Where(x => interceptorMeta != x &&
+                                SymbolEqualityComparer.Default.Equals(interceptorMeta.TypeSymbol, x.TypeSymbol));
+                foreach (var x in redundant)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        DiagnosticDescriptors.RedundantInterceptorType,
+                        x.AttributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? typeMeta.Syntax.GetLocation(),
+                        x.TypeSymbol.Name));
+                    error = true;
+                }
+            }
+            foreach (var method in typeMeta.RouteMethodMetas)
+            {
+                foreach (var interceptorMeta in method.InterceptorMetas)
+                {
+                    var redundant = typeMeta.DefaultInterceptorMetas
+                        .Where(x => SymbolEqualityComparer.Default.Equals(interceptorMeta.TypeSymbol, x.TypeSymbol));
+                    foreach (var x in redundant)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            DiagnosticDescriptors.RedundantInterceptorType,
+                            x.AttributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? typeMeta.Syntax.GetLocation(),
+                            x.TypeSymbol.Name));
+                        error = true;
+                    }
+                }
+            }
+
 
             if (error)
             {
@@ -224,7 +257,8 @@ partial class {{typeMeta.TypeName}}
     static bool TryEmitMappingMethod(TypeMeta typeMeta, StringBuilder builder)
     {
         var parameters = new[] { "ICommandSubscribable subscribable" }
-            .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}"));
+            .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}"))
+            .Distinct();
 
         builder.AppendLine($$"""
     Subscription? __subscription__;
@@ -249,7 +283,8 @@ partial class {{typeMeta.TypeName}}
         if (hasAsyncSubscriber)
         {
             var asyncSubscriberArgs = new[] { "this" }
-                .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.VariableName}"));
+                .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.VariableName}"))
+                .Distinct();
 
             builder.AppendLine($$"""
         var asyncSubscriber  = new __AsyncSubscriber__({{string.Join(", ", asyncSubscriberArgs)}});
@@ -337,7 +372,9 @@ partial class {{typeMeta.TypeName}}
             return true;
         }
 
-        var interceptorParams = typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}");
+        var interceptorParams = typeMeta.AllInterceptorMetas
+            .Select(x => $"{x.FullTypeName} {x.VariableName}")
+            .Distinct();
         var constructorParams = new[] { $"{typeMeta.TypeName} source" }.Concat(interceptorParams);
 
          builder.AppendLine($$"""

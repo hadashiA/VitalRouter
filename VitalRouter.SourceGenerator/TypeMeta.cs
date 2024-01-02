@@ -41,14 +41,14 @@ class TypeMeta
         DefaultInterceptorMetas = symbol.GetAttributes()
             .Where(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, references.FilterAttribute) &&
                         x.ConstructorArguments is [{ Kind: TypedConstantKind.Type }, ..])
-            .Select(x => new InterceptorMeta((INamedTypeSymbol)x.ConstructorArguments[0].Value!))
+            .Select(x => new InterceptorMeta(x, (INamedTypeSymbol)x.ConstructorArguments[0].Value!))
             .ToArray();
 
         CollectMembers();
 
         AllInterceptorMetas = DefaultInterceptorMetas
             .Concat(RouteMethodMetas.SelectMany(x => x.InterceptorMetas))
-            .Distinct(InterceptorMetaEqualityComparer.Instance)
+            // .Distinct(InterceptorMetaEqualityComparer.Instance)
             .ToArray();
 
     }
@@ -82,10 +82,7 @@ class TypeMeta
                 // sync
                 if (method is { ReturnsVoid: true, Parameters.Length: 1 })
                 {
-                    if (!routeMethodMetas.Any(x => SymbolEqualityComparer.Default.Equals(method, x.Symbol)))
-                    {
-                        routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
-                    }
+                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
                 }
                 // async
                 else if (SymbolEqualityComparer.Default.Equals(method.ReturnType, references.UniTaskType) ||
@@ -93,10 +90,7 @@ class TypeMeta
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.TaskType) ||
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.ValueTaskType))
                 {
-                    if (!routeMethodMetas.Any(x => SymbolEqualityComparer.Default.Equals(method, x.Symbol)))
-                    {
-                        routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
-                    }
+                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
                 }
                 // not routable
                 else

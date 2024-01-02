@@ -51,7 +51,16 @@ static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor InvalidInterceptorType = new(
         id: "VITALROUTER006",
         title: "The argument type of the Filter attribute must implement `ICommandInterceptor`",
-        messageFormat: "The argument '{0}' of the [Filter] attribute of VitalRouter must implement `ICommandInterceptor`",
+        messageFormat: "The argument 'typeof({0})' of the [Filter] attribute of VitalRouter must implement `ICommandInterceptor`",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+
+    public static readonly DiagnosticDescriptor RedundantInterceptorType = new(
+        id: "VITALROUTER006",
+        title: "The argument type of the Filter attribute must be unique for each routing target",
+        messageFormat: "The argument 'typeof({0})' of the [Filter] attribute must be unique for each routing target",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);

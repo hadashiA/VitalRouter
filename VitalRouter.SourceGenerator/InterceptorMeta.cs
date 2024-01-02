@@ -9,25 +9,27 @@ class InterceptorMetaEqualityComparer : IEqualityComparer<InterceptorMeta>
 
     public bool Equals(InterceptorMeta x, InterceptorMeta y)
     {
-        return SymbolEqualityComparer.Default.Equals(x.Symbol, y.Symbol);
+        return SymbolEqualityComparer.Default.Equals(x.TypeSymbol, y.TypeSymbol);
     }
 
     public int GetHashCode(InterceptorMeta obj)
     {
-        return SymbolEqualityComparer.Default.GetHashCode(obj.Symbol);
+        return SymbolEqualityComparer.Default.GetHashCode(obj.TypeSymbol);
     }
 }
 
 class InterceptorMeta
 {
-    public INamedTypeSymbol Symbol { get; }
+    public AttributeData AttributeData { get; }
+    public INamedTypeSymbol TypeSymbol { get; }
     public string FullTypeName { get; }
     public string VariableName { get; }
 
-    public InterceptorMeta(INamedTypeSymbol symbol)
+    public InterceptorMeta(AttributeData attributeData, INamedTypeSymbol typeSymbol)
     {
-        Symbol = symbol;
-        FullTypeName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        TypeSymbol = typeSymbol;
+        AttributeData = attributeData;
+        FullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         VariableName = FullTypeName
             .Replace("global::", "")
             .Replace(".", "_")

@@ -45,7 +45,7 @@ class RouteMethodMeta
         InterceptorMetas = symbol.GetAttributes()
             .Where(x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, references.FilterAttribute) &&
                         x.ConstructorArguments is [{ Kind: TypedConstantKind.Type }, ..])
-            .Select(x => new InterceptorMeta((INamedTypeSymbol)x.ConstructorArguments[0].Value!))
+            .Select(x => new InterceptorMeta(x, (INamedTypeSymbol)x.ConstructorArguments[0].Value!))
             .ToArray();
 
         CommandFullTypeName = commandTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
