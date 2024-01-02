@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace VitalRouter.Tests;
 
 class AInterceptor : ICommandInterceptor
 {
-    public int Calls { get; private set; }
+    public readonly Queue<ICommand> Receives = new();
 
     public UniTask InvokeAsync<T>(
         T command,
@@ -14,14 +15,14 @@ class AInterceptor : ICommandInterceptor
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        Calls++;
+        Receives.Enqueue(command);
         return next(command, cancellation);
     }
 }
 
-public class BInterceptor : ICommandInterceptor
+class BInterceptor : ICommandInterceptor
 {
-    public int Calls { get; private set; }
+    public readonly Queue<ICommand> Receives = new();
 
     public UniTask InvokeAsync<T>(
         T command,
@@ -29,73 +30,67 @@ public class BInterceptor : ICommandInterceptor
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        Calls++;
+        Receives.Enqueue(command);
         return next(command, cancellation);
     }
 }
 
-public class CInterceptor : ICommandInterceptor
+class CInterceptor : ICommandInterceptor
 {
+    public readonly Queue<ICommand> Receives = new();
+
     public UniTask InvokeAsync<T>(
         T command,
         CancellationToken cancellation,
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        Receives.Enqueue(command);
+        return default;
     }
 }
 
-public class DInterceptor : ICommandInterceptor
+class DInterceptor : ICommandInterceptor
 {
+    public readonly Queue<ICommand> Receives = new();
+
     public UniTask InvokeAsync<T>(
         T command,
         CancellationToken cancellation,
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        Receives.Enqueue(command);
+        return default;
     }
 }
 
 class CommandA : ICommand
 {
+    public int Value { get; }
+
+    public CommandA(int value)
+    {
+        Value = value;
+    }
 }
 
 class CommandB : ICommand
 {
+    public int Value { get; }
+
+    public CommandB(int value)
+    {
+        Value = value;
+    }
 }
 
 class CommandC : ICommand
 {
-}
+    public int Value { get; }
 
-[Routing]
-partial class SimpleSyncPresenter
-{
-    public void On(CommandA cmd)
+    public CommandC(int value)
     {
-    }
-}
-
-[Routing]
-partial class SimpleAsyncPresenter
-{
-    public UniTask On(CommandA cmd)
-    {
-        return default;
-    }
-}
-
-[Routing]
-partial class SimpleCombinedPresenter
-{
-    public void On(CommandA cmd)
-    {
-    }
-
-    public UniTask On(CommandB cmd)
-    {
-        return default;
+        Value = value;
     }
 }

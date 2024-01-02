@@ -92,13 +92,10 @@ class TypeMeta
                 if (method is { ReturnsVoid: true, Parameters.Length: 1 })
                 {
                     var methodMeta = new RouteMethodMeta(method, commandParam.Type, references, i++);
+                    syncRouteMethodMetas.Add(methodMeta);
                     if (DefaultInterceptorMetas.Length > 0 || methodMeta.InterceptorMetas.Length > 0)
                     {
                         interceptRouteMethodMetas.Add(methodMeta);
-                    }
-                    else
-                    {
-                        syncRouteMethodMetas.Add(methodMeta);
                     }
                 }
                 // async
@@ -108,13 +105,10 @@ class TypeMeta
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.ValueTaskType))
                 {
                     var methodMeta = new RouteMethodMeta(method, commandParam.Type, references, i++);
+                    asyncRouteMethodMetas.Add(methodMeta);
                     if (DefaultInterceptorMetas.Length > 0 || methodMeta.InterceptorMetas.Length > 0)
                     {
                         interceptRouteMethodMetas.Add(methodMeta);
-                    }
-                    else
-                    {
-                        asyncRouteMethodMetas.Add(methodMeta);
                     }
                 }
                 // not routable

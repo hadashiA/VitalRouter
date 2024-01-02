@@ -60,7 +60,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                         x.Attributes.First(),
                         references);
 
-                    if (TryEmit(typeMeta, stringBuilder, sourceProductionContext))
+                    if (TryEmit(typeMeta, references, stringBuilder, sourceProductionContext))
                     {
                         var fullType = typeMeta.FullTypeName
                             .Replace("global::", "")
@@ -74,7 +74,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
             });
     }
 
-    static bool TryEmit(TypeMeta typeMeta, StringBuilder builder, in SourceProductionContext context)
+    static bool TryEmit(TypeMeta typeMeta, ReferenceSymbols references, StringBuilder builder, in SourceProductionContext context)
     {
         try
         {
@@ -109,6 +109,19 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                         DiagnosticDescriptors.DuplicateRouteMethodDefined,
                         methodMeta.Symbol.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
                         methodMeta.Symbol.Name));
+                    error = true;
+                }
+            }
+
+            // check interceptor type
+            foreach (var interceptorMeta in typeMeta.AllInterceptorMetas())
+            {
+                if (!interceptorMeta.Symbol.Interfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.InterceptorInterface)))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        DiagnosticDescriptors.InvalidInterceptorType,
+                        interceptorMeta.Symbol.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
+                        interceptorMeta.Symbol.Name));
                     error = true;
                 }
             }
@@ -214,20 +227,24 @@ partial class {{typeMeta.TypeName}}
             .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.FullTypeName} {x.VariableName}"));
 
         builder.AppendLine($$"""
+    CompositeSubscription? __subscription__;
+
     [global::VitalRouter.Preserve]
     public void MapRoutes({{string.Join(", ", parameters)}})
     {
+        UnmapRoutes();
+        __subscription__ = new CompositeSubscription();
 """);
-        if (typeMeta.SyncRouteMethodMetas.Count > 0)
+        if (typeMeta.DefaultInterceptorMetas.Length <= 0 && typeMeta.SyncRouteMethodMetas.Any(x => x.InterceptorMetas.Length <= 0))
         {
             builder.AppendLine($$"""
-        subscribable.Subscribe(new __Subscriber__(this));
+        __subscription__.Add(subscribable.Subscribe(new __Subscriber__(this)));
 """);
         }
-        if (typeMeta.AsyncRouteMethodMetas.Count > 0)
+        if (typeMeta.DefaultInterceptorMetas.Length <= 0 && typeMeta.AsyncRouteMethodMetas.Any(x => x.InterceptorMetas.Length <= 0))
         {
             builder.AppendLine($$"""
-        subscribable.Subscribe(new __AsyncSubscriber__(this));
+        __subscription__.Add(subscribable.Subscribe(new __AsyncSubscriber__(this)));
 """);
         }
         if (typeMeta.InterceptRouteMethodMetas.Count > 0)
@@ -235,12 +252,18 @@ partial class {{typeMeta.TypeName}}
             var arguments = new[] { "this" }
                 .Concat(typeMeta.AllInterceptorMetas().Select(x => $"{x.VariableName}"));
             builder.AppendLine($$"""
-        subscribable.Subscribe(new __InterceptSubscriber__({{string.Join(", ", arguments)}}));
+        __subscription__.Add(subscribable.Subscribe(new __InterceptAsyncSubscriber__({{string.Join(", ", arguments)}}));
 """);
         }
+
         builder.AppendLine($$"""
     }
 
+    public void UnmapRoutes()
+    {
+        __subscription__?.Dispose();
+        __subscription__ = null;
+    }
 """);
         return true;
     }
@@ -255,9 +278,9 @@ partial class {{typeMeta.TypeName}}
         builder.AppendLine($$"""
     class __AsyncSubscriber__ : IAsyncCommandSubscriber
     {
-        readonly {{typeMeta.FullTypeName}} source;
+        readonly {{typeMeta.TypeName}} source;
     
-        public __AsyncSubscriber__({{typeMeta.FullTypeName}} source)
+        public __AsyncSubscriber__({{typeMeta.TypeName}} source)
         {
             this.source = source;
         }
@@ -305,9 +328,9 @@ partial class {{typeMeta.TypeName}}
         builder.AppendLine($$"""
     class __Subscriber__ : ICommandSubscriber
     {
-        readonly {{typeMeta.FullTypeName}} source;
+        readonly {{typeMeta.TypeName}} source;
     
-        public __Subscriber__({{typeMeta.FullTypeName}} source)
+        public __Subscriber__({{typeMeta.TypeName}} source)
         {
             this.source = source;
         }
@@ -344,40 +367,56 @@ partial class {{typeMeta.TypeName}}
         }
 
         var interceptorParams = typeMeta.AllInterceptorMetas().Select(x => $"{x.FullTypeName} {x.VariableName}");
-        var constructorParams = new[] { $"{typeMeta.FullTypeName} source" }
+        var constructorParams = new[] { $"{typeMeta.TypeName} source" }
             .Concat(interceptorParams);
 
          builder.AppendLine($$"""
-    class __InterceptAsyncSubscriber__() : IAsyncCommandSubscriber
+    class __InterceptAsyncSubscriber__ : IAsyncCommandSubscriber
     {
 """);
          if (typeMeta.InterceptRouteMethodMetas.Any(x => !x.IsAsync))
          {
              builder.AppendLine($"""
-         readonly __Subscriber__ subscriberCore;
+        readonly __Subscriber__ syncSource;
 """);
          }
          if (typeMeta.InterceptRouteMethodMetas.Any(x => x.IsAsync))
          {
              builder.AppendLine($"""
-         readonly __AsyncSubscriber__ asyncSubscriberCore;
+        readonly __AsyncSubscriber__ asyncSource;
 """);
+         }
+         if (typeMeta.DefaultInterceptorMetas.Length > 0)
+         {
+             builder.AppendLine($$"""
+         readonly ICommandInterceptor[] interceptorStackDefault;
+""");
+         }
+         foreach (var method in typeMeta.InterceptRouteMethodMetas)
+         {
+             if (method.InterceptorMetas.Length > 0)
+             {
+                 builder.AppendLine($$"""
+         readonly ICommandInterceptor[] interceptorStack{{method.CommandTypePrefix}};
+""");
+             }
          }
 
 builder.AppendLine($$"""
+
         public __InterceptAsyncSubscriber__({{string.Join(", ", constructorParams)}})
         {
 """);
         if (typeMeta.InterceptRouteMethodMetas.Any(x => !x.IsAsync))
         {
             builder.AppendLine($$"""
-            subscriber = new __Subscriber__(source);
+            syncSource = new __Subscriber__(source);
 """);
         }
         if (typeMeta.InterceptRouteMethodMetas.Any(x => x.IsAsync))
         {
             builder.AppendLine($$"""
-            asyncSubscriber = new __AsyncSubscriber__(source);
+            asyncSource = new __AsyncSubscriber__(source);
 """);
         }
 
@@ -396,30 +435,23 @@ builder.AppendLine($$"""
 """);
             }
         }
+
         builder.AppendLine($$"""
         }
         
-        public UniTask InvokeAsync<T>(
-            T command,
-            CancellationToken cancellation,
-            Func<T, CancellationToken, UniTask> next)
-            where T : ICommand
+        public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation) where T : ICommand
         {
             switch (command)
             {
 """);
-
         foreach (var methodMeta in typeMeta.InterceptRouteMethodMetas)
         {
+            var invokerName = methodMeta.IsAsync ? "asyncSource" : "syncSource";
+            var interceptorStackName = methodMeta.InterceptorMetas.Length > 0 ? $"interceptorStack{methodMeta.CommandTypePrefix}" : "interceptorStackDefault";
             builder.AppendLine($$"""
-            case {{methodMeta.CommandFullTypeName}} x:
-""");
-            if (methodMeta.InterceptorMetas.Length > 0)
-            {
-                var invokerName = methodMeta.IsAsync ? "asyncSubscriber" : "subscriber";
-                builder.AppendLine($$"""
+                case {{methodMeta.CommandFullTypeName}} x:
                 {
-                    var context = PublishContext<T>.Rent(interceptorStack{{methodMeta.CommandTypePrefix}}, {{invokerName}});
+                    var context = InvokeContext<T>.Rent({{interceptorStackName}}, {{invokerName}});
                     try
                     {
                         return context.InvokeRecursiveAsync(command, cancellation);
@@ -430,30 +462,13 @@ builder.AppendLine($$"""
                     }
                 }
 """);
-            }
-            else
-            {
-                builder.AppendLine($$"""
-                {
-                    var context = PublishContext<T>.Rent(interceptorStackDefault, asyncSubscriber);
-                    try
-                    {
-                        return context.InvokeRecursiveAsync(command, cancellation);
-                    }
-                    finally
-                    {
-                        context.Return();
-                    }
-                }
-""");
-            }
         }
         builder.AppendLine($$"""
-            default:
-                return UniTask.CompletedTask;
+                default:
+                    return UniTask.CompletedTask;
+            }
         }
     }
-
 """);
         return true;
     }

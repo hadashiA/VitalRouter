@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace VitalRouter;
 
@@ -26,5 +27,31 @@ public struct Subscription : IDisposable
             commandBus.Unsubscribe(subscriber);
         if (asyncSubscriber != null)
             commandBus.Unsubscribe(asyncSubscriber);
+    }
+}
+
+public class CompositeSubscription : IDisposable
+{
+    readonly CommandBus commandBus;
+    readonly List<Subscription> subscriptions = new();
+
+    public void Add(in Subscription x)
+    {
+        lock (subscriptions)
+        {
+            subscriptions.Add(x);
+        }
+    }
+
+    public void Dispose()
+    {
+        lock (subscriptions)
+        {
+            foreach (var subscription in subscriptions)
+            {
+                subscription.Dispose();
+            }
+            subscriptions.Clear();
+        }
     }
 }

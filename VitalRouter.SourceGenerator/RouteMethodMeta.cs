@@ -35,6 +35,7 @@ class RouteMethodMeta
         CommandFullTypeName = commandTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         CommandTypePrefix = CommandFullTypeName
             .Replace("global::", "")
+            .Replace(".", "")
             .Replace("<", "_")
             .Replace(">", "_");
         commandTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);

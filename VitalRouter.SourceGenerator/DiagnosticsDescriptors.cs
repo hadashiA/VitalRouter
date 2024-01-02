@@ -41,9 +41,17 @@ static class DiagnosticDescriptors
         isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor DuplicateRouteMethodDefined = new(
-        id: "VITALROUTER004",
+        id: "VITALROUTER005",
         title: "The VitalRouter routing target must not define more than one routing of the same command type",
         messageFormat: "The public method '{0}' of the [Routing] class of VitalRouter duplicates other public methods in the command type it takes as an argument",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor InvalidInterceptorType = new(
+        id: "VITALROUTER006",
+        title: "The argument type of the Filter attribute must implement `ICommandInterceptor`",
+        messageFormat: "The argument '{0}' of the [Filter] attribute of VitalRouter must implement `ICommandInterceptor`",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
