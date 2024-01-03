@@ -11,11 +11,13 @@ namespace VitalRouter.VContainer;
 
 class MapRoutesInfo
 {
+    public Type Type { get; }
     public MethodInfo MapRoutesMethod { get; }
     public ParameterInfo[] ParameterInfos { get; }
 
     public MapRoutesInfo(Type type)
     {
+        Type = type;
         MapRoutesMethod = type.GetMethod("MapRoutes", BindingFlags.Instance | BindingFlags.Public)!;
         ParameterInfos = MapRoutesMethod.GetParameters();
     }
@@ -23,11 +25,13 @@ class MapRoutesInfo
 
 public partial class RoutingBuilder
 {
-    public IReadOnlyList<Type> RoutingTypes => routingTypes;
-    public IReadOnlyList<Type> GlobalInterceptorTypes => globalInterceptorTypes;
+    static readonly ConcurrentDictionary<Type, MapRoutesInfo> MapRoutesInfoCache = new();
+
+    internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
+    internal IReadOnlyList<Type> GlobalInterceptorTypes => globalInterceptorTypes;
 
     readonly IContainerBuilder containerBuilder;
-    readonly List<Type> routingTypes = new();
+    readonly List<MapRoutesInfo> mapRoutesInfos = new();
     readonly List<Type> globalInterceptorTypes = new();
 
     public RoutingBuilder(IContainerBuilder containerBuilder)
@@ -50,32 +54,35 @@ public partial class RoutingBuilder
         {
             containerBuilder.Register<T>(Lifetime.Singleton);
         }
-        routingTypes.Add(typeof(T));
+
+        var info = MapRoutesInfoCache.GetOrAdd(typeof(T), key => new MapRoutesInfo(key));
+        mapRoutesInfos.Add(info);
     }
 
     public void Map<T>(T instance) where T : class
     {
         containerBuilder.RegisterInstance(instance);
-        routingTypes.Add(instance.GetType());
+        var info = MapRoutesInfoCache.GetOrAdd(instance.GetType(), key => new MapRoutesInfo(key));
+        mapRoutesInfos.Add(info);
     }
 
     public void MapComponentInHierarchy<T>() where T : UnityEngine.Component
     {
         containerBuilder.RegisterComponentInHierarchy<T>();
-        routingTypes.Add(typeof(T));
+        var info = MapRoutesInfoCache.GetOrAdd(typeof(T), key => new MapRoutesInfo(key));
+        mapRoutesInfos.Add(info);
     }
 
     public void MapComponentInNewPrefab<T>(T prefab) where T : UnityEngine.Component
     {
         containerBuilder.RegisterComponentInNewPrefab(prefab, Lifetime.Singleton);
-        routingTypes.Add(typeof(T));
+        var info = MapRoutesInfoCache.GetOrAdd(typeof(T), key => new MapRoutesInfo(key));
+        mapRoutesInfos.Add(info);
     }
 }
 
 public static class VContainerExtensions
 {
-    static readonly ConcurrentDictionary<Type, MapRoutesInfo> MapRoutesInfoCache = new();
-
     public static void RegisterVitalRouter(this IContainerBuilder builder, Action<RoutingBuilder> configure)
     {
         var routing = new RoutingBuilder(builder);
@@ -84,6 +91,19 @@ public static class VContainerExtensions
         foreach (var interceptorType in routing.GlobalInterceptorTypes)
         {
             builder.Register(interceptorType, Lifetime.Singleton);
+        }
+
+        for (var i = 0; i < routing.MapRoutesInfos.Count; i++)
+        {
+            var info = routing.MapRoutesInfos[i];
+            for (var paramIndex = 1; paramIndex < info.ParameterInfos.Length; paramIndex++)
+            {
+                var interceptorType = info.ParameterInfos[paramIndex].ParameterType;
+                if (!builder.Exists(interceptorType))
+                {
+                    builder.Register(interceptorType, Lifetime.Singleton);
+                }
+            }
         }
 
         builder.Register(container =>
@@ -101,22 +121,21 @@ public static class VContainerExtensions
         builder.RegisterBuildCallback(container =>
         {
             var commandBus = container.Resolve<CommandBus>();
-            for (var i = 0; i < routing.RoutingTypes.Count; i++)
+            for (var i = 0; i < routing.MapRoutesInfos.Count; i++)
             {
-                var type = routing.RoutingTypes[i];
-                var instance = container.Resolve(type);
+                var info = routing.MapRoutesInfos[i];
+                var instance = container.Resolve(info.Type);
 
                 // TODO: more optimize
-                var mapRoutesInfo = MapRoutesInfoCache.GetOrAdd(type, key => new MapRoutesInfo(key));
-                var parameters = CappedArrayPool<object>.Shared8Limit.Rent(mapRoutesInfo.ParameterInfos.Length);
+                var parameters = CappedArrayPool<object>.Shared8Limit.Rent(info.ParameterInfos.Length);
                 try
                 {
                     parameters[0] = commandBus;
                     for (var paramIndex = 1; paramIndex < parameters.Length; paramIndex++)
                     {
-                        parameters[paramIndex] = container.CreateInstance(mapRoutesInfo.ParameterInfos[paramIndex].ParameterType);
+                        parameters[paramIndex] = container.Resolve(info.ParameterInfos[paramIndex].ParameterType);
                     }
-                    mapRoutesInfo.MapRoutesMethod.Invoke(instance, parameters);
+                    info.MapRoutesMethod.Invoke(instance, parameters);
                 }
                 finally
                 {
