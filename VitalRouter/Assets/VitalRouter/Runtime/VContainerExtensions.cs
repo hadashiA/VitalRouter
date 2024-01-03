@@ -11,6 +11,10 @@ namespace VitalRouter.VContainer;
 
 class MapRoutesInfo
 {
+    static readonly ConcurrentDictionary<Type, MapRoutesInfo> Cache = new();
+
+    public static MapRoutesInfo Analyze(Type type) => Cache.GetOrAdd(type, key => new MapRoutesInfo(key));
+
     public Type Type { get; }
     public MethodInfo MapRoutesMethod { get; }
     public ParameterInfo[] ParameterInfos { get; }
@@ -25,8 +29,6 @@ class MapRoutesInfo
 
 public partial class RoutingBuilder
 {
-    static readonly ConcurrentDictionary<Type, MapRoutesInfo> MapRoutesInfoCache = new();
-
     internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
     internal IReadOnlyList<Type> GlobalInterceptorTypes => globalInterceptorTypes;
 
@@ -54,30 +56,25 @@ public partial class RoutingBuilder
         {
             containerBuilder.Register<T>(Lifetime.Singleton);
         }
-
-        var info = MapRoutesInfoCache.GetOrAdd(typeof(T), key => new MapRoutesInfo(key));
-        mapRoutesInfos.Add(info);
+        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 
     public void Map<T>(T instance) where T : class
     {
         containerBuilder.RegisterInstance(instance);
-        var info = MapRoutesInfoCache.GetOrAdd(instance.GetType(), key => new MapRoutesInfo(key));
-        mapRoutesInfos.Add(info);
+        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 
     public void MapComponentInHierarchy<T>() where T : UnityEngine.Component
     {
         containerBuilder.RegisterComponentInHierarchy<T>();
-        var info = MapRoutesInfoCache.GetOrAdd(typeof(T), key => new MapRoutesInfo(key));
-        mapRoutesInfos.Add(info);
+        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 
     public void MapComponentInNewPrefab<T>(T prefab) where T : UnityEngine.Component
     {
         containerBuilder.RegisterComponentInNewPrefab(prefab, Lifetime.Singleton);
-        var info = MapRoutesInfoCache.GetOrAdd(typeof(T), key => new MapRoutesInfo(key));
-        mapRoutesInfos.Add(info);
+        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 }
 
