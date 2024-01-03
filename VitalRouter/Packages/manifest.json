@@ -5,7 +5,7 @@
     "com.unity.ide.rider": "3.0.27",
     "com.unity.test-framework": "1.3.9",
     "com.unity.ugui": "2.0.0",
-    "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.13.2",
+    "jp.hadashikick.vcontainer": "file:../../../VContainer/VContainer/Assets/VContainer",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.audio": "1.0.0",
     "com.unity.modules.director": "1.0.0",

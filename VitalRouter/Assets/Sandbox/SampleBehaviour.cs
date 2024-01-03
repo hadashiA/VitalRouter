@@ -1,6 +1,5 @@
 using UnityEngine;
-
-namespace VitalRouter;
+using VitalRouter;
 
 public class SampleBehaviour : MonoBehaviour
 {

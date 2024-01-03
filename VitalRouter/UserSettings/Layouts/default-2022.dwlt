@@ -97,7 +97,7 @@ MonoBehaviour:
   m_MinSize: {x: 310, y: 221}
   m_MaxSize: {x: 4000, y: 4021}
   vertical: 0
-  controlID: 111
+  controlID: 118
 --- !u!114 &5
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -117,8 +117,8 @@ MonoBehaviour:
     y: 0
     width: 299.5
     height: 431
-  m_MinSize: {x: 202, y: 221}
-  m_MaxSize: {x: 4002, y: 4021}
+  m_MinSize: {x: 200, y: 200}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 20}
   m_Panes:
   - {fileID: 20}
@@ -220,8 +220,8 @@ MonoBehaviour:
     y: 431
     width: 1413
     height: 540
-  m_MinSize: {x: 101, y: 121}
-  m_MaxSize: {x: 4001, y: 4021}
+  m_MinSize: {x: 100, y: 100}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 23}
   m_Panes:
   - {fileID: 18}
@@ -370,8 +370,8 @@ MonoBehaviour:
     y: 0
     width: 508.5
     height: 431
-  m_MinSize: {x: 201, y: 221}
-  m_MaxSize: {x: 4001, y: 4021}
+  m_MinSize: {x: 200, y: 200}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 22}
   m_Panes:
   - {fileID: 22}
@@ -412,7 +412,7 @@ MonoBehaviour:
     m_SaveData: []
     m_OverlaysVisible: 1
   m_Spl:
-    ID: 155
+    ID: 650
     splitterInitialOffset: 341
     currentActiveSplitter: -1
     realSizes:
@@ -444,7 +444,7 @@ MonoBehaviour:
       name: VitalRouter
       fullName: VitalRouter
       resultStatus: 1
-      duration: 0.2521304
+      duration: 0.3070446
       messages: 
       output: 
       stacktrace: 
@@ -460,7 +460,7 @@ MonoBehaviour:
       name: VitalRouter.Tests.dll
       fullName: /Users/hadashi/dev/VitalRouter/VitalRouter/Library/ScriptAssemblies/VitalRouter.Tests.dll
       resultStatus: 1
-      duration: 0.2410122
+      duration: 0.2945251
       messages: 
       output: 
       stacktrace: 
@@ -476,7 +476,7 @@ MonoBehaviour:
       name: VitalRouter
       fullName: VitalRouter
       resultStatus: 1
-      duration: 0.2292517
+      duration: 0.2928212
       messages: 
       output: 
       stacktrace: 
@@ -492,7 +492,7 @@ MonoBehaviour:
       name: Tests
       fullName: VitalRouter.Tests
       resultStatus: 1
-      duration: 0.2274878
+      duration: 0.2907419
       messages: 
       output: 
       stacktrace: 
@@ -508,7 +508,7 @@ MonoBehaviour:
       name: CommandBusTest
       fullName: VitalRouter.Tests.CommandBusTest
       resultStatus: 1
-      duration: 0.0748181
+      duration: 0.0850463
       messages: 
       output: 
       stacktrace: 
@@ -519,12 +519,29 @@ MonoBehaviour:
       categories: []
       parentId: 1018
       parentUniqueId: VitalRouter.Tests.dll/VitalRouter/[VitalRouter.Tests][VitalRouter.Tests][suite]
+    - id: 1006
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/CommandBusTest/[VitalRouter.Tests][VitalRouter.Tests.CommandBusTest.ErrorHandlingInterceptor]
+      name: ErrorHandlingInterceptor
+      fullName: VitalRouter.Tests.CommandBusTest.ErrorHandlingInterceptor
+      resultStatus: 1
+      duration: 0.0161318
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1002
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.CommandBusTest][suite]
     - id: 1004
       uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/CommandBusTest/[VitalRouter.Tests][VitalRouter.Tests.CommandBusTest.PropagateInterceptors]
       name: PropagateInterceptors
       fullName: VitalRouter.Tests.CommandBusTest.PropagateInterceptors
       resultStatus: 1
-      duration: 0.0157158
+      duration: 0.01045
       messages: 
       output: 
       stacktrace: 
@@ -541,7 +558,7 @@ MonoBehaviour:
       name: StopPropagationByInterceptor
       fullName: VitalRouter.Tests.CommandBusTest.StopPropagationByInterceptor
       resultStatus: 1
-      duration: 0.0054323
+      duration: 0.0128365
       messages: 
       output: 
       stacktrace: 
@@ -558,7 +575,7 @@ MonoBehaviour:
       name: Subscribers
       fullName: VitalRouter.Tests.CommandBusTest.Subscribers
       resultStatus: 1
-      duration: 0.041097
+      duration: 0.032346
       messages: 
       output: 
       stacktrace: 
@@ -575,7 +592,7 @@ MonoBehaviour:
       name: ExpandBufferTest
       fullName: VitalRouter.Tests.ExpandBufferTest
       resultStatus: 1
-      duration: 0.0059523
+      duration: 0.0062284
       messages: 
       output: 
       stacktrace: 
@@ -591,7 +608,7 @@ MonoBehaviour:
       name: RemoveAt
       fullName: VitalRouter.Tests.ExpandBufferTest.RemoveAt
       resultStatus: 1
-      duration: 0.0008472
+      duration: 0.0010355
       messages: 
       output: 
       stacktrace: 
@@ -603,12 +620,164 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1006
       parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.ExpandBufferTest][suite]
+    - id: 1008
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+      name: GeneratedRoutingTest
+      fullName: VitalRouter.Tests.GeneratedRoutingTest
+      resultStatus: 1
+      duration: 0.0632909
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1022
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/[VitalRouter.Tests][VitalRouter.Tests][suite]
+    - id: 1014
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.DefaultAndPerMethodInterceptors]
+      name: DefaultAndPerMethodInterceptors
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.DefaultAndPerMethodInterceptors
+      resultStatus: 1
+      duration: 0.0086019
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+    - id: 1012
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.DefaultInterceptor]
+      name: DefaultInterceptor
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.DefaultInterceptor
+      resultStatus: 1
+      duration: 0.009258
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+    - id: 1017
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.ErrorFromInterceptorHandler]
+      name: ErrorFromInterceptorHandler
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.ErrorFromInterceptorHandler
+      resultStatus: 1
+      duration: 0.006518
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1009
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+    - id: 1016
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.ErrorHandler]
+      name: ErrorHandler
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.ErrorHandler
+      resultStatus: 1
+      duration: 0.0063276
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1009
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+    - id: 1013
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.PerMethodInterceptors]
+      name: PerMethodInterceptors
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.PerMethodInterceptors
+      resultStatus: 1
+      duration: 0.0065266
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+    - id: 1010
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.SimpleAsyncRoutes]
+      name: SimpleAsyncRoutes
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.SimpleAsyncRoutes
+      resultStatus: 1
+      duration: 0.0048886
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+    - id: 1011
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.SimpleCombinedRoutes]
+      name: SimpleCombinedRoutes
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.SimpleCombinedRoutes
+      resultStatus: 1
+      duration: 0.0052215
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
+    - id: 1009
+      uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/GeneratedRoutingTest/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest.SimpleSyncRoutes]
+      name: SimpleSyncRoutes
+      fullName: VitalRouter.Tests.GeneratedRoutingTest.SimpleSyncRoutes
+      resultStatus: 1
+      duration: 0.0050855
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.GeneratedRoutingTest][suite]
     - id: 1002
       uniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.UniTaskAsyncLockTest][suite]
       name: UniTaskAsyncLockTest
       fullName: VitalRouter.Tests.UniTaskAsyncLockTest
       resultStatus: 1
-      duration: 0.1352954
+      duration: 0.1232413
       messages: 
       output: 
       stacktrace: 
@@ -624,7 +793,7 @@ MonoBehaviour:
       name: Wait_Multiple
       fullName: VitalRouter.Tests.UniTaskAsyncLockTest.Wait_Multiple
       resultStatus: 1
-      duration: 0.0008832
+      duration: 0.0009325
       messages: 
       output: 
       stacktrace: 
@@ -641,7 +810,7 @@ MonoBehaviour:
       name: Wait_One
       fullName: VitalRouter.Tests.UniTaskAsyncLockTest.Wait_One
       resultStatus: 1
-      duration: 0.0000513
+      duration: 0.0000643
       messages: 
       output: 
       stacktrace: 
@@ -658,7 +827,7 @@ MonoBehaviour:
       name: WaitAsync_Multiple
       fullName: VitalRouter.Tests.UniTaskAsyncLockTest.WaitAsync_Multiple
       resultStatus: 1
-      duration: 0.0125062
+      duration: 0.0079316
       messages: 
       output: 
       stacktrace: 
@@ -675,7 +844,7 @@ MonoBehaviour:
       name: WaitAsync_One
       fullName: VitalRouter.Tests.UniTaskAsyncLockTest.WaitAsync_One
       resultStatus: 1
-      duration: 0.0053104
+      duration: 0.0041952
       messages: 
       output: 
       stacktrace: 
@@ -692,7 +861,7 @@ MonoBehaviour:
       name: WaitSyncWithAsync
       fullName: VitalRouter.Tests.UniTaskAsyncLockTest.WaitSyncWithAsync
       resultStatus: 1
-      duration: 0.1112595
+      duration: 0.1065536
       messages: 
       output: 
       stacktrace: 
@@ -709,7 +878,7 @@ MonoBehaviour:
       name: WhenAllTest
       fullName: VitalRouter.Tests.WhenAllTest
       resultStatus: 1
-      duration: 0.0091818
+      duration: 0.0107481
       messages: 
       output: 
       stacktrace: 
@@ -725,7 +894,7 @@ MonoBehaviour:
       name: Hoge
       fullName: VitalRouter.Tests.WhenAllTest.Hoge
       resultStatus: 1
-      duration: 0.0043583
+      duration: 0.0046003
       messages: 
       output: 
       stacktrace: 
@@ -737,13 +906,13 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1014
       parentUniqueId: VitalRouter.Tests.dll/VitalRouter/Tests/[VitalRouter.Tests][VitalRouter.Tests.WhenAllTest][suite]
-    m_ResultText: VitalRouter (0.252s)
+    m_ResultText: VitalRouter (0.307s)
     m_ResultStacktrace: 
     m_TestListState:
-      scrollPos: {x: 0, y: 6}
+      scrollPos: {x: 0, y: 166}
       m_SelectedIDs: cf53b9d6
       m_LastClickedID: -692497457
-      m_ExpandedIDs: 4849cd9d352b26c44cea74d3cf53b9d68d507203e1d396039e38aa33ffffff7f
+      m_ExpandedIDs: 4849cd9d352b26c44cea74d3cf53b9d68d507203bc5f7403e1d396039e38aa33ffffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -862,8 +1031,8 @@ MonoBehaviour:
   m_SearchText: 
   m_TreeViewState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 272fd499
-    m_LastClickedID: -1714147545
+    m_SelectedIDs: 4dcf9b58
+    m_LastClickedID: 1486606157
     m_ExpandedIDs: a73eced700000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
@@ -927,7 +1096,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/VitalRouter/Runtime/Internal
+    - Assets/Sandbox
     m_Globs: []
     m_OriginalText: 
     m_ImportLogFlags: 0
@@ -935,16 +1104,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets/VitalRouter/Runtime/Internal
+  - Assets/Sandbox
   m_LastFoldersGridSize: 16
   m_LastProjectPath: /Users/hadashi/dev/VitalRouter/VitalRouter
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 52530000
-    m_LastClickedID: 21330
-    m_ExpandedIDs: 00000000284800002a4800002c48000000ca9a3bffffff7f
+    m_SelectedIDs: 12480000
+    m_LastClickedID: 18450
+    m_ExpandedIDs: 0000000006480000084800000a48000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -972,7 +1141,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000284800002a4800002c480000
+    m_ExpandedIDs: 0000000006480000084800000a480000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -997,8 +1166,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: 36530000
-    m_LastClickedInstanceID: 21302
+    m_SelectedInstanceIDs: 40480000
+    m_LastClickedInstanceID: 18496
     m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: c6230000a882000062780000
     m_RenameOverlay:
@@ -1112,9 +1281,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 36530000
-      m_LastClickedID: 0
-      m_ExpandedIDs: 8a78ffffe078ffff7e7afffff67affff4c7bffffea7cffff587effffae7effff4c80ffffac80ffff0281ffffa082fffffa83ffff5084ffffec85ffff8486ffffda86ffff7688fffffa88ffff5089ffffec8affff608bffffb68bffff528dffffde8dffff348effffd08fffff2291ffff7891ffff1493ffff7493ffffca93ffff6695ffffbc96ffff1297ffffb098ffff029affff589afffff49bffffc69dffff1c9effffba9fffff0ca1ffff62a1fffffea2ffff5ea3ffffb4a3ffff50a5ffffa2a6fffff8a6ffff94a8ffffeea9ffff44aaffffe2abffff44adffff9aadffff38afffff9ab0fffff0b0ffff8eb2fffff6b3ffff4cb4ffffe8b5ffff26b8ffff7cb8ffff18baffff76bcffffccbcffff68beffffc2bfffff18c0ffffb4c1ffff14c2ffff6ac2ffff06c4ffff50c5ffffa6c5ffff42c7ffffaec7ffff04c8ffffa0c9ffffeacaffff40cbffffdeccffff6acdffffc0cdffff5ecfffffacd0ffff02d1ffffa0d2ffff0cd3ffff62d3ffff00d5ffff56d6ffffacd6ffff4ad8ffffb6d8ffff0cd9ffffaadaffff14dcffff6adcffff08deffff70deffffc6deffff64e0fffff0e0ffff46e1ffffe4e2ffff48e3ffff9ee3ffff3ce5ffffb6e6ffff0ce7ffffaae8ffff0ae9ffff60e9fffffeeaffff5eebffffb4ebffff52edffffb2edffff08eeffffa6efffff0ef0ffff64f0ffff00f2ffff6cf2ffffc2f2ffff60f4ffffd8f5ffff2ef6ffffcef7ffff2ef8ffff84f8ffff28faffff16fbffff
+      m_SelectedIDs: 40480000
+      m_LastClickedID: 18496
+      m_ExpandedIDs: d0f9ffff24fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 

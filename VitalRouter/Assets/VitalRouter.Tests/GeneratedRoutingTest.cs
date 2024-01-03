@@ -157,7 +157,7 @@ public class GeneratedRoutingTest
     }
 }
 
-[Routing]
+[Routes]
 partial class SimpleSyncPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
@@ -168,7 +168,7 @@ partial class SimpleSyncPresenter
     }
 }
 
-[Routing]
+[Routes]
 partial class SimpleAsyncPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
@@ -180,7 +180,7 @@ partial class SimpleAsyncPresenter
     }
 }
 
-[Routing]
+[Routes]
 partial class SimpleCombinedPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
@@ -197,7 +197,7 @@ partial class SimpleCombinedPresenter
     }
 }
 
-[Routing]
+[Routes]
 [Filter(typeof(AInterceptor))]
 partial class DefaultInterceptorPresenter
 {
@@ -215,7 +215,7 @@ partial class DefaultInterceptorPresenter
     }
 }
 
-[Routing]
+[Routes]
 partial class PerMethodInterceptorPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
@@ -245,7 +245,7 @@ partial class PerMethodInterceptorPresenter
     }
 }
 
-[Routing]
+[Routes]
 [Filter(typeof(AInterceptor))]
 [Filter(typeof(BInterceptor))]
 partial class ComplexInterceptorPresenter
@@ -274,7 +274,7 @@ partial class ComplexInterceptorPresenter
     }
 }
 
-[Routing]
+[Routes]
 [Filter(typeof(ErrorHandlingInterceptor))]
 partial class ErrorHandlingInterceptorPresenter
 {
@@ -284,7 +284,7 @@ partial class ErrorHandlingInterceptorPresenter
     }
 }
 
-[Routing]
+[Routes]
 [Filter(typeof(ErrorHandlingInterceptor))]
 [Filter(typeof(ThrowInterceptor))]
 partial class ErrorHandlingInterceptorPresenter2

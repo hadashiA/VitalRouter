@@ -7,7 +7,7 @@ public class PreserveAttribute : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class)]
-public class RoutingAttribute : Attribute
+public class RoutesAttribute : Attribute
 {
 }
 

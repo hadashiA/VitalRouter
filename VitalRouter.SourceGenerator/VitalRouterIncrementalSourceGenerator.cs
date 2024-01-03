@@ -32,7 +32,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
         var provider = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 context,
-                "VitalRouter.RoutingAttribute",
+                "VitalRouter.RoutesAttribute",
                 static (node, cancellation) => node is ClassDeclarationSyntax,
                 static (context, cancellation) => context)
             .Combine(context.CompilationProvider)
@@ -164,13 +164,13 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                 return false;
             }
 
-            foreach (var nonRoutableMethod in typeMeta.NonRoutableMethodSymbols)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.NoRoutablePublicMethodDefined,
-                    nonRoutableMethod.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
-                    nonRoutableMethod.Name));
-            }
+            // foreach (var nonRoutableMethod in typeMeta.NonRoutableMethodSymbols)
+            // {
+            //     context.ReportDiagnostic(Diagnostic.Create(
+            //         DiagnosticDescriptors.NoRoutablePublicMethodDefined,
+            //         nonRoutableMethod.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
+            //         nonRoutableMethod.Name));
+            // }
 
             if (typeMeta.RouteMethodMetas.Count <= 0)
             {
@@ -208,7 +208,7 @@ namespace {{ns}}
 partial class {{typeMeta.TypeName}}
 {
 """);
-            if (!TryEmitMappingMethod(typeMeta, builder))
+            if (!TryEmitMappingMethod(typeMeta, references, builder))
             {
                 return false;
             }
@@ -254,14 +254,14 @@ partial class {{typeMeta.TypeName}}
         }
     }
 
-    static bool TryEmitMappingMethod(TypeMeta typeMeta, StringBuilder builder)
+    static bool TryEmitMappingMethod(TypeMeta typeMeta, ReferenceSymbols references, StringBuilder builder)
     {
         var parameters = new[] { "ICommandSubscribable subscribable" }
             .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}"))
             .Distinct();
 
         builder.AppendLine($$"""
-    Subscription? vitalRouterGeneratedSubscription;
+    Subscription vitalRouterGeneratedSubscription;
 
     [global::VitalRouter.Preserve]
     public void MapRoutes({{string.Join(", ", parameters)}})
@@ -302,12 +302,25 @@ partial class {{typeMeta.TypeName}}
 
         builder.AppendLine($$"""
         vitalRouterGeneratedSubscription = new Subscription(subscribable, {{subscriptionArgs}});
+""");
+
+        if (typeMeta.Symbol.InheritsFrom(references.MonoBehaviourType))
+        {
+            builder.AppendLine($$"""
+        
+        if (!gameObject.TryGetComponent(typeof(SubscriptionHandle), out var handle))
+        {
+            handle = gameObject.AddComponent<SubscriptionHandle>();
+        }
+        ((SubscriptionHandle)handle).Subscription = vitalRouterGeneratedSubscription;
+""");
+        }
+        builder.AppendLine($$"""
     }
 
     public void UnmapRoutes()
     {
-        vitalRouterGeneratedSubscription?.Dispose();
-        vitalRouterGeneratedSubscription = null;
+        vitalRouterGeneratedSubscription.Dispose();
     }
 
 """);

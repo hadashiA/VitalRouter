@@ -5,18 +5,20 @@ namespace VitalRouter;
 public struct Subscription : IDisposable
 {
     readonly ICommandSubscribable commandBus;
-    readonly ICommandSubscriber? subscriber;
-    readonly IAsyncCommandSubscriber? asyncSubscriber;
+    ICommandSubscriber? subscriber;
+    IAsyncCommandSubscriber? asyncSubscriber;
 
     public Subscription(ICommandSubscribable commandBus, ICommandSubscriber subscriber)
     {
         this.commandBus = commandBus;
         this.subscriber = subscriber;
+        this.asyncSubscriber = null;
     }
 
     public Subscription(ICommandSubscribable commandBus, IAsyncCommandSubscriber subscriber)
     {
         this.commandBus = commandBus;
+        this.subscriber = null;
         this.asyncSubscriber = subscriber;
     }
 
@@ -30,8 +32,15 @@ public struct Subscription : IDisposable
     public void Dispose()
     {
         if (subscriber != null)
+        {
             commandBus.Unsubscribe(subscriber);
+            subscriber = null;
+        }
+
         if (asyncSubscriber != null)
+        {
             commandBus.Unsubscribe(asyncSubscriber);
+            asyncSubscriber = null;
+        }
     }
 }

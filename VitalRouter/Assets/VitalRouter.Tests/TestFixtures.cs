@@ -76,7 +76,7 @@ class ThrowInterceptor : ICommandInterceptor
 
 class ErrorHandlingInterceptor : ICommandInterceptor
 {
-    public Exception Exception { get; private set; }
+    public Exception? Exception { get; private set; }
 
     public UniTask InvokeAsync<T>(
         T command,
