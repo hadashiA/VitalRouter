@@ -17,20 +17,42 @@ class MapRoutesInfo
 
     public Type Type { get; }
     public MethodInfo MapRoutesMethod { get; }
+    public MethodInfo UnmapRoutesMethod { get; }
     public ParameterInfo[] ParameterInfos { get; }
 
     public MapRoutesInfo(Type type)
     {
         Type = type;
         MapRoutesMethod = type.GetMethod("MapRoutes", BindingFlags.Instance | BindingFlags.Public)!;
+        UnmapRoutesMethod = type.GetMethod("UnmapRoutes", BindingFlags.Instance | BindingFlags.Public)!;
         ParameterInfos = MapRoutesMethod.GetParameters();
+    }
+}
+
+class RoutingDisposable : IDisposable
+{
+    readonly IObjectResolver container;
+    readonly IReadOnlyList<MapRoutesInfo> routes;
+
+    public RoutingDisposable(IObjectResolver container, IReadOnlyList<MapRoutesInfo> routes)
+    {
+        this.container = container;
+        this.routes = routes;
+    }
+
+    public void Dispose()
+    {
+        for (var i = 0; i < routes.Count; i++)
+        {
+            var instance = container.Resolve(routes[i].Type);
+            routes[i].UnmapRoutesMethod.Invoke(instance, null);
+        }
     }
 }
 
 public partial class RoutingBuilder
 {
-    public bool OverrideCommandBus { get; set; }
-
+    internal bool CommandBusOverriden { get; set; }
     internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
     internal IReadOnlyList<Type> GlobalInterceptorTypes => globalInterceptorTypes;
 
@@ -41,6 +63,11 @@ public partial class RoutingBuilder
     public RoutingBuilder(IContainerBuilder containerBuilder)
     {
         this.containerBuilder = containerBuilder;
+    }
+
+    public void OverrideCommandBus()
+    {
+        CommandBusOverriden = true;
     }
 
     public void Use<T>() where T : ICommandInterceptor
@@ -105,12 +132,17 @@ public static class VContainerExtensions
             }
         }
 
-        if (!builder.Exists(typeof(CommandBus)) || router.OverrideCommandBus)
+        if (!builder.Exists(typeof(CommandBus)) || router.CommandBusOverriden)
         {
             builder.Register<CommandBus>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
         }
+
+        builder.Register(container =>
+        {
+            return new RoutingDisposable(container, router.MapRoutesInfos);
+        }, Lifetime.Singleton);
 
         builder.RegisterBuildCallback(container =>
         {
