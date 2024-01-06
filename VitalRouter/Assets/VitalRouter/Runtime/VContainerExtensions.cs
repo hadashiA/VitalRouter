@@ -29,6 +29,8 @@ class MapRoutesInfo
 
 public partial class RoutingBuilder
 {
+    public bool OverrideCommandBus { get; set; }
+
     internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
     internal IReadOnlyList<Type> GlobalInterceptorTypes => globalInterceptorTypes;
 
@@ -82,17 +84,17 @@ public static class VContainerExtensions
 {
     public static void RegisterVitalRouter(this IContainerBuilder builder, Action<RoutingBuilder> configure)
     {
-        var routing = new RoutingBuilder(builder);
-        configure(routing);
+        var router = new RoutingBuilder(builder);
+        configure(router);
 
-        foreach (var interceptorType in routing.GlobalInterceptorTypes)
+        foreach (var interceptorType in router.GlobalInterceptorTypes)
         {
             builder.Register(interceptorType, Lifetime.Singleton);
         }
 
-        for (var i = 0; i < routing.MapRoutesInfos.Count; i++)
+        for (var i = 0; i < router.MapRoutesInfos.Count; i++)
         {
-            var info = routing.MapRoutesInfos[i];
+            var info = router.MapRoutesInfos[i];
             for (var paramIndex = 1; paramIndex < info.ParameterInfos.Length; paramIndex++)
             {
                 var interceptorType = info.ParameterInfos[paramIndex].ParameterType;
@@ -103,24 +105,24 @@ public static class VContainerExtensions
             }
         }
 
-        builder.Register(container =>
-            {
-                var commandBus = new CommandBus();
-                foreach (var interceptorType in routing.GlobalInterceptorTypes)
-                {
-                    commandBus.Use((ICommandInterceptor)container.Resolve(interceptorType));
-                }
-                return commandBus;
-            }, Lifetime.Singleton)
-            .AsImplementedInterfaces()
-            .AsSelf();
+        if (!builder.Exists(typeof(CommandBus)) || router.OverrideCommandBus)
+        {
+            builder.Register<CommandBus>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
+        }
 
         builder.RegisterBuildCallback(container =>
         {
             var commandBus = container.Resolve<CommandBus>();
-            for (var i = 0; i < routing.MapRoutesInfos.Count; i++)
+            foreach (var interceptorType in router.GlobalInterceptorTypes)
             {
-                var info = routing.MapRoutesInfos[i];
+                commandBus.Use((ICommandInterceptor)container.Resolve(interceptorType));
+            }
+
+            for (var i = 0; i < router.MapRoutesInfos.Count; i++)
+            {
+                var info = router.MapRoutesInfos[i];
                 var instance = container.Resolve(info.Type);
 
                 // TODO: more optimize
