@@ -28,6 +28,18 @@ public interface IAsyncCommandSubscriber
     UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
 }
 
+public static class CommandPublisherExtensions
+{
+    public static void Enqueue<T>(
+        this ICommandPublisher publisher,
+        T command,
+        CancellationToken cancellation = default)
+        where T : ICommand
+    {
+        publisher.PublishAsync(command, cancellation).Forget();
+    }
+}
+
 public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable, IDisposable
 {
     public static readonly CommandBus Default = new();
