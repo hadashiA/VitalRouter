@@ -264,7 +264,7 @@ partial class {{typeMeta.TypeName}}
     Subscription vitalRouterGeneratedSubscription;
 
     [global::VitalRouter.Preserve]
-    public void MapRoutes({{string.Join(", ", parameters)}})
+    public void MapTo({{string.Join(", ", parameters)}})
     {
         UnmapRoutes();
 
@@ -308,11 +308,11 @@ partial class {{typeMeta.TypeName}}
         {
             builder.AppendLine($$"""
         
-        if (!gameObject.TryGetComponent(typeof(SubscriptionHandle), out var handle))
+        if (!gameObject.TryGetComponent(typeof(VitalRouter.Unity.SubscriptionHandle), out var handle))
         {
-            handle = gameObject.AddComponent<SubscriptionHandle>();
+            handle = gameObject.AddComponent<VitalRouter.Unity.SubscriptionHandle>();
         }
-        ((SubscriptionHandle)handle).Subscription = vitalRouterGeneratedSubscription;
+        ((VitalRouter.Unity.SubscriptionHandle)handle).Subscription = vitalRouterGeneratedSubscription;
 """);
         }
         builder.AppendLine($$"""

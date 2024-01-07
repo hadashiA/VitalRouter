@@ -7,16 +7,16 @@ using VitalRouter.VContainer;
 
 public class SampleEntryPoint : IAsyncStartable
 {
-    readonly CommandBus commandBus;
+    readonly Router router;
 
-    public SampleEntryPoint(CommandBus commandBus)
+    public SampleEntryPoint(Router router)
     {
-        this.commandBus = commandBus;
+        this.router = router;
     }
 
     public async UniTask StartAsync(CancellationToken cancellation)
     {
-        await commandBus.PublishAsync(new CharacterMoveCommand(), cancellation);
+        await router.PublishAsync(new CharacterMoveCommand(), cancellation);
     }
 }
 

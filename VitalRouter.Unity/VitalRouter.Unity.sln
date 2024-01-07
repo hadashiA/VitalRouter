@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VContainer", "VContainer.csproj", "{ba9faf91-2861-1a85-f011-48d13d4eca50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter", "VitalRouter.csproj", "{f3798404-ff2c-4ac3-ffd9-ce39361c3ff0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{b7b04b51-83b9-0a96-23c6-36e7a5e8364a}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VContainer.Editor", "VContainer.Editor.csproj", "{d3c5ba68-d15c-d8da-a6a8-1890c69ef351}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Tests", "VitalRouter.Tests.csproj", "{acd3ed16-6f4c-280b-d238-2cdfd385568b}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ba9faf91-2861-1a85-f011-48d13d4eca50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ba9faf91-2861-1a85-f011-48d13d4eca50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{f3798404-ff2c-4ac3-ffd9-ce39361c3ff0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{f3798404-ff2c-4ac3-ffd9-ce39361c3ff0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{b7b04b51-83b9-0a96-23c6-36e7a5e8364a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{b7b04b51-83b9-0a96-23c6-36e7a5e8364a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{d3c5ba68-d15c-d8da-a6a8-1890c69ef351}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{d3c5ba68-d15c-d8da-a6a8-1890c69ef351}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{acd3ed16-6f4c-280b-d238-2cdfd385568b}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{acd3ed16-6f4c-280b-d238-2cdfd385568b}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -132,9 +132,9 @@ public static class VContainerExtensions
             }
         }
 
-        if (!builder.Exists(typeof(CommandBus)) || router.CommandBusOverriden)
+        if (!builder.Exists(typeof(Router)) || router.CommandBusOverriden)
         {
-            builder.Register<CommandBus>(Lifetime.Singleton)
+            builder.Register<Router>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
         }
@@ -146,7 +146,7 @@ public static class VContainerExtensions
 
         builder.RegisterBuildCallback(container =>
         {
-            var commandBus = container.Resolve<CommandBus>();
+            var commandBus = container.Resolve<Router>();
             foreach (var interceptorType in router.GlobalInterceptorTypes)
             {
                 commandBus.Use((ICommandInterceptor)container.Resolve(interceptorType));

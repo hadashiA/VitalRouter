@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace VitalRouter;
+namespace VitalRouter.Unity;
 
 public class SubscriptionHandle : MonoBehaviour
 {

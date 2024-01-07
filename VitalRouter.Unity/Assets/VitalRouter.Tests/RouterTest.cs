@@ -70,12 +70,12 @@ struct TestCommand2 : ICommand
 }
 
 [TestFixture]
-public class CommandBusTest
+public class RouterTest
 {
     [Test]
     public async Task Subscribers()
     {
-        var commandBus = new CommandBus();
+        var commandBus = new Router();
 
         var subscriber1 = new TestSubscriber();
         var subscriber2 = new TestSubscriber();
@@ -103,7 +103,7 @@ public class CommandBusTest
     [Test]
     public async Task PropagateInterceptors()
     {
-        var commandBus = new CommandBus();
+        var commandBus = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestInterceptor();
         commandBus.Use(interceptor1);
@@ -118,7 +118,7 @@ public class CommandBusTest
     [Test]
     public async Task StopPropagationByInterceptor()
     {
-        var commandBus = new CommandBus();
+        var commandBus = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestStopperInterceptor();
         var subscriber1 = new TestSubscriber();
@@ -135,7 +135,7 @@ public class CommandBusTest
     [Test]
     public async Task ErrorHandlingInterceptor()
     {
-        var commandBus = new CommandBus();
+        var commandBus = new Router();
         var errorHandler = new ErrorHandlingInterceptor();
         commandBus.Use(errorHandler);
         commandBus.Subscribe(new TestThrowSubscriber());

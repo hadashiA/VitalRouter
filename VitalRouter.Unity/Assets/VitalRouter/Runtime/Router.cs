@@ -40,9 +40,9 @@ public static class CommandPublisherExtensions
     }
 }
 
-public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable, IDisposable
+public sealed partial class Router : ICommandPublisher, ICommandSubscribable, IDisposable
 {
-    public static readonly CommandBus Default = new();
+    public static readonly Router Default = new();
 
     // public ICommandPool CommandPool { get; set; } = ConcurrentQueueCommandPool.Shared;
 
@@ -62,7 +62,7 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
 
     readonly ICommandInterceptor publishCore;
 
-    public CommandBus()
+    public Router()
     {
         publishCore = new PublishCore(this);
     }
@@ -194,9 +194,9 @@ public sealed partial class CommandBus : ICommandPublisher, ICommandSubscribable
 
     class PublishCore : ICommandInterceptor
     {
-        readonly CommandBus source;
+        readonly Router source;
 
-        public PublishCore(CommandBus source)
+        public PublishCore(Router source)
         {
             this.source = source;
         }

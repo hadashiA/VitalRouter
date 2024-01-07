@@ -8,15 +8,15 @@ namespace VitalRouter.Tests;
 [TestFixture]
 public class GeneratedRoutingTest
 {
-    readonly CommandBus commandBus = new();
+    readonly Router router = new();
 
     [Test]
     public async Task SimpleSyncRoutes()
     {
         var x = new SimpleSyncPresenter();
-        x.MapRoutes(commandBus);
+        x.MapTo(router);
 
-        await commandBus.PublishAsync(new CommandA(111));
+        await router.PublishAsync(new CommandA(111));
 
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
     }
@@ -25,9 +25,9 @@ public class GeneratedRoutingTest
     public async Task SimpleAsyncRoutes()
     {
         var x = new SimpleAsyncPresenter();
-        x.MapRoutes(commandBus);
+        x.MapTo(router);
 
-        await commandBus.PublishAsync(new CommandA(111));
+        await router.PublishAsync(new CommandA(111));
 
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
     }
@@ -36,11 +36,11 @@ public class GeneratedRoutingTest
     public async Task SimpleCombinedRoutes()
     {
         var x = new SimpleCombinedPresenter();
-        x.MapRoutes(commandBus);
+        x.MapTo(router);
 
-        await commandBus.PublishAsync(new CommandA(111));
-        await commandBus.PublishAsync(new CommandB(222));
-        await commandBus.PublishAsync(new CommandC(222));
+        await router.PublishAsync(new CommandA(111));
+        await router.PublishAsync(new CommandB(222));
+        await router.PublishAsync(new CommandC(222));
 
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandB>());
@@ -52,10 +52,10 @@ public class GeneratedRoutingTest
     {
         var x = new DefaultInterceptorPresenter();
         var interceptorA = new AInterceptor();
-        x.MapRoutes(commandBus, interceptorA);
+        x.MapTo(router, interceptorA);
 
-        await commandBus.PublishAsync(new CommandA(111));
-        await commandBus.PublishAsync(new CommandB(222));
+        await router.PublishAsync(new CommandA(111));
+        await router.PublishAsync(new CommandB(222));
 
         Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandA>());
         Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandB>());
@@ -72,12 +72,12 @@ public class GeneratedRoutingTest
         var x = new PerMethodInterceptorPresenter();
         var interceptorA = new AInterceptor();
         var interceptorB = new BInterceptor();
-        x.MapRoutes(commandBus, interceptorA, interceptorB);
+        x.MapTo(router, interceptorA, interceptorB);
 
-        await commandBus.PublishAsync(new CommandA(1));
-        await commandBus.PublishAsync(new CommandB(2));
-        await commandBus.PublishAsync(new CommandC(3));
-        await commandBus.PublishAsync(new CommandD(4));
+        await router.PublishAsync(new CommandA(1));
+        await router.PublishAsync(new CommandB(2));
+        await router.PublishAsync(new CommandC(3));
+        await router.PublishAsync(new CommandD(4));
 
         Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandA>());
         Assert.That(interceptorA.Receives.Count, Is.Zero);
@@ -100,12 +100,12 @@ public class GeneratedRoutingTest
         var interceptorB = new BInterceptor();
         var interceptorC = new CInterceptor();
         var interceptorD = new DInterceptor();
-        x.MapRoutes(commandBus, interceptorA, interceptorB, interceptorC, interceptorD);
+        x.MapTo(router, interceptorA, interceptorB, interceptorC, interceptorD);
 
-        await commandBus.PublishAsync(new CommandA(1));
-        await commandBus.PublishAsync(new CommandB(2));
-        await commandBus.PublishAsync(new CommandC(3));
-        await commandBus.PublishAsync(new CommandD(4));
+        await router.PublishAsync(new CommandA(1));
+        await router.PublishAsync(new CommandB(2));
+        await router.PublishAsync(new CommandC(3));
+        await router.PublishAsync(new CommandD(4));
 
         Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandA>());
         Assert.That(interceptorA.Receives.Dequeue(), Is.InstanceOf<CommandB>());
@@ -136,9 +136,9 @@ public class GeneratedRoutingTest
     {
         var x = new ErrorHandlingInterceptorPresenter();
         var errorHandler = new ErrorHandlingInterceptor();
-        x.MapRoutes(commandBus, errorHandler);
+        x.MapTo(router, errorHandler);
 
-        await commandBus.PublishAsync(new CommandA(1));
+        await router.PublishAsync(new CommandA(1));
 
         Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
     }
@@ -149,9 +149,9 @@ public class GeneratedRoutingTest
         var x = new ErrorHandlingInterceptorPresenter2();
         var errorHandler = new ErrorHandlingInterceptor();
         var throwInterceptor = new ThrowInterceptor();
-        x.MapRoutes(commandBus, errorHandler, throwInterceptor);
+        x.MapTo(router, errorHandler, throwInterceptor);
 
-        await commandBus.PublishAsync(new CommandA(1));
+        await router.PublishAsync(new CommandA(1));
 
         Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
     }

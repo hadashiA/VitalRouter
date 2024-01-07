@@ -325,12 +325,12 @@ MigrationBackup/
 # Unity
 
 ### Unity ###
-VitalRouter/[Ll]ibrary/
-VitalRouter/[Tt]emp/
-VitalRouter/[Oo]bj/
-VitalRouter/[Bb]uild/
-VitalRouter/[Bb]uilds/
-VitalRouter/Assets/AssetStoreTools*
+VitalRouter.Unity/[Ll]ibrary/
+VitalRouter.Unity/[Tt]emp/
+VitalRouter.Unity/[Oo]bj/
+VitalRouter.Unity/[Bb]uild/
+VitalRouter.Unity/[Bb]uilds/
+VitalRouter.Unity/Assets/AssetStoreTools*
 
 VitalRouter.Benchmark/[Ll]ibrary/
 VitalRouter.Benchmark/[Tt]emp/

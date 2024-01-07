@@ -1,18 +1,18 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Unity.Collections.LowLevel.Unsafe;
+using VitalRouter.Internal;
 
 namespace VitalRouter;
 
 public static class CommandBusAnonymousExtensions
 {
     public static void Use<T>(
-        this CommandBus commandBus,
+        this Router router,
         Func<T, CancellationToken, Func<T, CancellationToken, UniTask>, UniTask> callback)
         where T : ICommand
     {
-        commandBus.Use(new AnonymousInterceptor<T>(callback));
+        router.Use(new AnonymousInterceptor<T>(callback));
     }
 }
 
@@ -33,14 +33,11 @@ class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
     {
         if (command is T x)
         {
-            var y = UnsafeUtility.As<
+            var y = UnsafeHelper.As<
                 Func<TReceive, CancellationToken, UniTask>,
                 Func<T, CancellationToken, UniTask>>(ref next);
             return callback(x, cancellation, y);
         }
-        else
-        {
-            return next(command, cancellation);
-        }
+        return next(command, cancellation);
     }
 }

@@ -28,7 +28,7 @@
 
     <!-- Copy files for Unity -->
     <PropertyGroup>
-        <UnityAssetsRuntime>$(MSBuildProjectDirectory)\..\VitalRouter\Assets\VitalRouter\Runtime</UnityAssetsRuntime>
+        <UnityAssetsRuntime>$(MSBuildProjectDirectory)\..\VitalRouter.Unity\Assets\VitalRouter\Runtime</UnityAssetsRuntime>
     </PropertyGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$(Configuration) == 'Release'">
         <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(UnityAssetsRuntime)\$(TargetFileName)" SkipUnchangedFiles="true" />

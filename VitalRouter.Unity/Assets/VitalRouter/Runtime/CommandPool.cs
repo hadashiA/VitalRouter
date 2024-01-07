@@ -105,9 +105,9 @@ public class CommandPooling : ICommandInterceptor
         }
         finally
         {
-            if (command is IPoolableCommand poolable)
+            if (command is IPoolableCommand pooled)
             {
-                Return(poolable);
+                Return(pooled);
             }
         }
     }

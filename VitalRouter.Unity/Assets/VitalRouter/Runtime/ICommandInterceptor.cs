@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Unity.Collections.LowLevel.Unsafe;
+using VitalRouter.Internal;
 
 namespace VitalRouter;
 
@@ -25,7 +25,7 @@ public abstract class TypedCommandInterceptro<T> : ICommandInterceptor
     {
         if (command is T x)
         {
-            var n = UnsafeUtility.As<
+            var n = UnsafeHelper.As<
                 Func<TReceive, CancellationToken, UniTask>,
                 Func<T, CancellationToken, UniTask>
             >(ref next);

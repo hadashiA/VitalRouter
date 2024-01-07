@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.SourceGenerator", "VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj", "{1E429509-F841-48F1-A111-5D0CD35707CC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VItalRouter", "VItalRouter\VItalRouter.csproj", "{DD9A5ED8-8B7E-4F41-BDB6-67294C5752D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{1E429509-F841-48F1-A111-5D0CD35707CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E429509-F841-48F1-A111-5D0CD35707CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E429509-F841-48F1-A111-5D0CD35707CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD9A5ED8-8B7E-4F41-BDB6-67294C5752D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD9A5ED8-8B7E-4F41-BDB6-67294C5752D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD9A5ED8-8B7E-4F41-BDB6-67294C5752D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD9A5ED8-8B7E-4F41-BDB6-67294C5752D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace VitalRouter.Internal;
 
@@ -54,9 +53,9 @@ class UniTaskAsyncLock : IDisposable
                 waitSuccessful = Monitor.Wait(syncRoot, Timeout.Infinite);
             }
 
-            // acquired
-            Debug.Assert(!waitSuccessful || currentResourceCount > 0,
-                "If the wait was successful, there should be count available.");
+            // // acquired
+            // Debug.Assert(!waitSuccessful || currentResourceCount > 0,
+            //     "If the wait was successful, there should be count available.");
             if (currentResourceCount > 0)
             {
                 currentResourceCount--;
