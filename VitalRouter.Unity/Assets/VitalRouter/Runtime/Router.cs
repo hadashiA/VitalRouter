@@ -162,12 +162,13 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
-    public void Use(ICommandInterceptor interceptor)
+    public Router Filter(ICommandInterceptor interceptor)
     {
         lock (subscribers)
         {
             interceptors.Add(interceptor);
         }
+        return this;
     }
 
     public void Dispose()

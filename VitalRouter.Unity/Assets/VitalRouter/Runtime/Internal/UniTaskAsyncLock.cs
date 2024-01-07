@@ -96,18 +96,17 @@ class UniTaskAsyncLock : IDisposable
         var releaseCount = 1;
         lock (syncRoot)
         {
-            // Read the m_currentCount into a local variable to avoid unnecessary volatile accesses inside the lock.
-            var count = currentResourceCount;
-            if (maxResourceCount - count < releaseCount)
+            var currentResourceCountLocal = currentResourceCount;
+            if (maxResourceCount - currentResourceCountLocal < releaseCount)
             {
                 throw new InvalidOperationException();
             }
 
-            count += releaseCount;
+            currentResourceCountLocal += releaseCount;
 
             // Signal to any synchronous waiters
-            var waitCount = this.waitCount;
-            var waitersToNotify = Math.Min(count, waitCount) - countOfWaitersPulsedToWake;
+            var waitCountLocal = waitCount;
+            var waitersToNotify = Math.Min(currentResourceCountLocal, waitCountLocal) - countOfWaitersPulsedToWake;
             if (waitersToNotify > 0)
             {
                 if (waitersToNotify > releaseCount)
@@ -122,16 +121,16 @@ class UniTaskAsyncLock : IDisposable
                 }
             }
 
-            var maxAsyncToRelease = count;
+            var maxAsyncToRelease = currentResourceCountLocal;
             for (var i = 0; i < maxAsyncToRelease; i++)
             {
                 if (asyncWaitingQueue.TryDequeue(out var waitingTask))
                 {
-                    --count;
+                    --currentResourceCountLocal;
                     waitingTask.TrySetResult();
                 }
             }
-            currentResourceCount = count;
+            currentResourceCount = currentResourceCountLocal;
         }
     }
 

@@ -264,7 +264,7 @@ partial class {{typeMeta.TypeName}}
     Subscription vitalRouterGeneratedSubscription;
 
     [global::VitalRouter.Preserve]
-    public void MapTo({{string.Join(", ", parameters)}})
+    public Subscription MapTo({{string.Join(", ", parameters)}})
     {
         UnmapRoutes();
 
@@ -316,6 +316,7 @@ partial class {{typeMeta.TypeName}}
 """);
         }
         builder.AppendLine($$"""
+        return vitalRouterGeneratedSubscription; 
     }
 
     public void UnmapRoutes()

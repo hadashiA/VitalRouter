@@ -12,7 +12,7 @@ public static class CommandBusAnonymousExtensions
         Func<T, CancellationToken, Func<T, CancellationToken, UniTask>, UniTask> callback)
         where T : ICommand
     {
-        router.Use(new AnonymousInterceptor<T>(callback));
+        router.Filter(new AnonymousInterceptor<T>(callback));
     }
 }
 

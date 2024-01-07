@@ -23,7 +23,7 @@ class MapRoutesInfo
     public MapRoutesInfo(Type type)
     {
         Type = type;
-        MapRoutesMethod = type.GetMethod("MapRoutes", BindingFlags.Instance | BindingFlags.Public)!;
+        MapRoutesMethod = type.GetMethod("MapTo", BindingFlags.Instance | BindingFlags.Public)!;
         UnmapRoutesMethod = type.GetMethod("UnmapRoutes", BindingFlags.Instance | BindingFlags.Public)!;
         ParameterInfos = MapRoutesMethod.GetParameters();
     }
@@ -50,15 +50,26 @@ class RoutingDisposable : IDisposable
     }
 }
 
-public partial class RoutingBuilder
+public class InterceptorStackBuilder
 {
+    public List<Type> Types { get; } = new();
+
+    public InterceptorStackBuilder Add<T>() where T : ICommandInterceptor
+    {
+        Types.Add(typeof(T));
+        return this;
+    }
+}
+
+public class RoutingBuilder
+{
+    public InterceptorStackBuilder Filters { get; } = new();
+
     internal bool CommandBusOverriden { get; set; }
     internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
-    internal IReadOnlyList<Type> GlobalInterceptorTypes => globalInterceptorTypes;
 
     readonly IContainerBuilder containerBuilder;
     readonly List<MapRoutesInfo> mapRoutesInfos = new();
-    readonly List<Type> globalInterceptorTypes = new();
 
     public RoutingBuilder(IContainerBuilder containerBuilder)
     {
@@ -68,11 +79,6 @@ public partial class RoutingBuilder
     public void OverrideCommandBus()
     {
         CommandBusOverriden = true;
-    }
-
-    public void Use<T>() where T : ICommandInterceptor
-    {
-        globalInterceptorTypes.Add(typeof(T));
     }
 
     public void Map<T>()
@@ -114,7 +120,7 @@ public static class VContainerExtensions
         var router = new RoutingBuilder(builder);
         configure(router);
 
-        foreach (var interceptorType in router.GlobalInterceptorTypes)
+        foreach (var interceptorType in router.Filters.Types)
         {
             builder.Register(interceptorType, Lifetime.Singleton);
         }
@@ -147,9 +153,9 @@ public static class VContainerExtensions
         builder.RegisterBuildCallback(container =>
         {
             var commandBus = container.Resolve<Router>();
-            foreach (var interceptorType in router.GlobalInterceptorTypes)
+            foreach (var interceptorType in router.Filters.Types)
             {
-                commandBus.Use((ICommandInterceptor)container.Resolve(interceptorType));
+                commandBus.Filter((ICommandInterceptor)container.Resolve(interceptorType));
             }
 
             for (var i = 0; i < router.MapRoutesInfos.Count; i++)

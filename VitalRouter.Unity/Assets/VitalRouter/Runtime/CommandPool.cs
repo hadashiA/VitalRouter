@@ -93,6 +93,8 @@ public class ConcurrentQueueCommandPool<T> : ICommandPool<T> where T : IPoolable
 
 public class CommandPooling : ICommandInterceptor
 {
+    public static readonly CommandPooling Instance = new();
+
     public async UniTask InvokeAsync<T>(
         T command,
         CancellationToken cancellation,
