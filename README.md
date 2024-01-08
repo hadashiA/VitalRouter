@@ -336,9 +336,9 @@ catch (Exception ex)
 
 ## Interceptors
 
-Interceptors can intercede additional processing before or after the any published command has been passed and consumed to subscribers.		
+Interceptors can intercede additional processing before or after the any published command has been passed and consumed to subscribers.	
 
-![interceptorstack](./docs/interceptorstack.png)
+<img src="./docs/interceptorstack.png" width="400" />
 
 ### Create a interceptor
 
@@ -640,7 +640,7 @@ If we try to implement this in a naive OOP way, we will end up with complex... v
 
 More to the point, individual objects in the game are created and destroyed at a dizzying rate during execution, so this N:N would tend to be even more complex!
 
-![guchagucya](./docs/gucyagucya.png)
+<img src="./docs/gucyagucya.png" width="400" />
 
 There is one problem. There is no distinction between "the one giving the orders" and "the one being given the orders."
 In the simplicity of Unity programming, it is easy to mix up the person giving the orders and the person being given the orders.
@@ -662,7 +662,7 @@ It will have complex parent-child relationships. Maybe.
 
 But we should separate this very detailed state management from the state that is brought to the entire game system and to which many objects react.
 
-![updating](. /docs/updating.png)
+<img src="./docs/updating.png" width="400" />
 
 It is the latter fact that should be "publich".
 
