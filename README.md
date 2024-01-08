@@ -29,7 +29,7 @@ public partial class ExamplePresenter
     
     // Declare event handler with extra filter
     [Filter(typeof(ExtraFilter))]
-    public async UniTask(CommandC cmd, CancellationToken cancellation)
+    public async UniTask On(BuzCommand cmd, CancellationToken cancellation)
     {
         // Do something after all filters runs on.
     }
@@ -54,6 +54,7 @@ public partial class ExamplePresenter
 - [Command pooling](#command-pooling)
 - [Sequence Command](#sequence-command)
 - [Fan-out](#fan-out)
+- [Low-level API](#low-level-api)
 - [Concept, Technical Explanation](#concept-technical-explanation)
 - [Lisence](#lisence)
 
@@ -523,7 +524,7 @@ If you wish to create a dedicated Router for a child scope, do the following.
 ```diff
 builder.RegisterVitalRouter(routing =>  
 {
-+    routing.OverrideRouter = true;
++    routing.Isolated = true;
     routing.Map<PresenterB>();  
 });  
 ```
@@ -640,6 +641,37 @@ public class SampleLifetimeScope : LifetimeScope
             .AsSelf()
     }
 }
+```
+
+## Low-level API
+
+```cs
+ICommandSubscribale router = Router.default;
+
+// Subscribe handler via lambda expression
+router.Subscribe<FooCommand>(cmd => { /* ... */ });
+
+// Subscribe async handler via lambda expression
+router.Subscribe<FooCommand>(async cmd => { /* ... */ });
+
+// Subscribe handler
+router.Subscribe(Subscriber);
+
+class Subscriber : ICommandSubscriber
+{
+    pubilc void Receive<T>(T cmd) where T : ICommand { /* ... */ }
+}
+
+// Subscribe async handler
+router.Subscribe(AsyncSubscriber);
+
+class AsyncSubscriber : IAsyncCommandSubscriber
+{
+    pubilc UniTask Receive<T>(T cmd, CancellationToken cancellation) where T : ICommand { /* ... */ }
+}
+
+// Add interceptor via lambda expresion
+router.Filter<FooCommand>(async (cmd, cancellationToken, next) => { /* ... */ });
 ```
 
 ## Concept, Technical Explanation
