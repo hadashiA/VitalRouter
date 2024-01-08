@@ -99,7 +99,7 @@ Forget about the traditional OOP "Command pattern" :) This library is intended f
 The name "command" is to emphasize that it is a operation that is "published" to your game system entirely. The word is borrowed from CQRS, EventStorming etc.
 
 In game development, the reason why the pub/sub model is used is because that any event will affect multiple sparse objects.
-See [#Technical Explanation](#Hoge) section to more information.
+See [Concedpt, Technical Explanation](#concept-technical-explanation) section to more information.
 
 > [!TIP]
 > Here we use the init-only property for simplicity. In your Unity project, you may need to add a definition of type `System.Runtime.CompilerServices.IsExternalInit`as a marker.
