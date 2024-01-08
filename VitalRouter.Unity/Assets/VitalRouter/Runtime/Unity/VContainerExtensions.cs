@@ -16,16 +16,16 @@ class MapRoutesInfo
     public static MapRoutesInfo Analyze(Type type) => Cache.GetOrAdd(type, key => new MapRoutesInfo(key));
 
     public Type Type { get; }
-    public MethodInfo MapRoutesMethod { get; }
+    public MethodInfo MapToMethod { get; }
     public MethodInfo UnmapRoutesMethod { get; }
     public ParameterInfo[] ParameterInfos { get; }
 
     public MapRoutesInfo(Type type)
     {
         Type = type;
-        MapRoutesMethod = type.GetMethod("MapTo", BindingFlags.Instance | BindingFlags.Public)!;
+        MapToMethod = type.GetMethod("MapTo", BindingFlags.Instance | BindingFlags.Public)!;
         UnmapRoutesMethod = type.GetMethod("UnmapRoutes", BindingFlags.Instance | BindingFlags.Public)!;
-        ParameterInfos = MapRoutesMethod.GetParameters();
+        ParameterInfos = MapToMethod.GetParameters();
     }
 }
 
@@ -64,8 +64,8 @@ public class InterceptorStackBuilder
 public class RoutingBuilder
 {
     public InterceptorStackBuilder Filters { get; } = new();
+    public bool OverrideRouter { get; set; }
 
-    internal bool CommandBusOverriden { get; set; }
     internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
 
     readonly IContainerBuilder containerBuilder;
@@ -74,11 +74,6 @@ public class RoutingBuilder
     public RoutingBuilder(IContainerBuilder containerBuilder)
     {
         this.containerBuilder = containerBuilder;
-    }
-
-    public void OverrideCommandBus()
-    {
-        CommandBusOverriden = true;
     }
 
     public void Map<T>()
@@ -117,17 +112,54 @@ public static class VContainerExtensions
 {
     public static void RegisterVitalRouter(this IContainerBuilder builder, Action<RoutingBuilder> configure)
     {
-        var router = new RoutingBuilder(builder);
-        configure(router);
+        var routing = new RoutingBuilder(builder);
+        configure(routing);
 
-        foreach (var interceptorType in router.Filters.Types)
+        builder.RegisterVitalRouterInterceptors(routing);
+        builder.RegisterVitalRouterDisposable(routing);
+
+        if (!builder.Exists(typeof(Router)) || routing.OverrideRouter)
+        {
+            builder.Register<Router>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
+        }
+
+        builder.RegisterBuildCallback(container =>
+        {
+            var router = container.Resolve<Router>();
+            InvokeMapRoutes(router, routing, container);
+        });
+    }
+
+    public static void RegisterVitalRouter(this IContainerBuilder builder, Router routerInstance, Action<RoutingBuilder> configure)
+    {
+        var routing = new RoutingBuilder(builder);
+        configure(routing);
+
+        builder.RegisterInstance(routerInstance)
+            .AsImplementedInterfaces()
+            .AsSelf();
+
+        builder.RegisterVitalRouterInterceptors(routing);
+        builder.RegisterVitalRouterDisposable(routing);
+
+        builder.RegisterBuildCallback(container =>
+        {
+            InvokeMapRoutes(routerInstance, routing, container);
+        });
+    }
+
+    static void RegisterVitalRouterInterceptors(this IContainerBuilder builder, RoutingBuilder routing)
+    {
+        foreach (var interceptorType in routing.Filters.Types)
         {
             builder.Register(interceptorType, Lifetime.Singleton);
         }
 
-        for (var i = 0; i < router.MapRoutesInfos.Count; i++)
+        for (var i = 0; i < routing.MapRoutesInfos.Count; i++)
         {
-            var info = router.MapRoutesInfos[i];
+            var info = routing.MapRoutesInfos[i];
             for (var paramIndex = 1; paramIndex < info.ParameterInfos.Length; paramIndex++)
             {
                 var interceptorType = info.ParameterInfos[paramIndex].ParameterType;
@@ -137,49 +169,42 @@ public static class VContainerExtensions
                 }
             }
         }
+    }
 
-        if (!builder.Exists(typeof(Router)) || router.CommandBusOverriden)
+    static void RegisterVitalRouterDisposable(this IContainerBuilder builder, RoutingBuilder routing)
+    {
+        builder.Register(container => new RoutingDisposable(container, routing.MapRoutesInfos), Lifetime.Singleton);
+    }
+
+    static void InvokeMapRoutes(Router router, RoutingBuilder routing, IObjectResolver container)
+    {
+        foreach (var interceptorType in routing.Filters.Types)
         {
-            builder.Register<Router>(Lifetime.Singleton)
-                .AsImplementedInterfaces()
-                .AsSelf();
+            router.Filter((ICommandInterceptor)container.Resolve(interceptorType));
         }
 
-        builder.Register(container =>
+        for (var i = 0; i < routing.MapRoutesInfos.Count; i++)
         {
-            return new RoutingDisposable(container, router.MapRoutesInfos);
-        }, Lifetime.Singleton);
+            var info = routing.MapRoutesInfos[i];
+            var instance = container.Resolve(info.Type);
 
-        builder.RegisterBuildCallback(container =>
-        {
-            var commandBus = container.Resolve<Router>();
-            foreach (var interceptorType in router.Filters.Types)
+            // TODO: more optimize
+            var parameters = CappedArrayPool<object>.Shared8Limit.Rent(info.ParameterInfos.Length);
+            try
             {
-                commandBus.Filter((ICommandInterceptor)container.Resolve(interceptorType));
+                parameters[0] = router;
+                for (var paramIndex = 1; paramIndex < parameters.Length; paramIndex++)
+                {
+                    parameters[paramIndex] = container.Resolve(info.ParameterInfos[paramIndex].ParameterType);
+                }
+                info.MapToMethod.Invoke(instance, parameters);
             }
-
-            for (var i = 0; i < router.MapRoutesInfos.Count; i++)
+            finally
             {
-                var info = router.MapRoutesInfos[i];
-                var instance = container.Resolve(info.Type);
-
-                // TODO: more optimize
-                var parameters = CappedArrayPool<object>.Shared8Limit.Rent(info.ParameterInfos.Length);
-                try
-                {
-                    parameters[0] = commandBus;
-                    for (var paramIndex = 1; paramIndex < parameters.Length; paramIndex++)
-                    {
-                        parameters[paramIndex] = container.Resolve(info.ParameterInfos[paramIndex].ParameterType);
-                    }
-                    info.MapRoutesMethod.Invoke(instance, parameters);
-                }
-                finally
-                {
-                    CappedArrayPool<object>.Shared8Limit.Return(parameters);
-                }
+                CappedArrayPool<object>.Shared8Limit.Return(parameters);
             }
-        });
+        }
+
     }
 }
 #endif

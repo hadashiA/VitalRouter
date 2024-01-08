@@ -1,39 +1,33 @@
-VitalRouter, is a zero-allocation message passing tool for Unity (Game Engine).  And the very thin layer that encourages MVP (or whatever)-like design. 
+# VitalRouter
+
+[![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
+![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
+
+VitalRouter, is a zero-allocation message passing tool for Unity (Game Engine). And the very thin layer that encourages MVP (or whatever)-like design. 
 Whether you're an individual developer or part of a larger team, VitalRouter can help you build complex game applications.
 
-Main feature:
-
-| Feature | Description |
-| ---- | ---- |
-| Declarative routing | The event delivery destination and inetrceptor stack are self-explanatory in the type definition. |
-| Async/non-Async handlers | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way |
-| With DI and without DI | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project |
-| Thread-safe N:N fun-outable, and FIFO  | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. |
-
-Here's a declarative routing example. Refer to the documentation for more details.
+Bring fast, declarative routing to your application with Source Generator.
 
 ```cs
-[Routs]
-[Filter(typeof(Logging))]           
-[Filter(typeof(ExceptionHandling))] 
-[Filter(typeof(GameStateUpdating))] 
-public partial class FooPresenter
+[Routes]
+[Filter(typeof(Logging))]
+[Filter(typeof(ExceptionHandling))]
+[Filter(typeof(GameStateUpdating))]
+public partial class ExamplePresenter
 {
-	// Define async event handler
-    public async UniTask On(CommandA cmd, CancellationToken cancellation)
-    {
-	    // Do something after all filters runs on...
-	    // 
-	    // Here, by awaiting for asynchronous processing, all types of next Command deliveries are waited for.
-    }
-
-	// Define non-async event handler
-	public void On(CommandB cmd)
+    // Declare event handler
+	public void On(FooCommand cmd)
 	{
-		// Do something after all filters runs on...
+	    // Do something ...
 	}
 
-	// Define handler with extra filter
+    // Declare event handler (async)
+	public async UniTask On(BarCommand cmd)
+	{
+	    // Do something for await ...
+	}
+    
+    // Declare event handler with extra filter
 	[Filter(typeof(ExtraFilter))]
 	public async UniTask(CommandC cmd, CancellationToken cancellation)
 	{
@@ -42,7 +36,18 @@ public partial class FooPresenter
 }
 ```
 
+
+| Feature | Description |
+| ---- | ---- |
+| Declarative routing | The event delivery destination and inetrceptor stack are self-explanatory in the type definition. |
+| Async/non-Async handlers | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way |
+| With DI and without DI | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project |
+| Thread-safe N:N fun-outable, and FIFO  | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. |
+
+```
+
 ## Table of Contents
+
 
 
 ## Installation
@@ -65,9 +70,7 @@ https://github.com/hadashiA/Vitalrouter.git?path=/VitalRouter.Unity/Assets/Vital
 
 ## Getting Started
 
-First, define the data types of the event/message you want to dispatch.
-In VitalRouter this is called  "command".
-
+First, define the data types of the event/message you want to dispatch. In VitalRouter this is called  "command".
 Any data type that implements `ICommand` will be available as a command, no matter what the struct/class/record is.
 
 ```cs
@@ -84,15 +87,12 @@ public readonly record struct BarCommand : ICommand
 }
 ```
 
-
 Command is a data type (without any functionally). You can call it an event, a message, whatever you like.
-The name "command" is to emphasize that it is a operation that is "published" to your game system entirely.  
-The reason why the pub/sub model is used is because that command will affect multiple sparse objects.
-The word is borrowed from CQRS, DDD's Event storming etc.
-the Command object has no methods. This library is intended for data-oriented design. 
+Forget about the traditional OOP "Command pattern" :) This library is intended for data-oriented design.
+The name "command" is to emphasize that it is a operation that is "published" to your game system entirely. The word is borrowed from CQRS, EventStorming etc.
 
-Forget about the traditional OOP Command pattern :) 
-See [#Technical Explanation](#Recommendation) section to more information.
+In game development, the reason why the pub/sub model is used is because that any event will affect multiple sparse objects.
+See [#Technical Explanation](#Hoge) section to more information.
 
 > [!TIP]
 > Here we use the init-only property for simplicity. In your Unity project, you may need to add a definition of type `System.Runtime.CompilerServices.IsExternalInit`as a marker.
@@ -113,14 +113,15 @@ public partial class FooPresentor
 	// This is called when a FooCommand is published.
     public void On(FooCommand cmd)
     {
-	    // Do something ...
+        // Do something ...
     }
 
-	// This is called when a FooCommand is published.
-	public async UniTask On(BarCommand cmd)
-	{
-	    // Do something for await ...
-	}
+    // This is called when a FooCommand is published.
+    public async UniTask On(BarCommand cmd)
+    {
+        // Do something for await ...
+        // Here, by awaiting for async task, the next command will not be called until this task is completed.
+    }
 }
 ```
 	
@@ -141,7 +142,7 @@ public async UniTask Recieve(FooCommand cmd, CancellationToken cancellation) { /
 ```
 
 > [!NOTE] 
-> Is this magic unclear? Well, there are no restrictions by Interface, but it will generate source code that will be resolved at compile time, so you will be able to follow the code well enough.
+> There are no restrictions by Interface but it will generate source code that will be resolved at compile time, so you will be able to follow the code well enough.
 
 Now, when and how does the routing defined here call? There are several ways to make it enable this.
 
@@ -150,13 +151,12 @@ Now, when and how does the routing defined here call? There are several ways to 
 In a naive Unity project, the easy way is to make MonoBehaviour into Routes.
 
 ```cs
-[Routes]
+[Rouets] // < If routing as a MonoBehaviour
 public class FooPresenter : MonoBehaviour
 {
     void Start()
     {
-	    // Start command handling.
-	    MapTo(Router.Default); 
+	    MapTo(Router.Default); // < Start command handling here 
     }
 }
 ```
@@ -187,13 +187,14 @@ MapTo(anotherRouter);
 ```cs
 anotherRouter.PublishAsync(..)
 ```
+
 ### DI based
 
 If DI is used, plain C# classes can be used as routing targets.
 
 ```cs
-[Rouets]
-public class FooPresenter // Plain C# class
+[Rouets] // < If routing as a plain C# class
+public class FooPresenter
 {
 	// ...
 }
@@ -211,7 +212,7 @@ public class GameLifetimeSCope : LifetimeScope
 	{
 		builder.RegisterVitalRouter(routing =>
 		{
-			routing.Map<FooPresenter>();
+			routing.Map<FooPresenter>(); // < Register routing class
 		});			
 	}
 }
@@ -233,13 +234,13 @@ class SomeMyComponent : MonoBehaviour
 		this.publisher = publisher;
     }
 
-	void Start()
-	{
-		someUIButton.onClick += ev =>
-		{
-			publisher.PublishAsync(new FooCommand { X = 1, Y = 2 }).Forget();
-		}
-	}
+    void Start()
+    {
+        someUIButton.onClick += ev =>
+        {
+        	publisher.PublishAsync(new FooCommand { X = 1, Y = 2 }).Forget();
+        }
+    }
 }
 ```
 
@@ -248,15 +249,15 @@ In this case, Just register your Component with the DI container. References are
 ```diff
 public class GameLifetimeSCope : LifetimeScope
 {
-	protected override void Configure(IContainerBuilder builder)
-	{
+    protected override void Configure(IContainerBuilder builder)
+    {
 +		builder.RegisterComponentInHierarchy<SomeMyComponent>(Lifetime.Singleton);
 	
-		builder.RegisterVitalRouter(routing =>
-		{
-			routing.Map<FooPresenter>();
-		});			
-	}
+        builder.RegisterVitalRouter(routing =>
+        {
+        	routing.Map<FooPresenter>();
+        });			
+    }
 }
 
 ```
@@ -283,9 +284,11 @@ Or, handle subscription.
 
 ```cs
 var subscription = presenter.MapTo(Router.Default);
+// ...
 subscription.Dispose();
 ```
-## pub/sub control flow
+
+## Publish
 
 `ICommandPublisher` has an awaitable publish method.
 
@@ -297,16 +300,13 @@ await publisher.PublishAsync(command, cancellationToken)
 ```
 
 
-> [!IMPORTANT]
->  `PublishAsync` をawaitすると、すべての  Subscribers (`[Routes]` クラス etc)のすべての処理が終わるまでをawaitすることになる。
-> 全ての `[Routes]` クラスと Interceptor が処理を終えるまで、次の処理にいかないことに注意してください。
+If you await `PublishAsync`, you will await until all Subscribers (`[Routes]` class etc.) have finished all processing.
+Also note that the next command will not be delivered until all `[Routes]` classes and Interceptors have finished processing the Command.
 
-
-If publish is occured before subscribers have finished consuming, Queue in the order in which Publish is called.
 ```cs
 publisher.PublishAsync(command1).Forget();
-publisher.PublishAsync(command2).Forget();
-publisher.PublishAsync(command3).Forget();
+publisher.PublishAsync(command2).Forget(); // Queue behind command1
+publisher.PublishAsync(command3).Forget(); // Queue behind command2
 // ...
 ```
 
@@ -323,26 +323,24 @@ publisher.Enqueue(command3);
 
 In other words, per Router, command acts as a FIFO queue for the async task.
 
-
 Of course, if you do `await`, you can try/catch all subscriber/routes exceptions.
 
 ```cs
 try
 {
-	await publisher.PublishAsync(cmd);
+    await publisher.PublishAsync(cmd);
 }
 catch (Exception ex)
 {
-	// ...
+    // ...
 }
 ```
-
 
 ## Interceptors
 
 Interceptors can intercede additional processing before or after the any published command has been passed and consumed to subscribers.		
 
-![[interceptorstack 2.png]]
+![interceptorstack](./docs/interceptorstack.png)
 
 ### Create a interceptor
 
@@ -366,7 +364,6 @@ class Logging : ICommandInterceptor
 	}		
 }
 ```
-
 
 Example 2:  try/catch all subscribers exceptions.
 
@@ -459,27 +456,64 @@ If you take the way of 2 or 3, the Interceptor instance is resolved as follows.
 
 - If you are using DI, the DI container will resolve this automatically.
 - if you are not using DI, you will need to pass the instance in the `MapTo` call.
+
+```cs
+MapTo(Router.Default, new Logging(), new ErrorHandling());
+```
  
 ```cs
-MapTo(Router.Default, new Logging(), new ExceptionHandling());
+// auto-generated
+public Subscription MapTo(ICommandSubscribable subscribable, Logging interceptor1, ErrorHandling interceptor2) { /* ... */ }
 ```
-
 
 ## DI scope
 
-VContainer
+VContainer can create child scopes at any time during execution.
+
+`RegisterVitalRouter` inherits the Router defined in the parent. 
+For example,
 
 ```cs
 public class ParentLifetimeScope : LifetimeScope  
 {  
     protected override void Configure(IContainerBuilder builder)  
     {    
-        builder.RegisterVitalRouter(router =>  
+        builder.RegisterVitalRouter(routing =>  
         {  
-            router.Map<PresenterA>();  
-        });  
+            routing.Map<PresenterA>();  
+        });
+        
+        builder.Register<ParentPublisher>(Lifetime.Singleton);
     }  
 }
+```
+
+```cs
+public class ChildLifetimeScope : LifetimeScope  
+{  
+    protected override void Configure(IContainerBuilder builder)  
+    {    
+        builder.RegisterVitalRouter(routing =>  
+        {  
+            routing.Map<PresenterB>();  
+        });  
+        
+        builder.Register<MyChildPublisher>(Lifetime.Singleton);
+    }  
+}
+```
+
+- When an instance in the parent scope publishes used `ICommandPublisher`, PresenterA and PresenterB receive it.
+- When an instance in the child scope publishes `ICommandPublisher`, also PresenterA and PresenterB receives.
+
+If you wish to create a dedicated Router for a child scope, do the following.
+
+```diff
+builder.RegisterVitalRouter(routing =>  
+{
++    routing.OverrideRouter = true;
+    routing.Map<PresenterB>();  
+});  
 ```
 
 ## Command Pooling
@@ -548,53 +582,93 @@ var sequenceCommand = new SequenceCommand
 
 ## Fan-out
 
-It may be too strong a restriction that all commands be executed in series.
-If you want to create a group that executes in concurernt, you can creaet a composite router.
+If you want to create a group that executes in concurrent, you can create a composite router.
 
 ```cs
 public class CompositeRouter : ICommandPublisher
 {
 	public Router GroupA { get; } = new();
 	public Ruoter GroupB { get; } = new();
+    
+    readonly UniTask[] tasks = new UniTask[2];
 
-	public UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+	public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
 	{
-		return UniTask.WhenAll(
-			
-		);
+        tasks[0] = GroupA.PublishAsync(command, cancellation);
+        tasks[1] = GroupA.PublishAsync(command, cancellation);
+		await UniTask.WhenAll(tasks)
+        Array.Clear(tasks, 0, tasks.Length);
 	}
 }
 ```
 
-## Recommendation, Technical Explanation
+For DI,
 
-Unityは簡単に扱える非常に楽しいゲームエンジンだが、複数のえGame
-ゲームは、あるオブジェクトが発火したイベント
-つまりこれを素朴に実装してしまうと、
+```cs
+public class SampleLifetimeScope : LifetimeScope
+{
+    public override void Configure(IContainerBuilder builder)
+    {
+        var compositeRouter = new CompositeRouter();
+        
+        builder.RegisterVitalRouter(compositeRouter.GroupA, routing =>
+        {
+            routing.Map<PresenterA>();
+            routing.Map<PresenterB>();
+        });
+        
+        builder.RegisterVitalRouter(compositeRouter.GroupA, routing =>
+        {
+            routing.Map<PresenterA>();
+            routing.Map<PresenterB>();
+        });
+        
+        builder.RegisterInsatnce(compositeRouter)
+            .AsImplementedInterfaces()
+            .AsSelf()
+    }
+}
+```
+
+## Concept, Technical Explanation
 
 ### Unidirectional control flow
 
+Unityは簡単に扱える非常に楽しいゲームエンジンだが、複数のGameObject間の通信を扱うのは難しい設計課題だ。
 
+UI、 ゲームシステム、 エフェクト、 サウンド、 画面上の様々なActor。ゲーム世界の中では、非常にたくさんのオブジェクトが協調して動作している。
 
- 素朴なUnityプログラミングでは、命令を下す側と、命令を下される側が混ぜこぜになりやすい。
-Controller/
+あるひとつのオブジェクトが発火したイベントが、ゲーム世界の様々なオブジェクトに影響を及ぼすことは普通だ。
+もし、我々がこれを素朴なOOPで実装しようとすると、複雑なN:N関係が生まれてしまうだろう。
 
-これがゲームの設計が難しい要因のひとつだ。
+さらに言うと、ゲーム内の個々のオブジェクトは、実行中にめまぐるしく生成と破棄と繰り返すから、このN:Nはさらに複雑なものになりがちだ。
 
+![guchagucya](./docs/guchaguchya.png)
+
+ここでの問題は、「命令を下す者」と「命令を下される者」の区別がないことだ。
+素朴なUnityプログラミングでは、命令を下す側と、命令を下される側が混ぜこぜになりやすい。
+これがゲームの設計が難しい要因のひとつである。
+
+関係がN:Nになる場合、双方向バインディングはほとんど無力だ。なぜなら、あるオブジェクトが、関係するすべてのオブジェクトの参照を解決するのは非常にfatである。しかも、それらすべては生成を繰り返すのだ。
+
+ほとんどの現代的なGUIアプリケーションフレームワークは、双方向バインディングではなく、全体としての単方向制御フローを推奨している。
+ゲームはGUIよりも一般化はむずかしい。しかし依然として「制御フロー」を整理することは重要である。
+
+![sequence](./docs/sequence.png)
+
+### Presentation Domain Separation
 
 M-V-Cはコンポーネントの設計パターンではない。ドメインロジックとプレゼンテーションの分離である。
 「Controller」とは、本来は誰からもコントロールされることはない。ゲームシステムが物語の円とりポイントである。
 VitalRouter は、誰かがController を宣言するだけだ。だからこのような設計を後押しする。
 
-VitalRouter ではpub/sub モデルを採用した。
+![updating](./docs/updating.png)
+
 また、 Unityのオブジェクトは、実行時にめまぐるしく生成/破棄が繰り返される
 あるオブジェクトが発火したイベントが、UI、 非常にたくさんの N:N の関係性を 
 
  GameObject 同士の メッセージのやりとりのサポートが微妙
  素朴に考えると、GameObject同士の関連が爆発してしまう
-
-双方向バインディングはこの方法に無力である。
-昨今、多くのGUIデザインは、単方向フローをとる。
 
 ゲームでは、view
 多く
@@ -605,12 +679,7 @@ VitalRouter ではpub/sub モデルを採用した。
 
 データオリエンテッドデザイン
 
-Command にはメソッドがない。これはただのデータである。
-設計上の利点のひとつは、、
-
-
-隠蔽しなくてよい。
-
+### Data-oriented
 
 イベントの種類ごとに型を与えることの重要な利点は、シリアライズ可能なことです。
 たとえば、
