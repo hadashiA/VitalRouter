@@ -631,63 +631,62 @@ public class SampleLifetimeScope : LifetimeScope
 
 ### Unidirectional control flow
 
-Unityは簡単に扱える非常に楽しいゲームエンジンだが、複数のGameObject間の通信を扱うのは難しい設計課題だ。
+Unity is a very fun game engine that is easy to work with, but handling communication between multiple GameObjects is a difficult design challenge.
 
-UI、 ゲームシステム、 エフェクト、 サウンド、 画面上の様々なActor。ゲーム世界の中では、非常にたくさんのオブジェクトが協調して動作している。
+In the game world, there are so many objects working in concert: UI, game system, effects, sounds, and various actors on the screen.
 
-あるひとつのオブジェクトが発火したイベントが、ゲーム世界の様々なオブジェクトに影響を及ぼすことは普通だ。
-もし、我々がこれを素朴なOOPで実装しようとすると、複雑なN:N関係が生まれてしまうだろう。
+It is common for an event fired by one object to affect many objects in the game world.
+If we try to implement this in a naive OOP way, we will end up with complex... very complex N:N relationships.
 
-さらに言うと、ゲーム内の個々のオブジェクトは、実行中にめまぐるしく生成と破棄と繰り返すから、このN:Nはさらに複雑なものになりがちだ。
+More to the point, individual objects in the game are created and destroyed at a dizzying rate during execution, so this N:N would tend to be even more complex!
 
 ![guchagucya](./docs/gucyagucya.png)
 
-ここでの問題は、「命令を下す者」と「命令を下される者」の区別がないことだ。
-素朴なUnityプログラミングでは、命令を下す側と、命令を下される側が混ぜこぜになりやすい。
-これがゲームの設計が難しい要因のひとつである。
+There is one problem. There is no distinction between "the one giving the orders" and "the one being given the orders."
+In the simplicity of Unity programming, it is easy to mix up the person giving the orders and the person being given the orders.
+This is one of the reasons why game design is so difficult.
 
-関係がN:Nになる場合、双方向バインディングはほとんど無力だ。なぜなら、あるオブジェクトが、関係するすべてのオブジェクトの参照を解決するのは非常にfatである。しかも、それらすべては生成を繰り返すのだ。
+When the relationship is N:N, bidirectional binding is almost powerless. This is because it is very fat for an object to resolve references to all related objects. Moreover, they all repeat their creation.
 
-ほとんどの現代的なGUIアプリケーションフレームワークは、双方向バインディングではなく、全体としての単方向制御フローを推奨している。
-ゲームはGUIよりも一般化はむずかしい。しかし依然として「制御フロー」を整理することは重要である。
+Most modern GUI application frameworks recommend an overall unidirectional control flow rather than bidirectional binding.
+Games are more difficult to generalize than GUIs. However, it is still important to organize the "control flow.
 
 ![sequence](./docs/sequence.png)
 
 ### Presentation Domain Separation
 
-M-V-Cはコンポーネントの設計パターンではない。ドメインロジックとプレゼンテーションの分離である。
-「Controller」とは、本来は誰からもコントロールされることはない。ゲームシステムが物語の円とりポイントである。
-VitalRouter は、誰かがController を宣言するだけだ。だからこのような設計を後押しする。
+A major concern in game development is creating a Visualize Component that is unique to that game.
 
-![updating](./docs/updating.png)
+The Component we create has very detailed state transitions. It will move every frame. Maybe.
+It will have complex parent-child relationships. Maybe.
 
-また、 Unityのオブジェクトは、実行時にめまぐるしく生成/破棄が繰り返される
-あるオブジェクトが発火したイベントが、UI、 非常にたくさんの N:N の関係性を 
+But we should separate this very detailed state management from the state that is brought to the entire game system and to which many objects react.
 
- GameObject 同士の メッセージのやりとりのサポートが微妙
- 素朴に考えると、GameObject同士の関連が爆発してしまう
+![updating](. /docs/updating.png)
 
-ゲームでは、view
-多く
+It is the latter fact that should be "publich".
 
-- Component それ自身のUpdate は自身の内側に隠蔽する
-- Componentはそれじし
+Each View Component should hide its own state inside.
 
 
-データオリエンテッドデザイン
+The "Controller" in MVC is essentially not controlled by anyone. It is the entry point of the system.
+VitalRouter does not require someone to own the Controller, only to declare it in an attribute. So it encourages this kind of design.
 
 ### Data-oriented
 
-イベントの種類ごとに型を与えることの重要な利点は、シリアライズ可能なことです。
-たとえば、
-コマンドを順番どおりに保存しておくだけで、あとからそれをゲームのリプレイができます。
-また、ネットワークをまたいだ命令や、
-エディタいよって Commandのシーケンスを保存しておけば
+An important advantage of giving a type for each type of event is that it is serializable.
 
-推奨するデザインについては、詳しくはフィロソフィーセクションを参照してほしい。
-しかしもちろん、あなたの
+For example,
+- If you store your commands in order, you can implement game replays later by simply re-publishing them in chronological order.
+- Commands across the network, your scenario data, editor data, whatever is datamined, are the same input data source.
 
+A further data-oriented design advantage is the separation of "data" from "functionality.
 
+The life of data is dynamic.
+Data is created/destroyed when certain conditions are met in a game.
+On the other hand, "functionality" has a static lifetime.
+This is a powerful tool for large code bases.
+ 
 ## LISENCE
 
 MIT
