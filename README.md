@@ -132,7 +132,7 @@ public partial class FooPresentor
     }
 }
 ```
-	
+
 Types with the `[Routes]` attribute are analyzed at compile time and a method to subscribe to Command is automatically generated.
 
 Methods that satisfy the following conditions are eligible.
@@ -159,7 +159,7 @@ Now, when and how does the routing defined here call? There are several ways to 
 In a naive Unity project, the easy way is to make MonoBehaviour into Routes.
 
 ```cs
-[Rouets] // < If routing as a MonoBehaviour
+[Routes] // < If routing as a MonoBehaviour
 public class FooPresenter : MonoBehaviour
 {
     void Start()
@@ -201,7 +201,7 @@ anotherRouter.PublishAsync(..)
 If DI is used, plain C# classes can be used as routing targets.
 
 ```cs
-[Rouets] // < If routing as a plain C# class
+[Routes] // < If routing as a plain C# class
 public class FooPresenter
 {
     // ...
@@ -214,7 +214,7 @@ using VitalRouter;
 using VitalRouter.VContainer;
 
 // VContaner's configuration
-public class GameLifetimeSCope : LifetimeScope
+public class GameLifetimeScope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
@@ -264,7 +264,7 @@ class SomeMyComponent : MonoBehaviour
 Just register your Component with the DI container. References are auto-wiring.
 
 ```diff
-public class GameLifetimeSCope : LifetimeScope
+public class GameLifetimeScope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
@@ -474,7 +474,7 @@ If you take the way of 2 or 3, the Interceptor instance is resolved as follows.
 - if you are not using DI, you will need to pass the instance in the `MapTo` call.
 	- ```cs
 	  MapTo(Router.Default, new Logging(), new ErrorHandling());
-	  ``` 
+	  ```
 	- ```cs
 	  // auto-generated
 	  public Subscription MapTo(ICommandSubscribable subscribable, Logging interceptor1, ErrorHandling interceptor2) { /* ... */ }
@@ -753,7 +753,7 @@ The life of data is dynamic.
 Data is created/destroyed when certain conditions are met in a game.
 On the other hand, "functionality" has a static lifetime.
 This is a powerful tool for large code bases.
- 
+
 ## LISENCE
 
 MIT
