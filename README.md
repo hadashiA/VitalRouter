@@ -41,7 +41,7 @@ public partial class ExamplePresenter
 | Declarative routing | The event delivery destination and inetrceptor stack are self-explanatory in the type definition. |
 | Async/non-Async handlers | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way |
 | With DI and without DI | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project |
-| Thread-safe N:N pub/sub, FIFO  | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. |
+| Thread-safe N:N pub/sub, FIFO  | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. But fan-out is also possible. |
 
 
 ## Table of Contents
