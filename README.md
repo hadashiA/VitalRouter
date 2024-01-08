@@ -16,35 +16,33 @@ Bring fast, declarative routing to your application with Source Generator.
 public partial class ExamplePresenter
 {
     // Declare event handler
-	public void On(FooCommand cmd)
-	{
-	    // Do something ...
-	}
+    public void On(FooCommand cmd)
+    {
+        // Do something ...
+    }
 
     // Declare event handler (async)
-	public async UniTask On(BarCommand cmd)
-	{
-	    // Do something for await ...
-	}
+    public async UniTask On(BarCommand cmd)
+    {
+        // Do something for await ...
+    }
     
     // Declare event handler with extra filter
-	[Filter(typeof(ExtraFilter))]
-	public async UniTask(CommandC cmd, CancellationToken cancellation)
-	{
-		// Do something after all filters runs on.
-	}
+    [Filter(typeof(ExtraFilter))]
+    public async UniTask(CommandC cmd, CancellationToken cancellation)
+    {
+        // Do something after all filters runs on.
+    }
 }
 ```
-
 
 | Feature | Description |
 | ---- | ---- |
 | Declarative routing | The event delivery destination and inetrceptor stack are self-explanatory in the type definition. |
 | Async/non-Async handlers | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way |
 | With DI and without DI | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project |
-| Thread-safe N:N fun-outable, and FIFO  | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. |
+| Thread-safe N:N pub/sub, FIFO  | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. |
 
-```
 
 ## Table of Contents
 
@@ -110,7 +108,7 @@ using VitalRouter;
 [Routes]
 public partial class FooPresentor
 {
-	// This is called when a FooCommand is published.
+    // This is called when a FooCommand is published.
     public void On(FooCommand cmd)
     {
         // Do something ...
@@ -156,7 +154,7 @@ public class FooPresenter : MonoBehaviour
 {
     void Start()
     {
-	    MapTo(Router.Default); // < Start command handling here 
+        MapTo(Router.Default); // < Start command handling here 
     }
 }
 ```
@@ -196,7 +194,7 @@ If DI is used, plain C# classes can be used as routing targets.
 [Rouets] // < If routing as a plain C# class
 public class FooPresenter
 {
-	// ...
+    // ...
 }
 ```
 
@@ -208,13 +206,13 @@ using VitalRouter.VContainer;
 // VContaner's configuration
 public class GameLifetimeSCope : LifetimeScope
 {
-	protected override void Configure(IContainerBuilder builder)
-	{
-		builder.RegisterVitalRouter(routing =>
-		{
-			routing.Map<FooPresenter>(); // < Register routing class
-		});			
-	}
+    protected override void Configure(IContainerBuilder builder)
+    {
+        builder.RegisterVitalRouter(routing =>
+        {
+            routing.Map<FooPresenter>(); // < Register routing class
+        });			
+    }
 }
 ```
 
@@ -223,22 +221,22 @@ In this case, publisher is also injectable.
 ```cs
 class SomeMyComponent : MonoBehaviour
 {
-	[SerializeField]
-	Button someUIBotton;
+    [SerializeField]
+    Button someUIBotton;
 
-	ICommandPublisher publisher;
+    ICommandPublisher publisher;
 
-	[Inject]
+    [Inject]
     public Construct(ICommandPublisher publisher)
     {
-		this.publisher = publisher;
+        this.publisher = publisher;
     }
 
     void Start()
     {
         someUIButton.onClick += ev =>
         {
-        	publisher.PublishAsync(new FooCommand { X = 1, Y = 2 }).Forget();
+            publisher.PublishAsync(new FooCommand { X = 1, Y = 2 }).Forget();
         }
     }
 }
@@ -251,11 +249,11 @@ public class GameLifetimeSCope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
-+		builder.RegisterComponentInHierarchy<SomeMyComponent>(Lifetime.Singleton);
++        builder.RegisterComponentInHierarchy<SomeMyComponent>(Lifetime.Singleton);
 	
         builder.RegisterVitalRouter(routing =>
         {
-        	routing.Map<FooPresenter>();
+            routing.Map<FooPresenter>();
         });			
     }
 }
@@ -295,8 +293,8 @@ subscription.Dispose();
 ```cs
 ICommandPublisher publisher = Router.Default;
 
-await publisher.PublishAsync(command)
-await publisher.PublishAsync(command, cancellationToken)
+await publisher.PublishAsync(command);
+await publisher.PublishAsync(command, cancellationToken);
 ```
 
 
@@ -351,17 +349,17 @@ Example 1:  Some kind of processing is interspersed before and after the command
 ```cs
 class Logging : ICommandInterceptor
 {
-	public async UniTask InvokeAsync<T>(  
-	    T command,  
-	    CancellationToken cancellation,  
-	    Func<T, CancellationToken, UniTask> next)  
-	    where T : ICommand  
-	{  
-		UnityEngine.Debug.Log($"Start {typeof(T)}");	
-		// Execute subsequent routes.	
-		await next(command, cancellation);		
-		UnityEngine.Debug.Log($"End   {typeof(T)}");
-	}		
+    public async UniTask InvokeAsync<T>(  
+        T command,  
+        CancellationToken cancellation,  
+        Func<T, CancellationToken, UniTask> next)  
+        where T : ICommand  
+    {  
+        UnityEngine.Debug.Log($"Start {typeof(T)}");	
+        // Execute subsequent routes.	
+        await next(command, cancellation);		
+        UnityEngine.Debug.Log($"End   {typeof(T)}");
+    }		
 }
 ```
 
@@ -370,22 +368,22 @@ Example 2:  try/catch all subscribers exceptions.
 ```cs
 class ExceptionHandling : ICommandInterceptor
 {
-	public async UniTask InvokeAsync<T>(  
-	    T command,  
-	    CancellationToken cancellation,  
-	    Func<T, CancellationToken, UniTask> next)  
-	    where T : ICommand  
-	{  
-		try
-		{
-			await next(command, cancellation);
-		}
-		catch (Exception ex)
-		{
-			// Error tracking you like			
-			UnityEngine.Debug.Log($"oops! {ex.Message}");			
-		}
-	}		
+    public async UniTask InvokeAsync<T>(  
+        T command,  
+        CancellationToken cancellation,  
+        Func<T, CancellationToken, UniTask> next)  
+        where T : ICommand  
+    {  
+        try
+        {
+            await next(command, cancellation);
+        }
+        catch (Exception ex)
+        {
+            // Error tracking you like			
+            UnityEngine.Debug.Log($"oops! {ex.Message}");			
+        }
+    }		
 }
 ```
 
@@ -394,20 +392,20 @@ Example 3:  Filtering command.
 ```cs
 class MyFilter : ICommandInterceptor
 {
-	public async UniTask InvokeAsync<T>(  
-	    T command,  
-	    CancellationToken cancellation,  
-	    Func<T, CancellationToken, UniTask> next)  
-	    where T : ICommand  
-	{  
-		if (command is FooCommand { X: > 100 } cmd) 
-		{
-			// Deny. Skip the rest of the subscribers.
-			return;
-		}
-		// Allow.
-		await next(command, cancellation);
-	}		
+    public async UniTask InvokeAsync<T>(  
+        T command,  
+        CancellationToken cancellation,  
+        Func<T, CancellationToken, UniTask> next)  
+        where T : ICommand  
+    {  
+        if (command is FooCommand { X: > 100 } cmd) 
+        {
+            // Deny. Skip the rest of the subscribers.
+            return;
+        }
+        // Allow.
+        await next(command, cancellation);
+    }		
 }
 ```
 ### Configure interceptors
@@ -429,11 +427,10 @@ Router.Default
 // 1. Apply to the router with VContaienr.
 builder.RegisterVitalRouter(routing => 
 {
-	routing.Filters.Add<Logging>();		
-	routing.Filters.Add<ErrorHandling>();	
+    routing.Filters.Add<Logging>();
+    routing.Filters.Add<ErrorHandling>();
 });
 ```
-
 
 ```cs
 // 2. Apply to the type
@@ -441,12 +438,12 @@ builder.RegisterVitalRouter(routing =>
 [Filter(typeof(Logging))]
 public partial class FooPresenter
 {
-	// 3. Apply to the method
-	[Filter(typeof(ExtraInterceptor))]
-	public void On(CommandA cmd)
-	{
-		// ...
-	}
+    // 3. Apply to the method
+    [Filter(typeof(ExtraInterceptor))]
+    public void On(CommandA cmd)
+    {
+        // ...
+    }
 }
 ```
 
@@ -528,12 +525,12 @@ So we support the ability to pooling commands when classes are used.
 ```cs
 public class MyBoxedCommmand : IPoolableCommand
 {
-	public ResourceA ResourceA { ge; set; }
+    public ResourceA ResourceA { ge; set; }
 
-	void IPoolableCommand.OnReturnToPool()
-	{
-		ResourceA = null!;
-	}
+    void IPoolableCommand.OnReturnToPool()
+    {
+        ResourceA = null!;
+    }
 }
 ```
 
@@ -573,10 +570,10 @@ If your command implements `IEnumerable<ICommand>`, it represents a sequence of 
 ```cs
 var sequenceCommand = new SequenceCommand
 {
-	new CommandA(), 
-	new CommandB(), 
-	new CommandC(),
-	// ...
+    new CommandA(), 
+    new CommandB(), 
+    new CommandC(),
+    // ...
 }
 ```
 
@@ -587,18 +584,18 @@ If you want to create a group that executes in concurrent, you can create a comp
 ```cs
 public class CompositeRouter : ICommandPublisher
 {
-	public Router GroupA { get; } = new();
-	public Ruoter GroupB { get; } = new();
-    
+    public Router GroupA { get; } = new();
+    public Ruoter GroupB { get; } = new();
+   
     readonly UniTask[] tasks = new UniTask[2];
 
-	public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
-	{
+    public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+    {
         tasks[0] = GroupA.PublishAsync(command, cancellation);
         tasks[1] = GroupA.PublishAsync(command, cancellation);
-		await UniTask.WhenAll(tasks)
+        await UniTask.WhenAll(tasks)
         Array.Clear(tasks, 0, tasks.Length);
-	}
+    }
 }
 ```
 
@@ -643,7 +640,7 @@ UI、 ゲームシステム、 エフェクト、 サウンド、 画面上の�
 
 さらに言うと、ゲーム内の個々のオブジェクトは、実行中にめまぐるしく生成と破棄と繰り返すから、このN:Nはさらに複雑なものになりがちだ。
 
-![guchagucya](./docs/guchaguchya.png)
+![guchagucya](./docs/gucyagucya.png)
 
 ここでの問題は、「命令を下す者」と「命令を下される者」の区別がないことだ。
 素朴なUnityプログラミングでは、命令を下す側と、命令を下される側が混ぜこぜになりやすい。
