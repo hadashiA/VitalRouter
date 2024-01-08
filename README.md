@@ -46,7 +46,16 @@ public partial class ExamplePresenter
 
 ## Table of Contents
 
-
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Publish](#publish)
+- [Interceptors](#interceptors)
+- [DI scope](#di-scope)
+- [Command pooling](#command-pooling)
+- [Sequence Command](#sequence-command)
+- [Fan-out](#fan-out)
+- [Concept, Technical Explanation](#concept-technical-explanation)
+- [Lisence](#lisence)
 
 ## Installation
 
