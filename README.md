@@ -437,7 +437,7 @@ There are three levels to enable interceptor
 ```cs
 // Apply to the router.
 Router.Default
-    .Filter(new Logging());
+    .Filter(new Logging())
     .Filter(new ErrorHandling);
 ```
 
