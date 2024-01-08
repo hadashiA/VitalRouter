@@ -629,10 +629,10 @@ public class SampleLifetimeScope : LifetimeScope
             routing.Map<PresenterB>();
         });
         
-        builder.RegisterVitalRouter(compositeRouter.GroupA, routing =>
+        builder.RegisterVitalRouter(compositeRouter.GroupB, routing =>
         {
-            routing.Map<PresenterA>();
-            routing.Map<PresenterB>();
+            routing.Map<PresenterC>();
+            routing.Map<PresenterD>();
         });
         
         builder.RegisterInsatnce(compositeRouter)
