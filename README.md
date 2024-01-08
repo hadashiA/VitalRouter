@@ -98,7 +98,7 @@ Forget about the traditional OOP "Command pattern" :) This library is intended f
 The name "command" is to emphasize that it is a operation that is "published" to your game system entirely. The word is borrowed from CQRS, EventStorming etc.
 
 In game development, the reason why the pub/sub model is used is because that any event will affect multiple sparse objects.
-See [Concedpt, Technical Explanation](#concept-technical-explanation) section to more information.
+See [Concept, Technical Explanation](#concept-technical-explanation) section to more information.
 
 > [!TIP]
 > Here we use the init-only property for simplicity. In your Unity project, you may need to add a definition of type `System.Runtime.CompilerServices.IsExternalInit`as a marker.
@@ -231,6 +231,8 @@ public class GameLifetimeSCope : LifetimeScope
 }
 ```
 
+The instances mapped here are released with to dispose of the DI container.
+
 In this case, publisher is also injectable.
 
 ```cs
@@ -257,7 +259,7 @@ class SomeMyComponent : MonoBehaviour
 }
 ```
 
-In this case, Just register your Component with the DI container. References are auto-wiring.
+Just register your Component with the DI container. References are auto-wiring.
 
 ```diff
 public class GameLifetimeSCope : LifetimeScope
@@ -468,15 +470,13 @@ If you take the way of 2 or 3, the Interceptor instance is resolved as follows.
 
 - If you are using DI, the DI container will resolve this automatically.
 - if you are not using DI, you will need to pass the instance in the `MapTo` call.
-
-```cs
-MapTo(Router.Default, new Logging(), new ErrorHandling());
-```
- 
-```cs
-// auto-generated
-public Subscription MapTo(ICommandSubscribable subscribable, Logging interceptor1, ErrorHandling interceptor2) { /* ... */ }
-```
+	- ```cs
+	  MapTo(Router.Default, new Logging(), new ErrorHandling());
+	  ``` 
+	- ```cs
+	  // auto-generated
+	  public Subscription MapTo(ICommandSubscribable subscribable, Logging interceptor1, ErrorHandling interceptor2) { /* ... */ }
+	  ```
 
 ## DI scope
 
