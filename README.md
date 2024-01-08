@@ -641,6 +641,27 @@ public class SampleLifetimeScope : LifetimeScope
 }
 ```
 
+Now we have the structure shown in the following：
+
+```mermaid
+flowchart LR
+
+Default(Router.Default)
+GroupA(groupA)
+GroupB(groupB)
+P1(presenter1)
+P2(presenter2)
+P3(presenter3)
+P4(presenter4)
+
+Default -->|concurent| GroupA
+Default -->|concurrent| GroupB
+GroupA --> P1
+GroupA --> P2
+GroupB --> P3
+GroupB --> P4
+```
+
 ## Low-level API
 
 ```cs
@@ -676,6 +697,8 @@ router.Filter<FooCommand>(async (cmd, cancellationToken, next) => { /* ... */ })
 
 ### Unidirectional control flow
 
+![sequence](./docs/sequence.png)
+
 Unity is a very fun game engine that is easy to work with, but handling communication between multiple GameObjects is a difficult design challenge.
 
 In the game world, there are so many objects working in concert: UI, game system, effects, sounds, and various actors on the screen.
@@ -695,8 +718,6 @@ When the relationship is N:N, bidirectional binding is almost powerless. This is
 
 Most modern GUI application frameworks recommend an overall unidirectional control flow rather than bidirectional binding.
 Games are more difficult to generalize than GUIs. However, it is still important to organize the "control flow.
-
-![sequence](./docs/sequence.png)
 
 ### Presentation Domain Separation
 
