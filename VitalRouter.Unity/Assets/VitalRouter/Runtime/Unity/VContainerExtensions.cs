@@ -118,7 +118,7 @@ public static class VContainerExtensions
         builder.RegisterVitalRouterInterceptors(routing);
         builder.RegisterVitalRouterDisposable(routing);
 
-        if (!builder.Exists(typeof(Router)) || routing.OverrideRouter)
+        if (routing.Isolated || !builder.Exists(typeof(Router)))
         {
             builder.Register<Router>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
