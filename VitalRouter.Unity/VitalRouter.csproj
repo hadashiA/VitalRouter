@@ -62,6 +62,7 @@
     <Compile Include="Assets/VitalRouter/Runtime/ICommandInterceptor.cs" />
     <Compile Include="Assets/VitalRouter/Runtime/Subscription.cs" />
     <Compile Include="Assets/VitalRouter/Runtime/InvokeContext.cs" />
+    <Compile Include="Assets/VitalRouter/Runtime/FanOutInterceptor.cs" />
     <Compile Include="Assets/VitalRouter/Runtime/Attributes.cs" />
     <None Include="Assets/VitalRouter/Runtime/csc.rsp" />
     <None Include="Assets/VitalRouter/Runtime/VitalRouter.asmdef" />

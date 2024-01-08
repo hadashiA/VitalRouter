@@ -66,10 +66,10 @@ public class RoutingBuilder
     public InterceptorStackBuilder Filters { get; } = new();
     public bool Isolated { get; set; }
 
-    internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
+    internal readonly List<MapRoutesInfo> MapRoutesInfos = new();
+    internal readonly List<RoutingBuilder> Subsequents = new();
 
     readonly IContainerBuilder containerBuilder;
-    readonly List<MapRoutesInfo> mapRoutesInfos = new();
 
     public RoutingBuilder(IContainerBuilder containerBuilder)
     {
@@ -86,25 +86,32 @@ public class RoutingBuilder
         {
             containerBuilder.Register<T>(Lifetime.Singleton);
         }
-        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 
     public void Map<T>(T instance) where T : class
     {
         containerBuilder.RegisterInstance(instance);
-        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 
     public void MapComponentInHierarchy<T>() where T : UnityEngine.Component
     {
         containerBuilder.RegisterComponentInHierarchy<T>();
-        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 
     public void MapComponentInNewPrefab<T>(T prefab) where T : UnityEngine.Component
     {
         containerBuilder.RegisterComponentInNewPrefab(prefab, Lifetime.Singleton);
-        mapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+    }
+
+    public void FanOut(Action<RoutingBuilder> configure)
+    {
+        var subsequent = new RoutingBuilder(containerBuilder);
+        configure(subsequent);
+        Subsequents.Add(subsequent);
     }
 }
 
@@ -115,9 +122,6 @@ public static class VContainerExtensions
         var routing = new RoutingBuilder(builder);
         configure(routing);
 
-        builder.RegisterVitalRouterInterceptors(routing);
-        builder.RegisterVitalRouterDisposable(routing);
-
         if (routing.Isolated || !builder.Exists(typeof(Router)))
         {
             builder.Register<Router>(Lifetime.Singleton)
@@ -125,28 +129,57 @@ public static class VContainerExtensions
                 .AsSelf();
         }
 
+        builder.RegisterVitalRouterInterceptors(routing);
+        builder.RegisterVitalRouterDisposable(routing);
+
+        FanOutInterceptor? fanOut = null;
+        if (routing.Subsequents.Count > 0)
+        {
+            fanOut = new FanOutInterceptor();
+            foreach (var subsequent in routing.Subsequents)
+            {
+                var subsequentRouter = new Router();
+                builder.RegisterVitalRouterRecursive(subsequentRouter, subsequent);
+                fanOut.Add(subsequentRouter);
+            }
+        }
+
         builder.RegisterBuildCallback(container =>
         {
             var router = container.Resolve<Router>();
             InvokeMapRoutes(router, routing, container);
+
+            if (fanOut != null)
+            {
+                router.Filter(fanOut);
+            }
         });
     }
 
-    public static void RegisterVitalRouter(this IContainerBuilder builder, Router routerInstance, Action<RoutingBuilder> configure)
+    static void RegisterVitalRouterRecursive(this IContainerBuilder builder, Router routerInstance, RoutingBuilder routing)
     {
-        var routing = new RoutingBuilder(builder);
-        configure(routing);
-
-        builder.RegisterInstance(routerInstance)
-            .AsImplementedInterfaces()
-            .AsSelf();
-
         builder.RegisterVitalRouterInterceptors(routing);
         builder.RegisterVitalRouterDisposable(routing);
+
+        FanOutInterceptor? fanOut = null;
+        if (routing.Subsequents.Count > 0)
+        {
+            fanOut = new FanOutInterceptor();
+            foreach (var subsequent in routing.Subsequents)
+            {
+                var subsequentRouter = new Router();
+                builder.RegisterVitalRouterRecursive(subsequentRouter, subsequent);
+                fanOut.Add(subsequentRouter);
+            }
+        }
 
         builder.RegisterBuildCallback(container =>
         {
             InvokeMapRoutes(routerInstance, routing, container);
+            if (fanOut != null)
+            {
+                routerInstance.Filter(fanOut);
+            }
         });
     }
 
@@ -173,7 +206,7 @@ public static class VContainerExtensions
 
     static void RegisterVitalRouterDisposable(this IContainerBuilder builder, RoutingBuilder routing)
     {
-        builder.Register(container => new RoutingDisposable(container, routing.MapRoutesInfos), Lifetime.Singleton);
+        builder.Register(container => new RoutingDisposable(container, routing.MapRoutesInfos), Lifetime.Scoped);
     }
 
     static void InvokeMapRoutes(Router router, RoutingBuilder routing, IObjectResolver container)

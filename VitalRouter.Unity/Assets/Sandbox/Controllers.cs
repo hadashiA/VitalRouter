@@ -78,3 +78,43 @@ public partial class SamplePresenter
         UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
     }
 }
+
+[Routes]
+public partial class SamplePresenter2
+{
+    public UniTask On(CharacterEnterCommand cmd)
+    {
+        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
+        return default;
+    }
+}
+
+[Routes]
+public partial class SamplePresenter3
+{
+    public UniTask On(CharacterEnterCommand cmd)
+    {
+        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
+        return default;
+    }
+}
+
+[Routes]
+public partial class SamplePresenter4
+{
+    public UniTask On(CharacterEnterCommand cmd)
+    {
+        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
+        return default;
+    }
+}
+
+[Routes]
+public partial class SamplePresenter5
+{
+    public UniTask On(CharacterEnterCommand cmd)
+    {
+        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
+        return default;
+    }
+}

@@ -44,8 +44,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 {
     public static readonly Router Default = new();
 
-    // public ICommandPool CommandPool { get; set; } = ConcurrentQueueCommandPool.Shared;
-
     readonly ExpandBuffer<ICommandSubscriber> subscribers = new(8);
     readonly ExpandBuffer<IAsyncCommandSubscriber> asyncSubscribers = new(8);
     readonly ExpandBuffer<ICommandInterceptor> interceptors = new(4);

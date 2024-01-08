@@ -16,7 +16,7 @@ public class SampleEntryPoint : IAsyncStartable
 
     public async UniTask StartAsync(CancellationToken cancellation)
     {
-        await router.PublishAsync(new CharacterMoveCommand(), cancellation);
+        await router.PublishAsync(new CharacterEnterCommand(), cancellation);
     }
 }
 
@@ -26,10 +26,30 @@ public class SampleLifetimeScope : LifetimeScope
     {
         builder.RegisterEntryPoint<SampleEntryPoint>();
 
-        builder.RegisterVitalRouter(router =>
+        builder.RegisterVitalRouter(routing =>
         {
-            router.Map<SamplePresenter>();
-            router.Map<RoutingBehaviour>();
+            routing.Map<SamplePresenter>();
+            routing.Map<RoutingBehaviour>();
+
+            routing.FanOut(childRouter =>
+            {
+                childRouter.Map<SamplePresenter2>();
+            });
+
+            routing.FanOut(childRouter =>
+            {
+                childRouter.Map<SamplePresenter3>();
+
+                childRouter.FanOut(grandChildRouter =>
+                {
+                    grandChildRouter.Map<SamplePresenter4>();
+                });
+
+                childRouter.FanOut(grandChildRouter =>
+                {
+                    grandChildRouter.Map<SamplePresenter5>();
+                });
+            });
         });
     }
 }

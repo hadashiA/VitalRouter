@@ -598,21 +598,22 @@ var sequenceCommand = new SequenceCommand
 If you want to create a group that executes in concurrent, you can create a composite router.
 
 ```cs
-public class CompositeRouter : ICommandPublisher
-{
-    public Router GroupA { get; } = new();
-    public Ruoter GroupB { get; } = new();
-   
-    readonly UniTask[] tasks = new UniTask[2];
+var fanOut = new FanOutInterceptor();
+var groupA = new Router();
+var groupB = new Router();
 
-    public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
-    {
-        tasks[0] = GroupA.PublishAsync(command, cancellation);
-        tasks[1] = GroupA.PublishAsync(command, cancellation);
-        await UniTask.WhenAll(tasks)
-        Array.Clear(tasks, 0, tasks.Length);
-    }
-}
+fanOut.Add(groupA);
+fanOut.Add(groupB);
+
+Router.Default.Filter(fanOut);
+
+// Map routes per group
+
+presenter1.MapTo(groupA);
+presenter2.MapTo(groupA);
+
+presente3.MapTo(groupB);
+presente4.MapTo(groupB);
 ```
 
 For DI,
@@ -621,24 +622,21 @@ For DI,
 public class SampleLifetimeScope : LifetimeScope
 {
     public override void Configure(IContainerBuilder builder)
-    {
-        var compositeRouter = new CompositeRouter();
-        
-        builder.RegisterVitalRouter(compositeRouter.GroupA, routing =>
+    {                
+        builder.RegisterVitalRouter(routing =>
         {
-            routing.Map<PresenterA>();
-            routing.Map<PresenterB>();
+            routing.FanOut(groupA =>
+            {
+                groupA.Map<Presenter1>();
+                groupA.Map<Presenter2>();
+            })    
+
+            routing.FanOut(groupB =>
+            {
+                groupA.Map<Presenter3>();
+                groupA.Map<Presenter4>();
+            })                
         });
-        
-        builder.RegisterVitalRouter(compositeRouter.GroupB, routing =>
-        {
-            routing.Map<PresenterC>();
-            routing.Map<PresenterD>();
-        });
-        
-        builder.RegisterInsatnce(compositeRouter)
-            .AsImplementedInterfaces()
-            .AsSelf()
     }
 }
 ```
