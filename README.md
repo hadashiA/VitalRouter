@@ -6,7 +6,7 @@
 VitalRouter, is a zero-allocation message passing tool for Unity (Game Engine). And the very thin layer that encourages MVP (or whatever)-like design. 
 Whether you're an individual developer or part of a larger team, VitalRouter can help you build complex game applications.
 
-Bring fast, declarative routing to your application with Source Generator.
+Bring fast, declarative routing to your application. 
 
 ```cs
 [Routes]
