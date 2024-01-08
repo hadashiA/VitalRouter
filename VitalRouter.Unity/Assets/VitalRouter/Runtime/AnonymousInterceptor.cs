@@ -7,7 +7,7 @@ namespace VitalRouter;
 
 public static class CommandBusAnonymousExtensions
 {
-    public static void Use<T>(
+    public static void Filter<T>(
         this Router router,
         Func<T, CancellationToken, Func<T, CancellationToken, UniTask>, UniTask> callback)
         where T : ICommand

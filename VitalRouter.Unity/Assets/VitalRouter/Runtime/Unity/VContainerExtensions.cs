@@ -64,7 +64,7 @@ public class InterceptorStackBuilder
 public class RoutingBuilder
 {
     public InterceptorStackBuilder Filters { get; } = new();
-    public bool OverrideRouter { get; set; }
+    public bool Isolated { get; set; }
 
     internal IReadOnlyList<MapRoutesInfo> MapRoutesInfos => mapRoutesInfos;
 
