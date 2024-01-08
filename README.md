@@ -633,8 +633,8 @@ public class SampleLifetimeScope : LifetimeScope
 
             routing.FanOut(groupB =>
             {
-                groupA.Map<Presenter3>();
-                groupA.Map<Presenter4>();
+                groupB.Map<Presenter3>();
+                groupB.Map<Presenter4>();
             })                
         });
     }
