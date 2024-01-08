@@ -61,13 +61,12 @@ public partial class ExamplePresenter
 
 Prerequirements:
 - Unity 2022.2+
-	- This limitation is due to the use of the Incremental Source Generator.
+  - This limitation is due to the use of the Incremental Source Generator.
 - Install [UniTask](https://github.com/Cysharp/UniTask)
-	- Currently, VitalRouter uses UniTask instead of `UnityEngine.Awaitable`. UniTask is a fully featured and fast awaitable implementation.
-	- 
-	- In a future, if `UnityEngine.Awaitable` is enhanced in a future version of Unity, it may be migrated.
+  - Currently, VitalRouter uses UniTask instead of `UnityEngine.Awaitable`. UniTask is a fully featured and fast awaitable implementation.
+  - In a future, if `UnityEngine.Awaitable` is enhanced in a future version of Unity, it may be migrated.
 - (optional) Install [VContainer](https://github.com/hadashiA/VContainer) 
-	-  For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
+  -  For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
 
 Then, add git URL from Package Manager:
 
@@ -123,7 +122,7 @@ public partial class FooPresentor
         // Do something ...
     }
 
-    // This is called when a FooCommand is published.
+    // This is called when a BarCommand is published.
     public async UniTask On(BarCommand cmd)
     {
         // Do something for await ...
@@ -219,7 +218,14 @@ public class GameLifetimeSCope : LifetimeScope
     {
         builder.RegisterVitalRouter(routing =>
         {
-            routing.Map<FooPresenter>(); // < Register routing class
+            routing.Map<FooPresenter>(); // < Register routing plain class
+
+            // Or, use MonoBehaviour instance with DI
+            routing.MapComponent(instance);
+            // Or, use MonoBehaviour in the scene
+            routing.MapComponentInHierarchy<MyRoutesComponent>();
+            // Or, use MonoBehaviour from prefab
+            routing.MapComponentInNewPrefab(prefab);
         });			
     }
 }
@@ -652,7 +658,7 @@ More to the point, individual objects in the game are created and destroyed at a
 <img src="./docs/gucyagucya.png" width="400" />
 
 There is one problem. There is no distinction between "the one giving the orders" and "the one being given the orders."
-In the simplicity of Unity programming, it is easy to mix up the person giving the orders and the person being given the orders.
+In the simplicity of Unity programming, it is easy to mix up the object giving the orders and the object being given the orders.
 This is one of the reasons why game design is so difficult.
 
 When the relationship is N:N, bidirectional binding is almost powerless. This is because it is very fat for an object to resolve references to all related objects. Moreover, they all repeat their creation.
