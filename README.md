@@ -655,8 +655,8 @@ P2(presenter2)
 P3(presenter3)
 P4(presenter4)
 
-Default -->|concurent| GroupA
-Default -->|concurrent| GroupB
+Default --> GroupA
+Default --> GroupB
 GroupA --> P1
 GroupA --> P2
 GroupB --> P3
