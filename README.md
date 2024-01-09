@@ -655,8 +655,8 @@ P2(presenter2)
 P3(presenter3)
 P4(presenter4)
 
-Default --> GroupA
-Default --> GroupB
+Default -->|fire and forget| GroupA
+Default -->|fire and forget| GroupB
 GroupA --> P1
 GroupA --> P2
 GroupB --> P3
