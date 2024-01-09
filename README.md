@@ -729,7 +729,7 @@ It will have complex parent-child relationships. Maybe.
 
 But we should separate this very detailed state management from the state that is brought to the entire game system and to which many objects react.
 
-<img src="./docs/updating.png" width="400" />
+<img src="./docs/updating2.png" width="400" />
 
 It is the latter fact that should be "publich".
 
