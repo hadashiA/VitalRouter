@@ -720,7 +720,7 @@ When the relationship is N:N, bidirectional binding is almost powerless. This is
 Most modern GUI application frameworks recommend an overall unidirectional control flow rather than bidirectional binding.
 Games are more difficult to generalize than GUIs. However, it is still important to organize the "control flow.
 
-### Presentation Domain Separation
+### Distinguish between publishable and encapsulated states
 
 A major concern in game development is creating a Visualize Component that is unique to that game.
 
@@ -735,6 +735,9 @@ It is the latter fact that should be "publich".
 
 Each View Component should hide its own state inside.
 
+So how should granular components expose their own events to the outside world?  Be aware of ownership. An object with ownership of a fine-grained object communicates further outside of it.
+
+<img src="./docs/ownership.png" width="400" />
 
 The "Controller" in MVC is essentially not controlled by anyone. It is the entry point of the system.
 VitalRouter does not require someone to own the Controller, only to declare it in an attribute. So it encourages this kind of design.
