@@ -238,7 +238,7 @@ class SomeMyComponent : MonoBehaviour
     ICommandPublisher publisher;
 
     [Inject]
-    public Construct(ICommandPublisher publisher)
+    public void Construct(ICommandPublisher publisher)
     {
         this.publisher = publisher;
     }
