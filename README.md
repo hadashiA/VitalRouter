@@ -698,8 +698,6 @@ router.Filter<FooCommand>(async (cmd, cancellationToken, next) => { /* ... */ })
 
 ### Unidirectional control flow
 
-![sequence](./docs/sequence.png)
-
 Unity is a very fun game engine that is easy to work with, but handling communication between multiple GameObjects is a difficult design challenge.
 
 In the game world, there are so many objects working in concert: UI, game system, effects, sounds, and various actors on the screen.
@@ -718,7 +716,10 @@ This is one of the reasons why game design is so difficult.
 When the relationship is N:N, bidirectional binding is almost powerless. This is because it is very fat for an object to resolve references to all related objects. Moreover, they all repeat their creation.
 
 Most modern GUI application frameworks recommend an overall unidirectional control flow rather than bidirectional binding.
-Games are more difficult to generalize than GUIs. However, it is still important to organize the "control flow.
+
+![sequence](./docs/sequence.png)
+
+Games are more difficult to generalize than GUIs. However, it is still important to organize the "control flow".
 
 ### Distinguish between publishable and encapsulated states
 
