@@ -650,12 +650,12 @@ P4(presenter4)
 Default -->|fire and forget| GroupA
 Default -->|fire and forget| GroupB
 
-subgraph awaitable (1)
+subgraph awaitable 1
   GroupA --> P1
   GroupA --> P2
 end
 
-subgraph awaitable (2)
+subgraph awaitable 2
   GroupB --> P3
   GroupB --> P4
 end
