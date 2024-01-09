@@ -512,7 +512,7 @@ public class ChildLifetimeScope : LifetimeScope
 - When an instance in the parent scope publishes used `ICommandPublisher`, PresenterA and PresenterB receive it.
 - When an instance in the child scope publishes `ICommandPublisher`, also PresenterA and PresenterB receives.
 
-If you wish to create a dedicated Router for a child scope, do the following.
+If you want to create a dedicated Router for a child scope, do the following.
 
 ```diff
 builder.RegisterVitalRouter(routing =>  
@@ -588,7 +588,7 @@ var sequenceCommand = new SequenceCommand
 
 ## Fan-out
 
-If you want to create a group that executes in concurrent, you can create a composite router.
+If you want to group the awaiting subscribers, you can use `FanOutInterceptor`
 
 ```cs
 var fanOut = new FanOutInterceptor();
