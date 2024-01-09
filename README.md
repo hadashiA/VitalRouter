@@ -201,14 +201,6 @@ anotherRouter.PublishAsync(..)
 If DI is used, plain C# classes can be used as routing targets.
 
 ```cs
-[Routes] // < If routing as a plain C# class
-public class FooPresenter
-{
-    // ...
-}
-```
-
-```cs
 using VContainer;
 using VitalRouter;
 using VitalRouter.VContainer;
@@ -655,8 +647,8 @@ P2(presenter2)
 P3(presenter3)
 P4(presenter4)
 
-Default -->|concurent| GroupA
-Default -->|concurrent| GroupB
+Default -->|fire and forget| GroupA
+Default -->|fire and forget| GroupB
 GroupA --> P1
 GroupA --> P2
 GroupB --> P3
@@ -698,8 +690,6 @@ router.Filter<FooCommand>(async (cmd, cancellationToken, next) => { /* ... */ })
 
 ### Unidirectional control flow
 
-![sequence](./docs/sequence.png)
-
 Unity is a very fun game engine that is easy to work with, but handling communication between multiple GameObjects is a difficult design challenge.
 
 In the game world, there are so many objects working in concert: UI, game system, effects, sounds, and various actors on the screen.
@@ -718,9 +708,12 @@ This is one of the reasons why game design is so difficult.
 When the relationship is N:N, bidirectional binding is almost powerless. This is because it is very fat for an object to resolve references to all related objects. Moreover, they all repeat their creation.
 
 Most modern GUI application frameworks recommend an overall unidirectional control flow rather than bidirectional binding.
-Games are more difficult to generalize than GUIs. However, it is still important to organize the "control flow.
 
-### Presentation Domain Separation
+![sequence](./docs/sequence.png)
+
+Games are more difficult to generalize than GUIs. However, it is still important to organize the "control flow".
+
+### Distinguish between publishable and encapsulated states
 
 A major concern in game development is creating a Visualize Component that is unique to that game.
 
@@ -729,12 +722,15 @@ It will have complex parent-child relationships. Maybe.
 
 But we should separate this very detailed state management from the state that is brought to the entire game system and to which many objects react.
 
-<img src="./docs/updating.png" width="400" />
+<img src="./docs/updating2.png" width="400" />
 
 It is the latter fact that should be "publich".
 
 Each View Component should hide its own state inside.
 
+So how should granular components expose their own events to the outside world?  Be aware of ownership. An object with ownership of a fine-grained object communicates further outside of it.
+
+<img src="./docs/ownership.png" width="400" />
 
 The "Controller" in MVC is essentially not controlled by anyone. It is the entry point of the system.
 VitalRouter does not require someone to own the Controller, only to declare it in an attribute. So it encourages this kind of design.

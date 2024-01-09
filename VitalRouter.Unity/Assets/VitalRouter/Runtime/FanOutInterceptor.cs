@@ -24,12 +24,9 @@ public class FanOutInterceptor : ICommandInterceptor
     {
         await next(command, cancellation);
 
-        executingTasks.Clear();
         foreach (var x in subsequents)
         {
-            executingTasks.Add(x.PublishAsync(command, cancellation));
+            x.PublishAsync(command, cancellation).Forget();
         }
-        whenAllSource.Reset(executingTasks);
-        await whenAllSource.Task;
     }
 }
