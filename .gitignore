@@ -364,3 +364,4 @@ VItalRouter.Benchmark/obj/*
 
 .DS_Store
 
+!VitalRouter.Unity/Assets/csc.rsp
