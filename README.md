@@ -201,14 +201,6 @@ anotherRouter.PublishAsync(..)
 If DI is used, plain C# classes can be used as routing targets.
 
 ```cs
-[Rouets] // < If routing as a plain C# class
-public class FooPresenter
-{
-    // ...
-}
-```
-
-```cs
 using VContainer;
 using VitalRouter;
 using VitalRouter.VContainer;
