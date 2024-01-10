@@ -312,7 +312,7 @@ partial class {{typeMeta.TypeName}}
         {
             handle = gameObject.AddComponent<VitalRouter.Unity.SubscriptionHandle>();
         }
-        ((VitalRouter.Unity.SubscriptionHandle)handle).Subscription = vitalRouterGeneratedSubscription;
+        ((VitalRouter.Unity.SubscriptionHandle)handle).Subscriptions.Add(vitalRouterGeneratedSubscription);
 """);
         }
         builder.AppendLine($$"""
