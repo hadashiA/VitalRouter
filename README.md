@@ -88,7 +88,7 @@ public readonly struct FooCommand : ICommand
     public string Y { get; init; }
 }
 
-public readonly record struct BarCommand : ICommand
+public readonly struct BarCommand : ICommand
 {
     public Guid Id { get; init; }
     public Vector3 Destination { get; init; }
@@ -97,7 +97,22 @@ public readonly record struct BarCommand : ICommand
 
 Command is a data type (without any functionally). You can call it an event, a message, whatever you like.
 Forget about the traditional OOP "Command pattern" :) This library is intended for data-oriented design.
+
 The name "command" is to emphasize that it is a operation that is "published" to your game system entirely. The word is borrowed from CQRS, EventStorming etc.
+
+One of the main advantages of event being a data type is that it is serializable.
+
+```cs
+[Serializable]       // < When you want to serialize to a scene or prefab in Unity.
+[MessagepackObject]  // < When you want to go through file or network I/O by MessagePack-Csharp.
+[YamlObject]         // < When you want to go through configuration files etc by VYaml.
+public readonly struct CharacterSpawnCommand : ICommand
+{
+    public long Id { get; init; }
+    public CharacterType Type { get; init; } 
+    public Vector3 Position { get; init; }      	
+}
+```
 
 In game development, the reason why the pub/sub model is used is because that any event will affect multiple sparse objects.
 See [Concept, Technical Explanation](#concept-technical-explanation) section to more information.
