@@ -42,7 +42,7 @@ public static class CommandPublisherExtensions
 
 public sealed partial class Router : ICommandPublisher, ICommandSubscribable, IDisposable
 {
-    public static readonly Router Default = new();
+    public static Router Default { get; set; } = new();
 
     readonly ExpandBuffer<ICommandSubscriber> subscribers = new(8);
     readonly ExpandBuffer<IAsyncCommandSubscriber> asyncSubscribers = new(8);
@@ -55,7 +55,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     bool disposed;
 
     readonly ReusableWhenAllSource whenAllSource = new();
-    readonly UniTaskAsyncLock publishLock = new();
     readonly object subscribeLock = new();
 
     readonly ICommandInterceptor publishCore;
@@ -72,8 +71,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
         try
         {
-            await publishLock.WaitAsync();
-
             lock (subscribeLock)
             {
                 if (interceptors.Count > 0)
@@ -103,7 +100,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         finally
         {
             executingInterceptors.Clear(true);
-            publishLock.Release();
         }
     }
 
@@ -174,7 +170,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         if (!disposed)
         {
             disposed = true;
-            publishLock.Dispose();
             subscribers.Clear(true);
             asyncSubscribers.Clear(true);
             executingTasks.Clear(true);

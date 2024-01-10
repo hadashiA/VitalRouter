@@ -30,6 +30,28 @@ class TestAsyncSubscriber : IAsyncCommandSubscriber
     }
 }
 
+class TestSignalSubscriber : IAsyncCommandSubscriber, IDisposable
+{
+    public AutoResetEvent Signal { get; } = new(false);
+    public int Calls { get; private set; }
+    public int Completed { get; private set; }
+
+    public async UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+    {
+        Calls++;
+
+        await UniTask.SwitchToThreadPool();
+        Signal.WaitOne();
+
+        Completed++;
+    }
+
+    public void Dispose()
+    {
+        Signal.Dispose();
+    }
+}
+
 class TestInterceptor : ICommandInterceptor
 {
     public int Calls { get; private set; }
@@ -143,5 +165,43 @@ public class RouterTest
         await commandBus.PublishAsync(new TestCommand1());
 
         Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
+    }
+
+    [Test]
+    public void ConcurrentPublishing()
+    {
+        var commandBus = new Router();
+        using var subscriber1 = new TestSignalSubscriber();
+        commandBus.Subscribe(subscriber1);
+
+        commandBus.PublishAsync(new TestCommand1()).Forget();
+        commandBus.PublishAsync(new TestCommand2()).Forget();
+
+        Assert.That(subscriber1.Calls, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task FirstInFirstOut()
+    {
+        var commandBus = new Router().FirstInFirstOut();
+
+        using var subscriber1 = new TestSignalSubscriber();
+        commandBus.Subscribe(subscriber1);
+
+        var task1 = commandBus.PublishAsync(new TestCommand1());
+        var task2 = commandBus.PublishAsync(new TestCommand2());
+
+        Assert.That(subscriber1.Calls, Is.EqualTo(1));
+        Assert.That(subscriber1.Completed, Is.EqualTo(0));
+
+        subscriber1.Signal.Set();
+        await task1;
+
+        Assert.That(subscriber1.Completed, Is.EqualTo(1));
+        Assert.That(subscriber1.Calls, Is.EqualTo(2));
+
+        subscriber1.Signal.Set();
+        await task2;
+        Assert.That(subscriber1.Completed, Is.EqualTo(2));
     }
 }

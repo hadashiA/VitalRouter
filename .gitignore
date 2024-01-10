@@ -332,6 +332,7 @@ VitalRouter.Unity/[Bb]uilds/
 VitalRouter.Unity/Assets/AssetStoreTools*
 VItalRouter.Unity/*.csproj
 VItalRouter.Unity/*.sln
+VitalRouter.Unity/UserSettings/*
 
 VitalRouter.Benchmark/[Ll]ibrary/
 VitalRouter.Benchmark/[Tt]emp/

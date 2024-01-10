@@ -9,7 +9,7 @@ namespace VitalRouter.Tests;
 public class WhenAllTest
 {
     [Test]
-    public async Task Hoge()
+    public async Task WaitAll()
     {
         var promise = new ReusableWhenAllSource();
 
