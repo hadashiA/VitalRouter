@@ -36,14 +36,13 @@ public partial class ExamplePresenter
 }
 ```
 
-| Feature | Description |
-| ---- | ---- |
-| Declarative routing | The event delivery destination and inetrceptor stack are self-explanatory in the type definition. |
-| Async/non-Async handlers | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way |
-| With DI and without DI | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project |
-| Thread-safe N:N pub/sub, FIFO  | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue.|
-| Fan-out | In Game, it is very useful to have events processed in series, but if the constraint is too strong, it is possible to fan-out to multiple FIFOs in concurernt. |
-
+| Feature                            | Description                                                                                                                                                                                                                                                    |
+|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Declarative routing                | The event delivery destination and inetrceptor stack are self-explanatory in the type definition.                                                                                                                                                              |
+| Async/non-Async handlers           | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                                                                                                                                 |
+| With DI and without DI             | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                                                        |
+| Thread-safe N:N pub/sub            | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. |
+| FIFO (First in first out), Fan-out | In Game, it is very useful to have events processed in series, VitalRouter provide FIFO constraints. it is possible to fan-out to multiple FIFOs in concurernt.                                                                                                |
 
 ## Table of Contents
 
@@ -54,7 +53,7 @@ public partial class ExamplePresenter
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
 - [Sequence Command](#sequence-command)
-- [Fan-out](#fan-out)
+- [FIFO](#fifo)
 - [Low-level API](#low-level-api)
 - [Concept, Technical Explanation](#concept-technical-explanation)
 - [Lisence](#lisence)
@@ -323,16 +322,18 @@ await publisher.PublishAsync(command);
 await publisher.PublishAsync(command, cancellationToken);
 ```
 
-
 If you await `PublishAsync`, you will await until all Subscribers (`[Routes]` class etc.) have finished all processing.
-Also note that the next command will not be delivered until all `[Routes]` classes and Interceptors have finished processing the Command.
+
+Note that by default, when Publish is executed in parallel, Subscribers is also executed in parallel.
 
 ```cs
-publisher.PublishAsync(command1).Forget();
-publisher.PublishAsync(command2).Forget(); // Queue behind command1
-publisher.PublishAsync(command3).Forget(); // Queue behind command2
+publisher.PublishAsync(command1).Forget(); // Start processing command1 immediately
+publisher.PublishAsync(command2).Forget(); // Start processing command2 immediately
+publisher.PublishAsync(command3).Forget(); // Start processing command3 immediately
 // ...
 ```
+
+If you want to treat the commands like a queue to be sequenced, see [FIFO](#fifo) section for more information.
 
 The following is same for the above.
 
@@ -344,8 +345,6 @@ publisher.Enqueue(command3);
 ```
 
 `Enqueue` is an alias to `PublishAsync(command).Forget()`.
-
-In other words, per Router, command acts as a FIFO queue for the async task.
 
 Of course, if you do `await`, you can try/catch all subscriber/routes exceptions.
 
@@ -601,11 +600,42 @@ var sequenceCommand = new SequenceCommand
 }
 ```
 
-## Fan-out
+## FIFO
 
-If you want to group the awaiting subscribers, you can use `FanOutInterceptor`
+If you want to treat the commands like a queue to be sequenced, do the following:
 
 ```cs
+// Set FIFO constraint to the globally.
+Router.Default.FirstInFirstOut();
+
+// Create FIFO router.
+var fifoRouter = new Router().FirstInFirstOut();
+
+// for DI
+builder.RegisterVitalRouter(routing => 
+{
+    routing.FirstInFirstOut();
+});
+```
+
+In this case, the next command will not be delivered until all `[Routes]` classes and Interceptors have finished processing the Command.
+
+In other words, per Router, command acts as a FIFO queue for the async task.
+
+```cs
+publisher.PublishAsync(command1).Forget(); // Start processing command1 immediately
+publisher.PublishAsync(command2).Forget(); // Queue command2 behaind command1
+publisher.PublishAsync(command3).Forget(); // Queue comand3 behaind command2
+// ...
+```
+
+### Fan-out
+
+When FIFO mode, if you want to group the awaiting subscribers, you can use `FanOutInterceptor`
+
+```cs
+Router.Default.FirstInFirstOutOrdering();
+
 var fanOut = new FanOutInterceptor();
 var groupA = new Router();
 var groupB = new Router();
@@ -633,17 +663,18 @@ public class SampleLifetimeScope : LifetimeScope
     {                
         builder.RegisterVitalRouter(routing =>
         {
-            routing.FanOut(groupA =>
-            {
-                groupA.Map<Presenter1>();
-                groupA.Map<Presenter2>();
-            })    
-
-            routing.FanOut(groupB =>
-            {
-                groupB.Map<Presenter3>();
-                groupB.Map<Presenter4>();
-            })                
+            routing
+                .FirstInFirstOut()            
+                .FanOut(groupA =>
+                {
+                    groupA.Map<Presenter1>();
+                    groupA.Map<Presenter2>();
+                })    
+                .FanOut(groupB =>
+                {
+                    groupB.Map<Presenter3>();
+                    groupB.Map<Presenter4>();
+                })                
         });
     }
 }

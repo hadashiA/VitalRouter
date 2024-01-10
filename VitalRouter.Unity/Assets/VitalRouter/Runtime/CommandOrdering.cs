@@ -39,7 +39,6 @@ public static class RouterCommandOrderingExtensions
 {
     public static Router FirstInFirstOut(this Router router)
     {
-        router.Filter(FirstInFirstOutOrdering.Instance);
-        return router;
+        return router.Filter(FirstInFirstOutOrdering.Instance);
     }
 }

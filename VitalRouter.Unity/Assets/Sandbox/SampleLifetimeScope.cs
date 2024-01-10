@@ -29,6 +29,7 @@ public class SampleLifetimeScope : LifetimeScope
 
         builder.RegisterVitalRouter(routing =>
         {
+            routing.Filters.Add<LoggingInterceptor>();
             routing.Map<SamplePresenter>();
             routing.Map<RoutingBehaviour>();
 
