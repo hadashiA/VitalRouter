@@ -107,11 +107,18 @@ public class RoutingBuilder
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
     }
 
-    public void FanOut(Action<RoutingBuilder> configure)
+    public RoutingBuilder FirstInFirstOut()
+    {
+        Filters.Add<FirstInFirstOutOrdering>();
+        return this;
+    }
+
+    public RoutingBuilder FanOut(Action<RoutingBuilder> configure)
     {
         var subsequent = new RoutingBuilder(containerBuilder);
         configure(subsequent);
         Subsequents.Add(subsequent);
+        return this;
     }
 }
 

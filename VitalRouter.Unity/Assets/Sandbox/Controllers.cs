@@ -17,14 +17,15 @@ public readonly struct CharacterExitCommand : ICommand
 
 public class LoggingInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(
+    public async UniTask InvokeAsync<T>(
         T command,
         CancellationToken cancellation,
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        UnityEngine.Debug.Log($"{GetType()} {command.GetType()}");
-        return next(command, cancellation);
+        UnityEngine.Debug.Log($"start {GetType()} {command.GetType()}");
+        await next(command, cancellation);
+        UnityEngine.Debug.Log($"end {GetType()} {command.GetType()}");
     }
 }
 
