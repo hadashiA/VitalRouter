@@ -50,10 +50,10 @@ public partial class ExamplePresenter
 - [Getting Started](#getting-started)
 - [Publish](#publish)
 - [Interceptors](#interceptors)
+- [FIFO](#fifo)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
 - [Sequence Command](#sequence-command)
-- [FIFO](#fifo)
 - [Low-level API](#low-level-api)
 - [Concept, Technical Explanation](#concept-technical-explanation)
 - [Lisence](#lisence)
@@ -289,7 +289,7 @@ public class GameLifetimeScope : LifetimeScope
 > This is a simple demonstration.
 > If your codebase is huge, just have the View component notify its own events on the outside, rather than Publish directly. And maybe only the class responsible for the control flow should Publish.
 
-### Manually 
+### Manual setup 
 
 You can also set up your own entrypoint without using `MonoBehaviour` or a DI container.
 
@@ -323,6 +323,13 @@ await publisher.PublishAsync(command, cancellationToken);
 ```
 
 If you await `PublishAsync`, you will await until all Subscribers (`[Routes]` class etc.) have finished all processing.
+
+```cs
+await publisher.PublishAsync(command1);  // Wait until all subscribers have finished processing command1
+await publisher.PublishAsync(command2);  // Wait until all subscribers have finished processing command2
+// ...
+```
+
 
 Note that by default, when Publish is executed in parallel, Subscribers is also executed in parallel.
 
@@ -433,6 +440,7 @@ class MyFilter : ICommandInterceptor
     }		
 }
 ```
+
 ### Configure interceptors
 
 There are three levels to enable interceptor
@@ -485,120 +493,6 @@ If you take the way of 2 or 3, the Interceptor instance is resolved as follows.
 	  // auto-generated
 	  public Subscription MapTo(ICommandSubscribable subscribable, Logging interceptor1, ErrorHandling interceptor2) { /* ... */ }
 	  ```
-
-## DI scope
-
-VContainer can create child scopes at any time during execution.
-
-`RegisterVitalRouter` inherits the Router defined in the parent. 
-For example,
-
-```cs
-public class ParentLifetimeScope : LifetimeScope  
-{  
-    protected override void Configure(IContainerBuilder builder)  
-    {    
-        builder.RegisterVitalRouter(routing =>  
-        {  
-            routing.Map<PresenterA>();  
-        });
-        
-        builder.Register<ParentPublisher>(Lifetime.Singleton);
-    }  
-}
-```
-
-```cs
-public class ChildLifetimeScope : LifetimeScope  
-{  
-    protected override void Configure(IContainerBuilder builder)  
-    {    
-        builder.RegisterVitalRouter(routing =>  
-        {  
-            routing.Map<PresenterB>();  
-        });  
-        
-        builder.Register<MyChildPublisher>(Lifetime.Singleton);
-    }  
-}
-```
-
-- When an instance in the parent scope publishes used `ICommandPublisher`, PresenterA and PresenterB receive it.
-- When an instance in the child scope publishes `ICommandPublisher`, also PresenterA and PresenterB receives.
-
-If you want to create a dedicated Router for a child scope, do the following.
-
-```diff
-builder.RegisterVitalRouter(routing =>  
-{
-+    routing.Isolated = true;
-    routing.Map<PresenterB>();  
-});  
-```
-
-## Command Pooling
-
-If Command is struct, VitalRouter avoids boxing, so no heap allocation occurs. This is the reson of using sturct is recommended.
-
-In some cases, however, you may want to use class.
-Typically, when Command is treated as a collection element, boxing is unavoidable.
-
-So we support the ability to pooling commands when classes are used.
-
-```cs
-public class MyBoxedCommmand : IPoolableCommand
-{
-    public ResourceA ResourceA { ge; set; }
-
-    void IPoolableCommand.OnReturnToPool()
-    {
-        ResourceA = null!;
-    }
-}
-```
-
-### Rent from pool
-
-```cs
-// To publish, use CommandPool for instantiation.
-var cmd = CommandPool<MyBoxedCommand>.Shared.Rent(() => new MyBoxedCommand());
-
-// Lambda expressions are used to instantiate objects that are not in the pool. Any number of arguments can be passed from outside.
-var cmd = CommandPool<MyBoxedCommand>.Shared.Rent(arg1 => new MyBoxedCommand(arg1), extraArg);
-var cmd = CommandPool<MyBoxedCommand>.Shared.Rent((arg1, arg2) => new MyBoxedCommand(arg1, arg2), extraArg1, extraArg2);
-// ...
-
-// Configure value
-cmd.ResourceA = resourceA;
-
-// Use it
-publisher.PublishAsync(cmd);
-```
-
-### Return to pool
-
-```cs
-// It is convenient to use the `CommandPooling` Interceptor to return to pool automatically.
-Router.Default.Filter(CommandPooling.Instance);
-
-
-// Or, return to pool manually.
-CommandPool<MyBoxedCommand>.Shard.Return(cmd);
-```
-
-## Sequence Command
-
-If your command implements `IEnumerable<ICommand>`, it represents a sequence of time series.
-
-```cs
-var sequenceCommand = new SequenceCommand
-{
-    new CommandA(), 
-    new CommandB(), 
-    new CommandC(),
-    // ...
-}
-```
 
 ## FIFO
 
@@ -713,6 +607,120 @@ subgraph awaitable 2
   GroupB --> P3
   GroupB --> P4
 end
+```
+
+## DI scope
+
+VContainer can create child scopes at any time during execution.
+
+`RegisterVitalRouter` inherits the Router defined in the parent. 
+For example,
+
+```cs
+public class ParentLifetimeScope : LifetimeScope  
+{  
+    protected override void Configure(IContainerBuilder builder)  
+    {    
+        builder.RegisterVitalRouter(routing =>  
+        {  
+            routing.Map<PresenterA>();  
+        });
+        
+        builder.Register<ParentPublisher>(Lifetime.Singleton);
+    }  
+}
+```
+
+```cs
+public class ChildLifetimeScope : LifetimeScope  
+{  
+    protected override void Configure(IContainerBuilder builder)  
+    {    
+        builder.RegisterVitalRouter(routing =>  
+        {  
+            routing.Map<PresenterB>();  
+        });  
+        
+        builder.Register<MyChildPublisher>(Lifetime.Singleton);
+    }  
+}
+```
+
+- When an instance in the parent scope publishes used `ICommandPublisher`, PresenterA and PresenterB receive it.
+- When an instance in the child scope publishes `ICommandPublisher`, also PresenterA and PresenterB receives.
+
+If you want to create a dedicated Router for a child scope, do the following.
+
+```diff
+builder.RegisterVitalRouter(routing =>  
+{
++    routing.Isolated = true;
+    routing.Map<PresenterB>();  
+});  
+```
+
+## Command Pooling
+
+If Command is struct, VitalRouter avoids boxing, so no heap allocation occurs. This is the reson of using sturct is recommended.
+
+In some cases, however, you may want to use class.
+Typically, when Command is treated as a collection element, boxing is unavoidable.
+
+So we support the ability to pooling commands when classes are used.
+
+```cs
+public class MyBoxedCommmand : IPoolableCommand
+{
+    public ResourceA ResourceA { ge; set; }
+
+    void IPoolableCommand.OnReturnToPool()
+    {
+        ResourceA = null!;
+    }
+}
+```
+
+### Rent from pool
+
+```cs
+// To publish, use CommandPool for instantiation.
+var cmd = CommandPool<MyBoxedCommand>.Shared.Rent(() => new MyBoxedCommand());
+
+// Lambda expressions are used to instantiate objects that are not in the pool. Any number of arguments can be passed from outside.
+var cmd = CommandPool<MyBoxedCommand>.Shared.Rent(arg1 => new MyBoxedCommand(arg1), extraArg);
+var cmd = CommandPool<MyBoxedCommand>.Shared.Rent((arg1, arg2) => new MyBoxedCommand(arg1, arg2), extraArg1, extraArg2);
+// ...
+
+// Configure value
+cmd.ResourceA = resourceA;
+
+// Use it
+publisher.PublishAsync(cmd);
+```
+
+### Return to pool
+
+```cs
+// It is convenient to use the `CommandPooling` Interceptor to return to pool automatically.
+Router.Default.Filter(CommandPooling.Instance);
+
+
+// Or, return to pool manually.
+CommandPool<MyBoxedCommand>.Shard.Return(cmd);
+```
+
+## Sequence Command
+
+If your command implements `IEnumerable<ICommand>`, it represents a sequence of time series.
+
+```cs
+var sequenceCommand = new SequenceCommand
+{
+    new CommandA(), 
+    new CommandB(), 
+    new CommandC(),
+    // ...
+}
 ```
 
 ## Low-level API
