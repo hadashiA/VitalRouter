@@ -189,6 +189,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 #pragma warning disable CS8631 // The type cannot be used as type parameter in the generic type or method
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter;
@@ -261,7 +262,7 @@ partial class {{typeMeta.TypeName}}
             .Distinct();
 
         builder.AppendLine($$"""
-    Subscription vitalRouterGeneratedSubscription;
+    readonly List<Subscription> vitalRouterGeneratedSubscriptions = new List<Subscription>();
 
     [global::VitalRouter.Preserve]
     public Subscription MapTo({{string.Join(", ", parameters)}})
@@ -301,7 +302,7 @@ partial class {{typeMeta.TypeName}}
         };
 
         builder.AppendLine($$"""
-        vitalRouterGeneratedSubscription = new Subscription(subscribable, {{subscriptionArgs}});
+        var subscription = new Subscription(subscribable, {{subscriptionArgs}});
 """);
 
         if (typeMeta.Symbol.InheritsFrom(references.MonoBehaviourType))
@@ -312,16 +313,27 @@ partial class {{typeMeta.TypeName}}
         {
             handle = gameObject.AddComponent<VitalRouter.Unity.SubscriptionHandle>();
         }
-        ((VitalRouter.Unity.SubscriptionHandle)handle).Subscriptions.Add(vitalRouterGeneratedSubscription);
+        ((VitalRouter.Unity.SubscriptionHandle)handle).Subscriptions.Add(subscription);
 """);
         }
         builder.AppendLine($$"""
-        return vitalRouterGeneratedSubscription; 
+        lock (vitalRouterGeneratedSubscriptions)
+        {
+            vitalRouterGeneratedSubscriptions.Add(subscription);
+        }
+        return subscription; 
     }
 
     public void UnmapRoutes()
     {
-        vitalRouterGeneratedSubscription.Dispose();
+        lock (vitalRouterGeneratedSubscriptions)
+        {
+            foreach (var subscription in vitalRouterGeneratedSubscriptions)
+            {
+                subscription.Dispose();
+            }
+            vitalRouterGeneratedSubscriptions.Clear();
+        }        
     }
 
 """);
