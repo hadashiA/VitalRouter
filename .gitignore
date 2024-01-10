@@ -78,7 +78,6 @@ StyleCopReport.xml
 *.ipdb
 *.pgc
 *.pgd
-*.rsp
 *.sbr
 *.tlb
 *.tli
@@ -331,6 +330,8 @@ VitalRouter.Unity/[Oo]bj/
 VitalRouter.Unity/[Bb]uild/
 VitalRouter.Unity/[Bb]uilds/
 VitalRouter.Unity/Assets/AssetStoreTools*
+VItalRouter.Unity/*.csproj
+VItalRouter.Unity/*.sln
 
 VitalRouter.Benchmark/[Ll]ibrary/
 VitalRouter.Benchmark/[Tt]emp/
@@ -363,5 +364,3 @@ VItalRouter.Benchmark/obj/*
 **/.idea.meta
 
 .DS_Store
-
-!VitalRouter.Unity/Assets/csc.rsp
