@@ -42,7 +42,7 @@ public static class CommandPublisherExtensions
 
 public sealed partial class Router : ICommandPublisher, ICommandSubscribable, IDisposable
 {
-    public static Router Default { get; set; } = new();
+    public static readonly Router Default = new();
 
     readonly ExpandBuffer<ICommandSubscriber> subscribers = new(8);
     readonly ExpandBuffer<IAsyncCommandSubscriber> asyncSubscribers = new(8);
