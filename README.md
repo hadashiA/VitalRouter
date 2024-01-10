@@ -625,9 +625,17 @@ In other words, per Router, command acts as a FIFO queue for the async task.
 ```cs
 publisher.PublishAsync(command1).Forget(); // Start processing command1 immediately
 publisher.PublishAsync(command2).Forget(); // Queue command2 behaind command1
-publisher.PublishAsync(command3).Forget(); // Queue comand3 behaind command2
+publisher.PublishAsync(command3).Forget(); // Queue command3 behaind command2
 // ...
 ```
+
+```cs
+publisher.Enqueue(command1); // Start processing command1 immediately
+publisher.Enqueue(command2); // Queue command2 behaind command1
+publisher.Enqueue(command3); // Queue command3 behaind command2
+// ...
+```
+
 
 ### Fan-out
 
