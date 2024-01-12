@@ -145,9 +145,10 @@ public class RouterTest
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestStopperInterceptor();
         var subscriber1 = new TestSubscriber();
-        commandBus.Filter(interceptor1);
-        commandBus.Filter(interceptor2);
-        commandBus.Subscribe(subscriber1);
+        commandBus
+            .Filter(interceptor1)
+            .Filter(interceptor2)
+            .Subscribe(subscriber1);
 
         await commandBus.PublishAsync(new TestCommand1());
 
