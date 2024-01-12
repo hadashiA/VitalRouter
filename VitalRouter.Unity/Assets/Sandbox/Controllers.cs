@@ -64,6 +64,7 @@ public partial class SamplePresenter
 
     public UniTask On(CharacterEnterCommand cmd)
     {
+        UnityEngine.Debug.Log("SamplePresenter.ctor");
         return default;
     }
 

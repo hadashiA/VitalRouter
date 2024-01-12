@@ -2,29 +2,32 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using VitalRouter.Internal;
 
 namespace VitalRouter;
 
-public class InvokeContext<T> where T : ICommand
+public class InvokeContextWithFreeList<T> where T : ICommand
 {
-    static readonly ConcurrentQueue<InvokeContext<T>> Pool = new();
+    static readonly ConcurrentQueue<InvokeContextWithFreeList<T>> Pool = new();
 
-    ICommandInterceptor[] interceptors = default!;
+    FreeList<ICommandInterceptor> interceptors = default!;
+    ICommandInterceptor core = default!;
     int currentInterceptorIndex = -1;
 
     readonly Func<T, CancellationToken, UniTask> nextDelegate;
 
-    public static InvokeContext<T> Rent(ICommandInterceptor[] interceptors)
+    public static InvokeContextWithFreeList<T> Rent(FreeList<ICommandInterceptor> interceptors, ICommandInterceptor core)
     {
         if (!Pool.TryDequeue(out var value))
         {
-            value = new InvokeContext<T>();
+            value = new InvokeContextWithFreeList<T>();
         }
         value.interceptors = interceptors;
+        value.core = core;
         return value;
     }
 
-    InvokeContext()
+    InvokeContextWithFreeList()
     {
         nextDelegate = InvokeRecursiveAsync;
     }
@@ -35,7 +38,7 @@ public class InvokeContext<T> where T : ICommand
         {
             return interceptor.InvokeAsync(command, cancellation, nextDelegate);
         }
-        return UniTask.CompletedTask;
+        return core.InvokeAsync(command, cancellation, static (command1, token) => UniTask.CompletedTask);
     }
 
     public void Return()
@@ -47,10 +50,13 @@ public class InvokeContext<T> where T : ICommand
 
     bool MoveNextInterceptor(out ICommandInterceptor nextInterceptor)
     {
-        if (++currentInterceptorIndex <= interceptors.Length - 1)
+        while (++currentInterceptorIndex <= interceptors.LastIndex)
         {
-            nextInterceptor = interceptors[currentInterceptorIndex];
-            return true;
+            if (interceptors[currentInterceptorIndex] is { } x)
+            {
+                nextInterceptor = x;
+                return true;
+            }
         }
         nextInterceptor = default!;
         return false;

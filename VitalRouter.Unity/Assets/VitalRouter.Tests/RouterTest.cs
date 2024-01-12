@@ -128,8 +128,9 @@ public class RouterTest
         var commandBus = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestInterceptor();
-        commandBus.Filter(interceptor1);
-        commandBus.Filter(interceptor2);
+        commandBus
+            .Filter(interceptor1)
+            .Filter(interceptor2);
 
         await commandBus.PublishAsync(new TestCommand1());
 
@@ -159,8 +160,9 @@ public class RouterTest
     {
         var commandBus = new Router();
         var errorHandler = new ErrorHandlingInterceptor();
-        commandBus.Filter(errorHandler);
-        commandBus.Subscribe(new TestThrowSubscriber());
+        commandBus
+            .Filter(errorHandler)
+            .Subscribe(new TestThrowSubscriber());
 
         await commandBus.PublishAsync(new TestCommand1());
 

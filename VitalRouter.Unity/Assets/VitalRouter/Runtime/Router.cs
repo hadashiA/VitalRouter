@@ -44,72 +44,52 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 {
     public static readonly Router Default = new();
 
-    readonly ExpandBuffer<ICommandSubscriber> subscribers = new(8);
-    readonly ExpandBuffer<IAsyncCommandSubscriber> asyncSubscribers = new(8);
-    readonly ExpandBuffer<ICommandInterceptor> interceptors = new(4);
-
-    readonly ExpandBuffer<ICommandSubscriber> executingSubscribers = new(8);
-    readonly ExpandBuffer<UniTask> executingTasks = new(8);
-    readonly ExpandBuffer<ICommandInterceptor> executingInterceptors = new(4);
+    readonly FreeList<ICommandSubscriber> subscribers = new(8);
+    readonly FreeList<IAsyncCommandSubscriber> asyncSubscribers = new(8);
+    readonly FreeList<ICommandInterceptor> interceptors = new(8);
 
     bool disposed;
 
     readonly ReusableWhenAllSource whenAllSource = new();
     readonly object subscribeLock = new();
-
-    readonly ICommandInterceptor publishCore;
+    readonly PublishCore publishCore;
 
     public Router()
     {
         publishCore = new PublishCore(this);
     }
 
-    public async UniTask PublishAsync<T>(T command, CancellationToken cancellation = default)
-        where T : ICommand
+    public UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
     {
         CheckDispose();
 
-        try
+        var hasInterceptor = false;
+        foreach (var interceptorOrNull in interceptors.AsSpan())
         {
-            lock (subscribeLock)
+            if (interceptorOrNull != null)
             {
-                if (interceptors.Count > 0)
-                {
-                    interceptors.CopyAndSetLengthTo(executingInterceptors);
-                }
-            }
-
-            if (executingInterceptors.Count > 0)
-            {
-                executingInterceptors.Add(publishCore);
-                var context = InvokeContext<T>.Rent(executingInterceptors);
-                try
-                {
-                    await context.InvokeRecursiveAsync(command, cancellation);
-                }
-                finally
-                {
-                    context.Return();
-                }
-            }
-            else
-            {
-                await publishCore.InvokeAsync(command, cancellation, null!);
+                hasInterceptor = true;
+                break;
             }
         }
-        finally
+        if (hasInterceptor)
         {
-            executingInterceptors.Clear(true);
+            var context = InvokeContextWithFreeList<T>.Rent(interceptors, publishCore);
+            try
+            {
+                return context.InvokeRecursiveAsync(command, cancellation);
+            }
+            finally
+            {
+                context.Return();
+            }
         }
+        return publishCore.InvokeAsync(command, cancellation, null!);
     }
 
     public Subscription Subscribe(ICommandSubscriber subscriber)
     {
-        lock (subscribeLock)
-        {
-            subscribers.Add(subscriber);
-        }
-
+        subscribers.Add(subscriber);
         return new Subscription(this, subscriber);
     }
 
@@ -125,43 +105,24 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     public void Unsubscribe(ICommandSubscriber subscriber)
     {
-        lock (subscribeLock)
-        {
-            var i = subscribers.IndexOf(subscriber);
-            if (i >= 0)
-            {
-                subscribers.RemoveAt(i);
-            }
-        }
+        subscribers.Remove(subscriber);
     }
 
     public void Unsubscribe(IAsyncCommandSubscriber subscriber)
     {
-        lock (subscribeLock)
-        {
-            var i = asyncSubscribers.IndexOf(subscriber);
-            if (i >= 0)
-            {
-                asyncSubscribers.RemoveAt(i);
-            }
-        }
+        asyncSubscribers.Remove(subscriber);
     }
 
     public void UnsubscribeAll()
     {
-        lock (subscribeLock)
-        {
-            subscribers.Clear(true);
-            asyncSubscribers.Clear(true);
-        }
+        subscribers.Clear();
+        asyncSubscribers.Clear();
+        interceptors.Clear();
     }
 
     public Router Filter(ICommandInterceptor interceptor)
     {
-        lock (subscribers)
-        {
-            interceptors.Add(interceptor);
-        }
+        interceptors.Add(interceptor);
         return this;
     }
 
@@ -170,11 +131,9 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         if (!disposed)
         {
             disposed = true;
-            subscribers.Clear(true);
-            asyncSubscribers.Clear(true);
-            executingTasks.Clear(true);
-            executingSubscribers.Clear(true);
-            executingInterceptors.Clear(true);
+            subscribers.Clear();
+            asyncSubscribers.Clear();
+            interceptors.Clear();
         }
     }
 
@@ -189,10 +148,12 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     class PublishCore : ICommandInterceptor
     {
         readonly Router source;
+        readonly ExpandBuffer<UniTask> executingTasks;
 
         public PublishCore(Router source)
         {
             this.source = source;
+            executingTasks = new ExpandBuffer<UniTask>(8);
         }
 
         public UniTask InvokeAsync<T>(
@@ -203,23 +164,22 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         {
             try
             {
-                lock (source.subscribeLock)
+                for (var i = 0; i <= source.subscribers.LastIndex; i++)
                 {
-                    source.subscribers.CopyAndSetLengthTo(source.executingSubscribers);
-                    for (var i = 0; i < source.asyncSubscribers.Count; i++)
+                    source.subscribers[i]?.Receive(command);
+                }
+                for (var i = 0; i <= source.asyncSubscribers.LastIndex; i++)
+                {
+                    if (source.asyncSubscribers[i] is { } asyncSubscriber)
                     {
-                        source.executingTasks.Add(source.asyncSubscribers[i].ReceiveAsync(command, cancellation));
+                        var task = asyncSubscriber.ReceiveAsync(command, cancellation);
+                        executingTasks.Add(task);
                     }
                 }
 
-                for (var i = 0; i < source.executingSubscribers.Count; i++)
+                if (executingTasks.Count > 0)
                 {
-                    source.executingSubscribers[i].Receive(command);
-                }
-
-                if (source.executingTasks.Count > 0)
-                {
-                    source.whenAllSource.Reset(source.executingTasks);
+                    source.whenAllSource.Reset(executingTasks);
                     return source.whenAllSource.Task;
                 }
 
@@ -227,8 +187,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             }
             finally
             {
-                source.executingTasks.Clear(true);
-                source.executingSubscribers.Clear(true);
+                executingTasks.Clear();
             }
         }
     }
