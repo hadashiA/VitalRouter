@@ -54,7 +54,7 @@ public class BInterceptor : ICommandInterceptor
 }
 
 [Routes]
-[Filter(typeof(LoggingInterceptor))]
+// [Filter(typeof(LoggingInterceptor))]
 public partial class SamplePresenter
 {
     public SamplePresenter()
@@ -64,19 +64,16 @@ public partial class SamplePresenter
 
     public UniTask On(CharacterEnterCommand cmd)
     {
-        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
         return default;
     }
 
     public UniTask On(CharacterMoveCommand cmd)
     {
-        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
         return default;
     }
 
     public void On(CharacterExitCommand cmd)
     {
-        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
     }
 }
 

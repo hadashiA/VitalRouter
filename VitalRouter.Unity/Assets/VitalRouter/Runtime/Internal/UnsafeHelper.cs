@@ -1,6 +1,6 @@
 namespace VitalRouter.Internal;
 
-public static class UnsafeHelper
+static class UnsafeHelper
 {
     public static ref TTo As<TFrom, TTo>(ref TFrom from)
     {
