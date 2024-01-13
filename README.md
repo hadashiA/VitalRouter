@@ -452,7 +452,7 @@ There are three levels to enable interceptor
 3. Apply only to specific methods in the `[Routes]` class.
 
 ```cs
-// Apply to the router.
+// 1. Apply globally to the router.
 Router.Default
     .Filter(new Logging())
     .Filter(new ErrorHandling);
@@ -468,13 +468,11 @@ builder.RegisterVitalRouter(routing =>
 ```
 
 ```cs
-// 2. Apply to the type
 [Routes]
-[Filter(typeof(Logging))]
+[Filter(typeof(Logging))] // 2. Apply to the type
 public partial class FooPresenter
 {
-    // 3. Apply to the method
-    [Filter(typeof(ExtraInterceptor))]
+    [Filter(typeof(ExtraInterceptor))] // 3. Apply to the method
     public void On(CommandA cmd)
     {
         // ...
