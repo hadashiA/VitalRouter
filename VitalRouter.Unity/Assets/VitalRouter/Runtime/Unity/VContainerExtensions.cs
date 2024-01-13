@@ -65,6 +65,7 @@ public class RoutingBuilder
 {
     public InterceptorStackBuilder Filters { get; } = new();
     public bool Isolated { get; set; }
+    public CommandOrdering Ordering { get; set; }
 
     internal readonly List<MapRoutesInfo> MapRoutesInfos = new();
     internal readonly List<RoutingBuilder> Subsequents = new();
@@ -192,6 +193,13 @@ public static class VContainerExtensions
 
     static void RegisterVitalRouterInterceptors(this IContainerBuilder builder, RoutingBuilder routing)
     {
+        switch (routing.Ordering)
+        {
+            case CommandOrdering.FirstInFirstOut:
+                routing.Filters.Add<FirstInFirstOutOrdering>();
+                break;
+        }
+
         foreach (var interceptorType in routing.Filters.Types)
         {
             builder.Register(interceptorType, Lifetime.Singleton);

@@ -11,6 +11,20 @@ public enum CommandOrdering
     FirstInFirstOut,
 }
 
+public partial class Router
+{
+    public Router Filter(CommandOrdering ordering)
+    {
+        switch (ordering)
+        {
+            case CommandOrdering.FirstInFirstOut:
+                Filter(FirstInFirstOutOrdering.Instance);
+                break;
+        }
+        return this;
+    }
+}
+
 public class FirstInFirstOutOrdering : ICommandInterceptor, IDisposable
 {
     public static readonly FirstInFirstOutOrdering Instance = new();
@@ -37,13 +51,5 @@ public class FirstInFirstOutOrdering : ICommandInterceptor, IDisposable
     public void Dispose()
     {
         publishLock.Dispose();
-    }
-}
-
-public static class RouterCommandOrderingExtensions
-{
-    public static Router FirstInFirstOut(this Router router)
-    {
-        return router.Filter(FirstInFirstOutOrdering.Instance);
     }
 }

@@ -50,18 +50,12 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     bool disposed;
 
-    readonly ReusableWhenAllSource whenAllSource = new();
     readonly PublishCore publishCore;
 
     public Router(CommandOrdering ordering = CommandOrdering.Parallel)
     {
         publishCore = new PublishCore(this);
-        switch (ordering)
-        {
-            case CommandOrdering.FirstInFirstOut:
-                Filter(FirstInFirstOutOrdering.Instance);
-                break;
-        }
+        Filter(ordering);
     }
 
     public UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
@@ -157,12 +151,12 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     class PublishCore : IAsyncCommandSubscriber
     {
         readonly Router source;
-        readonly ExpandBuffer<UniTask> executingTasks;
+        readonly ReusableWhenAllSource whenAllSource = new();
+        readonly ExpandBuffer<UniTask> executingTasks = new(8);
 
         public PublishCore(Router source)
         {
             this.source = source;
-            executingTasks = new ExpandBuffer<UniTask>(8);
         }
 
         public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation) where T : ICommand
@@ -184,8 +178,8 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
                 if (executingTasks.Count > 0)
                 {
-                    source.whenAllSource.Reset(executingTasks);
-                    return source.whenAllSource.Task;
+                    whenAllSource.Reset(executingTasks);
+                    return whenAllSource.Task;
                 }
 
                 return UniTask.CompletedTask;

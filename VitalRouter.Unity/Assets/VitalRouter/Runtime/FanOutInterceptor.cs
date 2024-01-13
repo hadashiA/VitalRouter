@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using VitalRouter.Internal;
 
 namespace VitalRouter;
 
 public class FanOutInterceptor : ICommandInterceptor
 {
     readonly List<ICommandPublisher> subsequents = new();
+    readonly ReusableWhenAllSource whenAllSource = new();
+    readonly ExpandBuffer<UniTask> executingTasks = new(4);
 
     public void Add(ICommandPublisher publisher)
     {
@@ -21,9 +24,19 @@ public class FanOutInterceptor : ICommandInterceptor
     {
         await next(command, cancellation);
 
-        foreach (var x in subsequents)
+        try
         {
-            x.PublishAsync(command, cancellation).Forget();
+            foreach (var x in subsequents)
+            {
+                executingTasks.Add(x.PublishAsync(command, cancellation));
+            }
+
+            whenAllSource.Reset(executingTasks);
+            await whenAllSource.Task;
+        }
+        finally
+        {
+            executingTasks.Clear();
         }
     }
 }
