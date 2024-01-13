@@ -502,15 +502,15 @@ If you want to treat the commands like a queue to be sequenced, do the following
 
 ```cs
 // Set FIFO constraint to the globally.
-Router.Default.FirstInFirstOut();
+Router.Default.Filter(CommandOrdering.FirstInFirstOut);
 
 // Create FIFO router.
-var fifoRouter = new Router(CommandOrdering.FirstInFirstOut);
+var fifoRouter = new Router().Filter(CommandOrdering.FirstInFirstOut);
 
 // Configure FIFO routing via DI
 builder.RegisterVitalRouter(routing => 
 {
-    routing.FirstInFirstOut();
+    routing.CommandOrdering = CommandOrdering.FirstInFirstOut;
 });
 ```
 
@@ -541,8 +541,8 @@ When FIFO mode, if you want to group the awaiting subscribers, you can use `FanO
 Router.Default.FirstInFirstOut();
 
 var fanOut = new FanOutInterceptor();
-var groupA = new Router();
-var groupB = new Router();
+var groupA = new Router().Filter(CommandOrdering.FirstInFirstOut)
+var groupB = new Router().Filter(CommandOrdering.FirstInFirstOut);
 
 fanOut.Add(groupA);
 fanOut.Add(groupB);
@@ -567,15 +567,18 @@ public class SampleLifetimeScope : LifetimeScope
     {                
         builder.RegisterVitalRouter(routing =>
         {
+            routing.Ordering = CommandOrdering.Parallel;
+            
             routing
-                .FirstInFirstOut()            
                 .FanOut(groupA =>
                 {
+                    groupA.Ordering = CommandOrdering.FirstInFirstOut;
                     groupA.Map<Presenter1>();
                     groupA.Map<Presenter2>();
                 })    
                 .FanOut(groupB =>
                 {
+                    groupB.Ordering = CommandOrdering.FirstInFirstOut;
                     groupB.Map<Presenter3>();
                     groupB.Map<Presenter4>();
                 })                
@@ -597,15 +600,15 @@ P2(presenter2)
 P3(presenter3)
 P4(presenter4)
 
-Default -->|fire and forget| GroupA
-Default -->|fire and forget| GroupB
+Default -->|concurrent| GroupA
+Default -->|concurrent| GroupB
 
-subgraph awaitable 1
+subgraph FIFO 1
   GroupA --> P1
   GroupA --> P2
 end
 
-subgraph awaitable 2
+subgraph FIFO 2
   GroupB --> P3
   GroupB --> P4
 end
