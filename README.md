@@ -74,7 +74,7 @@ Prerequirements:
 Then, add git URL from Package Manager:
 
 ```
-https://github.com/hadashiA/Vitalrouter.git?path=/VitalRouter.Unity/Assets/VitalRouter#0.2.0
+https://github.com/hadashiA/Vitalrouter.git?path=/VitalRouter.Unity/Assets/VitalRouter#0.3.0
 ```
 
 ## Getting Started
@@ -584,7 +584,7 @@ public class SampleLifetimeScope : LifetimeScope
 }
 ```
 
-Now we have the structure shown in the following：
+Now we have the structure shown in the following:
 
 ```mermaid
 flowchart LR
