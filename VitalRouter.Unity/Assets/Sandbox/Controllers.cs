@@ -37,7 +37,7 @@ public class AInterceptor : ICommandInterceptor
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        return next(command, cancellation);
     }
 }
 
@@ -49,12 +49,12 @@ public class BInterceptor : ICommandInterceptor
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        return next(command, cancellation);
     }
 }
 
 [Routes]
-// [Filter(typeof(LoggingInterceptor))]
+[Filter(typeof(AInterceptor))]
 public partial class SamplePresenter
 {
     public SamplePresenter()

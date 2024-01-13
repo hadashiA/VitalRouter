@@ -325,6 +325,7 @@ partial class {{typeMeta.TypeName}}
         return subscription; 
     }
 
+    [global::VitalRouter.Preserve]
     public void UnmapRoutes()
     {
         lock (vitalRouterGeneratedSubscriptions)
@@ -371,10 +372,7 @@ partial class {{typeMeta.TypeName}}
         foreach (var method in methods)
         {
             builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command) =>
-            {
-                source.{{method.Symbol.Name}}(command);
-            };
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command) => source.{{method.Symbol.Name}}(command);
 """);
         }
 
@@ -417,7 +415,8 @@ partial class {{typeMeta.TypeName}}
     {
         static class MethodTable<T> where T : ICommand
         {
-            public static Func<VitalRouterGeneratedAsyncSubscriber, T, CancellationToken, UniTask>? Value;
+            public static Func<{{typeMeta.FullTypeName}}, T, CancellationToken, UniTask>? Value;
+            public static Func<VitalRouterGeneratedAsyncSubscriber, ICommandInterceptor[]>? InterceptorFinder;
         }
         
         static VitalRouterGeneratedAsyncSubscriber()
@@ -428,35 +427,13 @@ partial class {{typeMeta.TypeName}}
             if (method.InterceptorMetas.Length > 0)
             {
                 builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static async (self, command, cancellation) =>
-            {
-                var context = InvokeContext<{{method.CommandFullTypeName}}>.Rent(self.interceptorStack{{method.CommandTypePrefix}});
-                try
-                {
-                    await context.InvokeRecursiveAsync(command, cancellation);
-                }
-                finally
-                {
-                    context.Return();
-                }
-            };
+            MethodTable<{{method.CommandFullTypeName}}>.InterceptorFinder = static self => self.interceptorStack{{method.CommandTypePrefix}};
 """);
             }
             else if (typeMeta.DefaultInterceptorMetas.Length > 0)
             {
                 builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static async (self, command, cancellation) =>
-            {
-                var context = InvokeContext<{{method.CommandFullTypeName}}>.Rent(self.interceptorStackDefault);
-                try
-                {
-                    await context.InvokeRecursiveAsync(command, cancellation);
-                }
-                finally
-                {
-                    context.Return();
-                }
-            };
+            MethodTable<{{method.CommandFullTypeName}}>.InterceptorFinder = static self => self.interceptorStackDefault;
 """);
             }
             else if (method.IsAsync)
@@ -464,19 +441,13 @@ partial class {{typeMeta.TypeName}}
                 if (method.TakeCancellationToken)
                 {
                     builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (self, command, cancellation) =>
-            {
-                return self.source.{{method.Symbol.Name}}(command, cancellation);
-            };
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, cancellation) => source.{{method.Symbol.Name}}(command, cancellation);
 """);
                 }
                 else
                 {
                     builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (self, command, cancellation) =>
-            {
-                return self.source.{{method.Symbol.Name}}(command);
-            };
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, cancellation) => source.{{method.Symbol.Name}}(command);
 """);
                 }
             }
@@ -552,7 +523,30 @@ partial class {{typeMeta.TypeName}}
         
         public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation) where T : ICommand
         {
-            return MethodTable<T>.Value?.Invoke(this, command, cancellation) ?? UniTask.CompletedTask;
+            if (MethodTable<T>.Value is { } method)
+            {
+                return method.Invoke(source, command, cancellation);
+            }
+            if (MethodTable<T>.InterceptorFinder is { } finder)
+            {
+                var interceptorStack = finder.Invoke(this);
+                return ReceiveWithInterceptorsAsync(command, interceptorStack, cancellation);
+            }
+            return UniTask.CompletedTask;
+        }
+        
+        async UniTask ReceiveWithInterceptorsAsync<T>(T command, ICommandInterceptor[] interceptorStack, CancellationToken cancellation)
+            where T : ICommand
+        {
+            var context = InvokeContext<T>.Rent(interceptorStack);
+            try
+            {
+                await context.InvokeRecursiveAsync(command, cancellation);
+            }
+            finally
+            {
+                context.Return();
+            }
         }
     }
 """);

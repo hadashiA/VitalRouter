@@ -7,7 +7,13 @@ namespace VitalRouter.Internal;
 
 class InvokeContextWithFreeList<T> where T : ICommand
 {
-    static readonly ConcurrentQueue<InvokeContextWithFreeList<T>> Pool = new();
+    static readonly ConcurrentQueue<InvokeContextWithFreeList<T>> Pool = new(new []
+    {
+        new InvokeContextWithFreeList<T>(),
+        new InvokeContextWithFreeList<T>(),
+        new InvokeContextWithFreeList<T>(),
+        new InvokeContextWithFreeList<T>(),
+    });
 
     FreeList<ICommandInterceptor> interceptors = default!;
     IAsyncCommandSubscriber core = default!;

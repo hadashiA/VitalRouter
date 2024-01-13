@@ -51,7 +51,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     bool disposed;
 
     readonly ReusableWhenAllSource whenAllSource = new();
-    readonly object subscribeLock = new();
     readonly PublishCore publishCore;
 
     public Router()
@@ -78,11 +77,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     public Subscription Subscribe(IAsyncCommandSubscriber subscriber)
     {
-        lock (subscribeLock)
-        {
-            asyncSubscribers.Add(subscriber);
-        }
-
+        asyncSubscribers.Add(subscriber);
         return new Subscription(this, subscriber);
     }
 

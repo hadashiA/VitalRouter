@@ -7,7 +7,13 @@ namespace VitalRouter;
 
 public class InvokeContext<T> where T : ICommand
 {
-    static readonly ConcurrentQueue<InvokeContext<T>> Pool = new();
+    static readonly ConcurrentQueue<InvokeContext<T>> Pool = new(new []
+    {
+        new InvokeContext<T>(),
+        new InvokeContext<T>(),
+        new InvokeContext<T>(),
+        new InvokeContext<T>(),
+    });
 
     ICommandInterceptor[] interceptors = default!;
     int currentInterceptorIndex = -1;
