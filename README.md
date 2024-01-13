@@ -505,7 +505,7 @@ If you want to treat the commands like a queue to be sequenced, do the following
 Router.Default.Filter(CommandOrdering.FirstInFirstOut);
 
 // Create FIFO router.
-var fifoRouter = new Router().Filter(CommandOrdering.FirstInFirstOut);
+var fifoRouter = new Router(CommandOrdering.FirstInFirstOut);
 
 // Configure FIFO routing via DI
 builder.RegisterVitalRouter(routing => 
