@@ -36,13 +36,14 @@ public partial class ExamplePresenter
 }
 ```
 
-| Feature                            | Description                                                                                                                                                                                                                                                    |
-|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Declarative routing                | The event delivery destination and inetrceptor stack are self-explanatory in the type definition.                                                                                                                                                              |
-| Async/non-Async handlers           | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                                                                                                                                 |
-| With DI and without DI             | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                                                        |
-| Thread-safe N:N pub/sub            | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.<br><br>Due to the async task's exclusivity control, events are characterized by being consumed in sequence. So it can be used as robust FIFO queue. |
-| FIFO (First in first out), Fan-out | In Game, it is very useful to have events processed in series, VitalRouter provide FIFO constraints. it is possible to fan-out to multiple FIFOs in concurernt.                                                                                                |
+| Feature                            | Description                                                                                                                                                                                                                                                                                                                                 |
+|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Declarative routing                | The event delivery destination and inetrceptor stack are self-explanatory in the type definition.                                                                                                                                                                                                                                           |
+| Async/non-Async handlers           | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                                                                                                                                                                                                              |
+| With DI and without DI             | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                                                                                                                                     |
+| Fast, less allocations           | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.                                                                                                                                                                                         |
+| Parallel N:N pub/sub               | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.                                                                                                                                                                                                                                  |                                                                                                                                                                                                               
+| FIFO (First in first out), Fan-out | Due to the async task's exclusivity control, events can be consumed in sequence. So it can be used as robust FIFO queue. <br /><br />In Game, it is very useful to have events processed in series, VitalRouter provide FIFO constraints. it is possible to fan-out to multiple FIFOs in concurernt. See [FIFO](#fifo) section for details. |
 
 ## Table of Contents
 
@@ -50,11 +51,12 @@ public partial class ExamplePresenter
 - [Getting Started](#getting-started)
 - [Publish](#publish)
 - [Interceptors](#interceptors)
-- [FIFO](#fifo)
+- [Command Ordering](#fifo)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
 - [Sequence Command](#sequence-command)
 - [Low-level API](#low-level-api)
+- [Performance](#performance)
 - [Concept, Technical Explanation](#concept-technical-explanation)
 - [Lisence](#lisence)
 
@@ -503,9 +505,9 @@ If you want to treat the commands like a queue to be sequenced, do the following
 Router.Default.FirstInFirstOut();
 
 // Create FIFO router.
-var fifoRouter = new Router().FirstInFirstOut();
+var fifoRouter = new Router(CommandOrdering.FirstInFirstOut);
 
-// for DI
+// Configure FIFO routing via DI
 builder.RegisterVitalRouter(routing => 
 {
     routing.FirstInFirstOut();
@@ -536,7 +538,7 @@ publisher.Enqueue(command3); // Queue command3 behaind command2
 When FIFO mode, if you want to group the awaiting subscribers, you can use `FanOutInterceptor`
 
 ```cs
-Router.Default.FirstInFirstOutOrdering();
+Router.Default.FirstInFirstOut();
 
 var fanOut = new FanOutInterceptor();
 var groupA = new Router();
@@ -753,6 +755,53 @@ class AsyncSubscriber : IAsyncCommandSubscriber
 // Add interceptor via lambda expresion
 router.Filter<FooCommand>(async (cmd, cancellationToken, next) => { /* ... */ });
 ```
+
+## Performance
+
+### Heap allocations
+
+There is zero extra heap allocation due to publish; if ICommand is struct, no boxing occurs. Also, if interceptor is used, type-specific allocations occur the first time, but are cached the second and subsequent times.
+
+![](./docs/screenshot_profiler.png)
+
+So it could be used for very granular messaging in games.
+
+> [!WARNING]
+> There is a difference in the optimization of the async method between the debug build and the release build.
+> If you want to check the allocations in production, you should look at the Release build.
+> ![](./docs/screenshot_codeopt.png)
+> Also, refer to the UniTask documentation for.
+
+### Static type caching
+
+By source generator, type of ICommand branches are pre-generated by static type caching.
+This is particularly fast compared to switch statements and dictionaries.
+
+```csharp
+// Auto-generated example, Determination of subscriber
+MethodTable<global::CharacterEnterCommand>.Value = static (source, command, cancellation) => source.On(command);
+MethodTable<global::CharacterMoveCommand>.Value = static (source, command, cancellation) => source.On(command);
+
+// Auto-generated example, Determination of interceptor
+MethodTable<global::CharacterEnterCommand>.InterceptorFinder = static self => self.interceptorStackDefault;
+MethodTable<global::CharacterMoveCommand>.InterceptorFinder = static self => self.interceptorStackDefault;
+``` 
+
+### Subscribers handling
+
+The challenge in implementing a thread-safe event handler is the contention for the subscriber collection: we want to enumerate all subscribers as they are dynamically added/removed.
+
+The easiest solution would be to make a copy of each case just before it is enumerated. (Like `ToArray`. `Immutable Collection`, and so on).
+In this case, however, allocation occurs.
+
+In early implementations of VitalRouter, only FIFOs were implemented, so two collections were prepared in advance. Like double buffering.
+
+The current implementation uses Free list.
+When an element is removed, its address becomes null and is reused later.
+When enumerating all cases, it does not take a lock and just "ignores" any nulls.
+This slows down enumeration when there is room, but does not require locking.
+
+Note that this idea is mostly borrowed from [Cysharp/R3](https://github.com/Cysharp/R3).
 
 ## Concept, Technical Explanation
 

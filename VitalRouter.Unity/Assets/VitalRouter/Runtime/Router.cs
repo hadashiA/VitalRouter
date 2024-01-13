@@ -53,9 +53,15 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     readonly ReusableWhenAllSource whenAllSource = new();
     readonly PublishCore publishCore;
 
-    public Router()
+    public Router(CommandOrdering ordering = CommandOrdering.Parallel)
     {
         publishCore = new PublishCore(this);
+        switch (ordering)
+        {
+            case CommandOrdering.FirstInFirstOut:
+                Filter(FirstInFirstOutOrdering.Instance);
+                break;
+        }
     }
 
     public UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand

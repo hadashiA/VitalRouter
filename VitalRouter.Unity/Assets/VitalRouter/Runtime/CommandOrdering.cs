@@ -5,6 +5,12 @@ using VitalRouter.Internal;
 
 namespace VitalRouter;
 
+public enum CommandOrdering
+{
+    Parallel,
+    FirstInFirstOut,
+}
+
 public class FirstInFirstOutOrdering : ICommandInterceptor, IDisposable
 {
     public static readonly FirstInFirstOutOrdering Instance = new();

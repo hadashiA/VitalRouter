@@ -186,7 +186,7 @@ public class RouterTest
     [Test]
     public async Task FirstInFirstOut()
     {
-        var commandBus = new Router().FirstInFirstOut();
+        var commandBus = new Router(CommandOrdering.FirstInFirstOut);
 
         using var subscriber1 = new TestSignalSubscriber();
         commandBus.Subscribe(subscriber1);
