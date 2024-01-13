@@ -428,24 +428,34 @@ partial class {{typeMeta.TypeName}}
             if (method.InterceptorMetas.Length > 0)
             {
                 builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (self, command, cancellation) =>
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static async (self, command, cancellation) =>
             {
                 var context = InvokeContext<{{method.CommandFullTypeName}}>.Rent(self.interceptorStack{{method.CommandTypePrefix}});
-                var task = context.InvokeRecursiveAsync(command, cancellation);
-                context.Return();
-                return task;
+                try
+                {
+                    await context.InvokeRecursiveAsync(command, cancellation);
+                }
+                finally
+                {
+                    context.Return();
+                }
             };
 """);
             }
             else if (typeMeta.DefaultInterceptorMetas.Length > 0)
             {
                 builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (self, command, cancellation) =>
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static async (self, command, cancellation) =>
             {
                 var context = InvokeContext<{{method.CommandFullTypeName}}>.Rent(self.interceptorStackDefault);
-                var task = context.InvokeRecursiveAsync(command, cancellation);
-                context.Return();
-                return task;
+                try
+                {
+                    await context.InvokeRecursiveAsync(command, cancellation);
+                }
+                finally
+                {
+                    context.Return();
+                }
             };
 """);
             }

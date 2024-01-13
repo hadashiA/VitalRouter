@@ -63,28 +63,11 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     {
         CheckDispose();
 
-        var hasInterceptor = false;
-        foreach (var interceptorOrNull in interceptors.AsSpan())
+        if (HasInterceptor())
         {
-            if (interceptorOrNull != null)
-            {
-                hasInterceptor = true;
-                break;
-            }
+            return PublishWithInterceptorsAsync(command, cancellation);
         }
-        if (hasInterceptor)
-        {
-            var context = InvokeContextWithFreeList<T>.Rent(interceptors, publishCore);
-            try
-            {
-                return context.InvokeRecursiveAsync(command, cancellation);
-            }
-            finally
-            {
-                context.Return();
-            }
-        }
-        return publishCore.InvokeAsync(command, cancellation, null!);
+        return publishCore.ReceiveAsync(command, cancellation);
     }
 
     public Subscription Subscribe(ICommandSubscriber subscriber)
@@ -137,6 +120,31 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
+    async UniTask PublishWithInterceptorsAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+    {
+        var context = InvokeContextWithFreeList<T>.Rent(interceptors, publishCore);
+        try
+        {
+            await context.InvokeRecursiveAsync(command, cancellation);
+        }
+        finally
+        {
+            context.Return();
+        }
+    }
+
+    bool HasInterceptor()
+    {
+        foreach (var interceptorOrNull in interceptors.AsSpan())
+        {
+            if (interceptorOrNull != null)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void CheckDispose()
     {
         if (disposed)
@@ -145,7 +153,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
-    class PublishCore : ICommandInterceptor
+    class PublishCore : IAsyncCommandSubscriber
     {
         readonly Router source;
         readonly ExpandBuffer<UniTask> executingTasks;
@@ -156,11 +164,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             executingTasks = new ExpandBuffer<UniTask>(8);
         }
 
-        public UniTask InvokeAsync<T>(
-            T command,
-            CancellationToken cancellation,
-            Func<T, CancellationToken, UniTask> _)
-            where T : ICommand
+        public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation) where T : ICommand
         {
             try
             {

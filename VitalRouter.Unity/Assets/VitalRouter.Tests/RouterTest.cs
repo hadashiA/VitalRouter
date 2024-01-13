@@ -141,16 +141,16 @@ public class RouterTest
     [Test]
     public async Task StopPropagationByInterceptor()
     {
-        var commandBus = new Router();
+        var router = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestStopperInterceptor();
         var subscriber1 = new TestSubscriber();
-        commandBus
+        router
             .Filter(interceptor1)
             .Filter(interceptor2)
             .Subscribe(subscriber1);
 
-        await commandBus.PublishAsync(new TestCommand1());
+        await router.PublishAsync(new TestCommand1());
 
         Assert.That(interceptor1.Calls, Is.EqualTo(1));
         Assert.That(subscriber1.Calls, Is.Zero);

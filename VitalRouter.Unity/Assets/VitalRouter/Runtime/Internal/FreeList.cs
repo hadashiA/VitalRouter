@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace VitalRouter.Internal;
 
@@ -132,7 +131,7 @@ public class FreeList<T> where T : class
     static int FindNullIndex(T?[] target)
     {
         var span = MemoryMarshal.CreateReadOnlySpan(
-            ref Unsafe.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), target.Length);
+            ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), target.Length);
         return span.IndexOf(IntPtr.Zero);
     }
 
@@ -140,7 +139,7 @@ public class FreeList<T> where T : class
 
     static unsafe int FindNullIndex(T?[] target)
     {
-        ref var head = ref UnsafeUtility.As<T?, IntPtr>(ref MemoryMarshal.GetReference(target.AsSpan()));
+        ref var head = ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetReference(target.AsSpan()));
         fixed (void* p = &head)
         {
             var span = new ReadOnlySpan<IntPtr>(p, target.Length);
@@ -164,7 +163,7 @@ public class FreeList<T> where T : class
     static int FindLastNonNullIndex(T?[] target, int lastIndex)
     {
         var span = MemoryMarshal.CreateReadOnlySpan(
-            ref Unsafe.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), lastIndex); // without lastIndexed value.
+            ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), lastIndex); // without lastIndexed value.
         var index = span.LastIndexOfAnyExcept(IntPtr.Zero);
         return index; // return -1 is ok(means empty)
     }
