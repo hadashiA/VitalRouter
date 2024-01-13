@@ -128,8 +128,9 @@ public class RouterTest
         var commandBus = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestInterceptor();
-        commandBus.Filter(interceptor1);
-        commandBus.Filter(interceptor2);
+        commandBus
+            .Filter(interceptor1)
+            .Filter(interceptor2);
 
         await commandBus.PublishAsync(new TestCommand1());
 
@@ -140,15 +141,16 @@ public class RouterTest
     [Test]
     public async Task StopPropagationByInterceptor()
     {
-        var commandBus = new Router();
+        var router = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestStopperInterceptor();
         var subscriber1 = new TestSubscriber();
-        commandBus.Filter(interceptor1);
-        commandBus.Filter(interceptor2);
-        commandBus.Subscribe(subscriber1);
+        router
+            .Filter(interceptor1)
+            .Filter(interceptor2)
+            .Subscribe(subscriber1);
 
-        await commandBus.PublishAsync(new TestCommand1());
+        await router.PublishAsync(new TestCommand1());
 
         Assert.That(interceptor1.Calls, Is.EqualTo(1));
         Assert.That(subscriber1.Calls, Is.Zero);
@@ -159,8 +161,9 @@ public class RouterTest
     {
         var commandBus = new Router();
         var errorHandler = new ErrorHandlingInterceptor();
-        commandBus.Filter(errorHandler);
-        commandBus.Subscribe(new TestThrowSubscriber());
+        commandBus
+            .Filter(errorHandler)
+            .Subscribe(new TestThrowSubscriber());
 
         await commandBus.PublishAsync(new TestCommand1());
 

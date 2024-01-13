@@ -37,7 +37,7 @@ public class AInterceptor : ICommandInterceptor
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        return next(command, cancellation);
     }
 }
 
@@ -49,12 +49,12 @@ public class BInterceptor : ICommandInterceptor
         Func<T, CancellationToken, UniTask> next)
         where T : ICommand
     {
-        throw new NotImplementedException();
+        return next(command, cancellation);
     }
 }
 
 [Routes]
-[Filter(typeof(LoggingInterceptor))]
+[Filter(typeof(AInterceptor))]
 public partial class SamplePresenter
 {
     public SamplePresenter()
@@ -64,19 +64,17 @@ public partial class SamplePresenter
 
     public UniTask On(CharacterEnterCommand cmd)
     {
-        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
+        UnityEngine.Debug.Log("SamplePresenter.ctor");
         return default;
     }
 
     public UniTask On(CharacterMoveCommand cmd)
     {
-        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
         return default;
     }
 
     public void On(CharacterExitCommand cmd)
     {
-        UnityEngine.Debug.Log($"{GetType()} {cmd.GetType()}");
     }
 }
 

@@ -48,7 +48,7 @@ class TypeMeta
 
         AllInterceptorMetas = DefaultInterceptorMetas
             .Concat(RouteMethodMetas.SelectMany(x => x.InterceptorMetas))
-            // .Distinct(InterceptorMetaEqualityComparer.Instance)
+            .Distinct(InterceptorMetaEqualityComparer.Instance)
             .ToArray();
 
     }
