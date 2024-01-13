@@ -584,7 +584,7 @@ public class SampleLifetimeScope : LifetimeScope
 }
 ```
 
-Now we have the structure shown in the followingo<
+Now we have the structure shown in the following:
 
 ```mermaid
 flowchart LR
