@@ -536,8 +536,6 @@ publisher.Enqueue(command3); // Queue command3 behaind command2
 When FIFO mode, if you want to group the awaiting subscribers, you can use `FanOutInterceptor`
 
 ```cs
-Router.Default.Filter(CommandOrdering.FirstInFirstOut);
-
 var fanOut = new FanOutInterceptor();
 var groupA = new Router(CommandOrdering.FirstInFirstOut)
 var groupB = new Router(CommandOrdering.FirstInFirstOut);
