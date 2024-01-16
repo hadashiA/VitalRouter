@@ -61,9 +61,10 @@ public class FreeList<T> where T : class
         {
             if (index < values.Length)
             {
-                var v = values[index];
+                ref var v = ref values[index];
                 if (v == null) throw new KeyNotFoundException($"key index {index} is not found.");
 
+                v = null;
                 if (index == lastIndex)
                 {
                     lastIndex = FindLastNonNullIndex(values, index);
