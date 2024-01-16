@@ -61,9 +61,10 @@ public class FreeList<T> where T : class
         {
             if (index < values.Length)
             {
-                var v = values[index];
+                ref var v = ref values[index];
                 if (v == null) throw new KeyNotFoundException($"key index {index} is not found.");
 
+                v = null;
                 if (index == lastIndex)
                 {
                     lastIndex = FindLastNonNullIndex(values, index);
@@ -79,7 +80,7 @@ public class FreeList<T> where T : class
             if (lastIndex < 0) return false;
 
             var index = -1;
-            var span = values.AsSpan(0, lastIndex);
+            var span = values.AsSpan(0, lastIndex + 1);
             for (var i = 0; i < span.Length; i++)
             {
                 if (span[i] == value)
@@ -104,7 +105,7 @@ public class FreeList<T> where T : class
         {
             if (lastIndex > 0)
             {
-                values.AsSpan(0, lastIndex).Clear();
+                values.AsSpan(0, lastIndex + 1).Clear();
                 lastIndex = -1;
             }
         }

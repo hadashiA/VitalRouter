@@ -163,15 +163,16 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         {
             try
             {
-                for (var i = 0; i <= source.subscribers.LastIndex; i++)
+                foreach (var sub in source.subscribers.AsSpan())
                 {
-                    source.subscribers[i]?.Receive(command);
+                    sub?.Receive(command);
                 }
-                for (var i = 0; i <= source.asyncSubscribers.LastIndex; i++)
+
+                foreach (var sub in source.asyncSubscribers.AsSpan())
                 {
-                    if (source.asyncSubscribers[i] is { } asyncSubscriber)
+                    if (sub != null)
                     {
-                        var task = asyncSubscriber.ReceiveAsync(command, cancellation);
+                        var task = sub.ReceiveAsync(command, cancellation);
                         executingTasks.Add(task);
                     }
                 }
