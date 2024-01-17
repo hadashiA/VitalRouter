@@ -3,7 +3,7 @@
 [![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
 ![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
 
-VitalRouter, is a zero-allocation message passing tool for Unity (Game Engine). And the very thin layer that encourages MVP (or whatever)-like design. 
+VitalRouter, is a zero-allocation message passing tool for Unity (Game Engine). And the very thin layer that encourages unidirectional control-flow. 
 Whether you're an individual developer or part of a larger team, VitalRouter can help you build complex game applications.
 
 Bring fast, declarative routing to your application. 
