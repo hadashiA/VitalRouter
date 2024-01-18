@@ -17,6 +17,7 @@ public class ReferenceSymbols
             CommandInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommand")!,
             InterceptorInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommandInterceptor")!,
             MonoBehaviourType = compilation.GetTypeByMetadataName("UnityEngine.MonoBehaviour")!,
+            CancellationTokenType = compilation.GetTypeByMetadataName("System.Threading.CancellationToken")!,
             UniTaskType = compilation.GetTypeByMetadataName("Cysharp.Threading.Tasks.UniTask"),
             AwaitableType = compilation.GetTypeByMetadataName("UnityEngine.Awaitable"),
             TaskType = compilation.GetTypeByMetadataName("System.Threading.Tasks.Task"),

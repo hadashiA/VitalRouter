@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
@@ -30,6 +31,20 @@ public class GeneratedRoutingTest
         await router.PublishAsync(new CommandA(111));
 
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+    }
+
+    [Test]
+    public async Task SimpleAsyncWithCancellationTokenRoutes()
+    {
+        var x = new SimpleAsyncWithCancellationTokenPresenter();
+        x.MapTo(router);
+
+        using var cts = new CancellationTokenSource();
+
+        await router.PublishAsync(new CommandA(111), cts.Token);
+
+        Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+        Assert.AreEqual(x.CancellationToken, cts.Token);
     }
 
     [Test]
@@ -181,6 +196,20 @@ partial class SimpleAsyncPresenter
 }
 
 [Routes]
+partial class SimpleAsyncWithCancellationTokenPresenter
+{
+    public Queue<ICommand> Receives { get; } = new();
+    public CancellationToken CancellationToken { get; private set; }
+
+    public UniTask On(CommandA cmd, CancellationToken cancellation)
+    {
+        Receives.Enqueue(cmd);
+        CancellationToken = cancellation;
+        return default;
+    }
+}
+
+[Routes]
 partial class SimpleCombinedPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
@@ -294,4 +323,3 @@ partial class ErrorHandlingInterceptorPresenter2
         return default;
     }
 }
-
