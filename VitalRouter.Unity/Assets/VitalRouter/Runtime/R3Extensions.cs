@@ -54,7 +54,7 @@ sealed class CommandSubscriberObservable<T> : Observable<T>, ICommandSubscriber 
         return subscribable.Subscribe(this);
     }
 
-    public void Receive<TReceive>(TReceive command) where TReceive : ICommand
+    public void Receive<TReceive>(TReceive command, PublishContext context) where TReceive : ICommand
     {
         if (typeof(TReceive) == typeof(T))
         {

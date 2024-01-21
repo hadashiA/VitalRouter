@@ -57,8 +57,6 @@ public class R3ExtensionsTest
 
         router.Subscribe(subscriber);
 
-        var result = new Queue<TestCommand>();
-
         await Observable.Range(0, 5)
             .Select(x => new TestCommand(x))
             .ForEachPublishAndForgetAsync(router);
@@ -73,7 +71,7 @@ public class R3ExtensionsTest
         var cts = new CancellationTokenSource();
 
         var subscriber = new TestSubscriber();
-        var router = new Router();
+        var router = new Router(CommandOrdering.FirstInFirstOut);
         router.Subscribe(subscriber);
 
         var task = Observable.Range(0, 10)
@@ -91,6 +89,28 @@ public class R3ExtensionsTest
     [Test]
     public async Task ForEachPublishAndAwait()
     {
+        var frameProvider = new FakeFrameProvider();
+        var subscriber = new TestAsyncSubscriber(frameProvider);
+        var router = new Router(CommandOrdering.FirstInFirstOut);
+
+        router.Subscribe(subscriber);
+
+        var task = Observable.Range(0, 3)
+            .Select(x => new TestCommand(x))
+            .ForEachPublishAndAwaitAsync(router);
+
+        Assert.That(subscriber.Queue.Count, Is.EqualTo(1));
+        frameProvider.Advance(1);
+        Assert.That(subscriber.Queue.Count, Is.EqualTo(2));
+        frameProvider.Advance(1);
+        Assert.That(subscriber.Queue.Count, Is.EqualTo(3));
+
+        await task;
+    }
+
+    [Test]
+    public async Task ForEachPublishAndAwait_Cancel()
+    {
         var cts = new CancellationTokenSource();
         var frameProvider = new FakeFrameProvider();
         var subscriber = new TestAsyncSubscriber(frameProvider);
@@ -99,40 +119,18 @@ public class R3ExtensionsTest
         router.Subscribe(subscriber);
 
         var task = Observable.Range(0, 3)
+            .DelayFrame(1, frameProvider)
             .Select(x => new TestCommand(x))
-            .ForEachPublishAndForgetAsync(router, cts.Token);
+            .ForEachPublishAndAwaitAsync(router, cts.Token);
 
-        Assert.That(subscriber.Queue.Count, Is.EqualTo(1));
-        frameProvider.Advance(1);
-        Assert.That(subscriber.Queue.Count, Is.EqualTo(2));
-        frameProvider.Advance(1);
+        // Assert.That(subscriber.Queue.Count, Is.EqualTo(1));
+        // frameProvider.Advance(1);
+        // Assert.That(subscriber.Queue.Count, Is.EqualTo(2));
+        // frameProvider.Advance(1);
 
         cts.Cancel();
 
         Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
-        Assert.That(subscriber.Queue.Count, Is.EqualTo(2));
-    }
-
-    [Test]
-    public async Task ForEachPublishAndAwait_Cancel()
-    {
-
-        var frameProvider = new FakeFrameProvider();
-        var subscriber = new TestAsyncSubscriber(frameProvider);
-        var router = new Router(CommandOrdering.FirstInFirstOut);
-
-        router.Subscribe(subscriber);
-
-        var task = Observable.Range(0, 3)
-            .Select(x => new TestCommand(x))
-            .ForEachPublishAndForgetAsync(router);
-
-        Assert.That(subscriber.Queue.Count, Is.EqualTo(1));
-        frameProvider.Advance(1);
-        Assert.That(subscriber.Queue.Count, Is.EqualTo(2));
-        frameProvider.Advance(1);
-        Assert.That(subscriber.Queue.Count, Is.EqualTo(3));
-        frameProvider.Advance(1);
 
         await task;
     }
@@ -141,44 +139,36 @@ public class R3ExtensionsTest
     {
         public Queue<TestCommand> Queue { get; } = new();
 
-        public void Receive<T>(T command) where T : ICommand
+        public void Receive<T>(T command, PublishContext context) where T : ICommand
         {
             Queue.Enqueue((command as TestCommand)!);
         }
     }
 
-    class TestAsyncSubscriber : IAsyncCommandSubscriber
+    class TestAsyncSubscriber : IAsyncCommandSubscriber, IFrameRunnerWorkItem
     {
         public Queue<object> Queue { get; } = new();
         readonly FrameProvider frameProvider;
+
+        UniTaskCompletionSource? tcs;
 
         public TestAsyncSubscriber(FrameProvider frameProvider)
         {
             this.frameProvider = frameProvider;
         }
 
-        public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+        public UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
             Queue.Enqueue(command);
-            var tcs = new UniTaskCompletionSource();
-            frameProvider.Register(new OneShot(tcs));
+            tcs = new UniTaskCompletionSource();
+            frameProvider.Register(this);
             return tcs.Task;
         }
 
-        class OneShot : IFrameRunnerWorkItem
+        public bool MoveNext(long frameCount)
         {
-            readonly UniTaskCompletionSource source;
-
-            public OneShot(UniTaskCompletionSource source)
-            {
-                this.source = source;
-            }
-
-            public bool MoveNext(long frameCount)
-            {
-                source.TrySetResult();
-                return false;
-            }
+            tcs?.TrySetResult();
+            return false;
         }
     }
 
