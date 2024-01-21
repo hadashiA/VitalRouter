@@ -379,11 +379,30 @@ catch (Exception ex)
 ```cs
 public class PublishContext
 {
+    /// <summary>
+    /// Cancellation token set by Publisher. Used to cancel this entire Publish.
+    /// </summary>
     public CancellationToken CancellationToken { get; set; }
+
+    /// <summary>
+    /// The Member name of the caller who published. `[CallerMemberName]` is the source.
+    /// </summary>
     public string? CallerMemberName { get; set; }
-    public int CallerLineNumber { get; set; }
+
+    /// <summary>
+    /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
+    /// </summary>
     public string? CallerFilePath { get; set; }
-    public IDictionary<string, object?> Extensions { get; } = new ConcurrentDictionary<string, object?>();
+
+    /// <summary>
+    /// The line number of the caller who published. `[CallerLineNumber]` is the source.
+    /// </summary>
+    public int CallerLineNumber { get; set; }
+
+    /// <summary>
+    /// A general-purpose shared data area that is valid only while it is being Publish. (Experimental)
+    /// </summary>
+    public IDictionary<string, object?> Extensions { get; }
 }
 ```
 

@@ -31,7 +31,7 @@ public class PublishContext
     /// <summary>
     /// A general-purpose shared data area that is valid only while it is being Publish. (Experimental)
     /// </summary>
-    public IDictionary<string, object?> Extensions { get; } = new ConcurrentDictionary<string, object?>();
+    public IDictionary<string, object?> Extensions { get; } = new Dictionary<string, object?>();
 
     static readonly ConcurrentQueue<PublishContext> Pool = new(new []
     {
