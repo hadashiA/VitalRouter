@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace VitalRouter.Tests;
@@ -9,14 +8,11 @@ class AInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
-        return next(command, cancellation);
+        return next(command, ctx);
     }
 }
 
@@ -24,14 +20,11 @@ class BInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
-        return next(command, cancellation);
+        return next(command, ctx);
     }
 }
 
@@ -39,14 +32,11 @@ class CInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
-        return next(command, cancellation);
+        return next(command, ctx);
     }
 }
 
@@ -54,20 +44,17 @@ class DInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
-        return next(command, cancellation);
+        return next(command, ctx);
     }
 }
 
 class ThrowInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(T command, CancellationToken cancellation, Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         throw new TestException();
@@ -78,15 +65,12 @@ class ErrorHandlingInterceptor : ICommandInterceptor
 {
     public Exception? Exception { get; private set; }
 
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         try
         {
-            return next(command, cancellation);
+            return next(command, ctx);
         }
         catch (Exception ex)
         {

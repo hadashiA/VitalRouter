@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using VitalRouter;
 
 public readonly struct CharacterMoveCommand : ICommand
@@ -17,24 +18,17 @@ public readonly struct CharacterExitCommand : ICommand
 
 public class LoggingInterceptor : ICommandInterceptor
 {
-    public async UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
-        where T : ICommand
+    public async UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next) where T : ICommand
     {
-        UnityEngine.Debug.Log($"start {GetType()} {command.GetType()}");
-        await next(command, cancellation);
-        UnityEngine.Debug.Log($"end {GetType()} {command.GetType()}");
+        var path = ctx.CallerFilePath.Replace(Application.dataPath, "Assets");
+        UnityEngine.Debug.Log($"publish {ctx.CallerMemberName} at (<a href=\"{path}\" line=\"{ctx.CallerLineNumber}\">{path}:{ctx.CallerLineNumber}</a>) {command.GetType()}");
+        await next(command, ctx);
     }
 }
 
 public class AInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext cancellation, PublishContinuation<T> next)
         where T : ICommand
     {
         return next(command, cancellation);
@@ -43,17 +37,15 @@ public class AInterceptor : ICommandInterceptor
 
 public class BInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
-        return next(command, cancellation);
+        return next(command, context);
     }
 }
 
 [Routes]
+// [Filter(typeof(LoggingInterceptor))]
 [Filter(typeof(AInterceptor))]
 public partial class SamplePresenter
 {

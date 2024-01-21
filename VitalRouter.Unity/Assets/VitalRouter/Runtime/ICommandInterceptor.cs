@@ -1,41 +1,33 @@
-using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter;
 
+public delegate UniTask PublishContinuation<in T>(T cmd, PublishContext ctx) where T : ICommand;
+
 public interface ICommandInterceptor
 {
-    UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand;
 }
 
 public abstract class TypedCommandInterceptro<T> : ICommandInterceptor
     where T : ICommand
 {
-    public UniTask InvokeAsync<TReceive>(
-        TReceive command,
-        CancellationToken cancellation,
-        Func<TReceive, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<TReceive>(TReceive command, PublishContext context, PublishContinuation<TReceive> next)
         where TReceive : ICommand
     {
-        if (command is T x)
+        if (typeof(TReceive) == typeof(T))
         {
-            var n = UnsafeHelper.As<
-                Func<TReceive, CancellationToken, UniTask>,
-                Func<T, CancellationToken, UniTask>
-            >(ref next);
-            return InvokeAsync(x, cancellation, n);
+            var nextCasted = UnsafeHelper.As<PublishContinuation<TReceive>, PublishContinuation<T>>(ref next);
+            var commandCasted = UnsafeHelper.As<TReceive, T>(ref command);
+            return InvokeAsync(commandCasted, context, nextCasted);
         }
-        return next(command, cancellation);
+        return next(command, context);
     }
 
     public abstract UniTask InvokeAsync(
         T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next);
+        PublishContext context,
+        PublishContinuation<T> next);
 }

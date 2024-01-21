@@ -16,6 +16,7 @@ public class ReferenceSymbols
             FilterAttribute = compilation.GetTypeByMetadataName("VitalRouter.FilterAttribute")!,
             CommandInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommand")!,
             InterceptorInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommandInterceptor")!,
+            PublishContextType = compilation.GetTypeByMetadataName("VitalRouter.PublishContext")!,
             MonoBehaviourType = compilation.GetTypeByMetadataName("UnityEngine.MonoBehaviour")!,
             CancellationTokenType = compilation.GetTypeByMetadataName("System.Threading.CancellationToken")!,
             UniTaskType = compilation.GetTypeByMetadataName("Cysharp.Threading.Tasks.UniTask"),
@@ -31,6 +32,7 @@ public class ReferenceSymbols
     public INamedTypeSymbol InterceptorInterface { get; private set; } = default!;
     public INamedTypeSymbol MonoBehaviourType { get; private set; } = default!;
     public INamedTypeSymbol CancellationTokenType { get; private set; } = default!;
+    public INamedTypeSymbol PublishContextType { get; private set; } = default!;
     public INamedTypeSymbol? UniTaskType { get; private set; } = default!;
     public INamedTypeSymbol? AwaitableType { get; private set; } = default!;
     public INamedTypeSymbol? TaskType { get; private set; } = default!;

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
@@ -7,7 +8,13 @@ namespace VitalRouter;
 
 public interface ICommandPublisher
 {
-    UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
+    UniTask PublishAsync<T>(
+        T command,
+        CancellationToken cancellation = default,
+        [CallerMemberName] string? callerMemberName = null,
+        [CallerFilePath] string? callerFilePath = null,
+        [CallerLineNumber] int callerLineNumber = 0)
+        where T : ICommand;
 }
 
 public interface ICommandSubscribable
@@ -20,12 +27,12 @@ public interface ICommandSubscribable
 
 public interface ICommandSubscriber
 {
-    void Receive<T>(T command) where T : ICommand;
+    void Receive<T>(T command, PublishContext context) where T : ICommand;
 }
 
 public interface IAsyncCommandSubscriber
 {
-    UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
+    UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand;
 }
 
 public static class CommandPublisherExtensions
@@ -33,10 +40,13 @@ public static class CommandPublisherExtensions
     public static void Enqueue<T>(
         this ICommandPublisher publisher,
         T command,
-        CancellationToken cancellation = default)
+        CancellationToken cancellation = default,
+        [CallerMemberName] string? callerMemberName = null,
+        [CallerFilePath] string? callerFilePath = null,
+        [CallerLineNumber] int callerLineNumber = 0)
         where T : ICommand
     {
-        publisher.PublishAsync(command, cancellation).Forget();
+        publisher.PublishAsync(command, cancellation, callerMemberName, callerFilePath, callerLineNumber).Forget();
     }
 }
 
@@ -58,15 +68,40 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         Filter(ordering);
     }
 
-    public UniTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+    public async UniTask PublishAsync<T>(
+        T command,
+        CancellationToken cancellation = default,
+        [CallerMemberName] string? callerMemberName = null,
+        [CallerFilePath] string? callerFilePath = null,
+        [CallerLineNumber] int callerLineNumber = 0)
+        where T : ICommand
     {
         CheckDispose();
 
         if (HasInterceptor())
         {
-            return PublishWithInterceptorsAsync(command, cancellation);
+            var context = PublishContext<T>.Rent(interceptors, publishCore, cancellation, callerMemberName, callerFilePath, callerLineNumber);
+            try
+            {
+                await context.PublishAsync(command);
+            }
+            finally
+            {
+                context.Return();
+            }
         }
-        return publishCore.ReceiveAsync(command, cancellation);
+        else
+        {
+            var context = PublishContext.Rent(cancellation, callerMemberName, callerFilePath, callerLineNumber);
+            try
+            {
+                await publishCore.ReceiveAsync(command, context);
+            }
+            finally
+            {
+                context.Return();
+            }
+        }
     }
 
     public Subscription Subscribe(ICommandSubscriber subscriber)
@@ -115,19 +150,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
-    async UniTask PublishWithInterceptorsAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
-    {
-        var context = InvokeContextWithFreeList<T>.Rent(interceptors, publishCore);
-        try
-        {
-            await context.InvokeRecursiveAsync(command, cancellation);
-        }
-        finally
-        {
-            context.Return();
-        }
-    }
-
     bool HasInterceptor()
     {
         foreach (var interceptorOrNull in interceptors.AsSpan())
@@ -159,20 +181,20 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             this.source = source;
         }
 
-        public UniTask ReceiveAsync<T>(T command, CancellationToken cancellation) where T : ICommand
+        public UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
             try
             {
                 foreach (var sub in source.subscribers.AsSpan())
                 {
-                    sub?.Receive(command);
+                    sub?.Receive(command, context);
                 }
 
                 foreach (var sub in source.asyncSubscribers.AsSpan())
                 {
                     if (sub != null)
                     {
-                        var task = sub.ReceiveAsync(command, cancellation);
+                        var task = sub.ReceiveAsync(command, context);
                         executingTasks.Add(task);
                     }
                 }

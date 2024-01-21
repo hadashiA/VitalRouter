@@ -8,7 +8,6 @@ public struct DataCommand : ICommand
     public int Damage { get; set; }
 }
 
-
 public class SampleBehaviour : MonoBehaviour
 {
     readonly ICommandInterceptor[] interceptors =

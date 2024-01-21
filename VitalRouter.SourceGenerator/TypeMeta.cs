@@ -73,16 +73,39 @@ class TypeMeta
                 if (method.Parameters.Length is <= 0 or >= 3)
                     continue;
 
-                var commandParam = method.Parameters[0];
-                if (!commandParam.Type.AllInterfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.CommandInterface)))
+                IParameterSymbol? commandParam = null;
+                IParameterSymbol? cancellationTokenParam = null;
+                IParameterSymbol? publishContextParam = null;
+
+                foreach (var param in method.Parameters)
+                {
+                    if (param.Type.AllInterfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.CommandInterface)))
+                    {
+                        commandParam = param;
+                    }
+                    else if (SymbolEqualityComparer.Default.Equals(param.Type, references.CancellationTokenType))
+                    {
+                        cancellationTokenParam = param;
+                    }
+                    else if (SymbolEqualityComparer.Default.Equals(param.Type, references.PublishContextType))
+                    {
+                        publishContextParam = param;
+                    }
+                }
+
+                if (commandParam is null)
+                {
+                    continue;
+                }
+                if (method.Parameters.Length >= 2 && cancellationTokenParam is null && publishContextParam is null)
                 {
                     continue;
                 }
 
                 // sync
-                if (method is { ReturnsVoid: true, Parameters.Length: 1 })
+                if (method is { ReturnsVoid: true })
                 {
-                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
+                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam, cancellationTokenParam, publishContextParam, i++, references));
                 }
                 // async
                 else if (SymbolEqualityComparer.Default.Equals(method.ReturnType, references.UniTaskType) ||
@@ -90,7 +113,7 @@ class TypeMeta
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.TaskType) ||
                          SymbolEqualityComparer.Default.Equals(method.ReturnType, references.ValueTaskType))
                 {
-                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam.Type, references, i++));
+                    routeMethodMetas.Add(new RouteMethodMeta(method, commandParam, cancellationTokenParam, publishContextParam, i++, references));
                 }
                 // not routable
                 else

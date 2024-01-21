@@ -17,18 +17,15 @@ public class FanOutInterceptor : ICommandInterceptor
         subsequents.Add(publisher);
     }
 
-    public async UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation, Func<T, CancellationToken, UniTask> next)
+    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
-        await next(command, cancellation);
-
+        await next(command, context);
         try
         {
             foreach (var x in subsequents)
             {
-                executingTasks.Add(x.PublishAsync(command, cancellation));
+                executingTasks.Add(x.PublishAsync(command, context.CancellationToken, context.CallerMemberName, context.CallerFilePath, context.CallerLineNumber));
             }
 
             whenAllSource.Reset(executingTasks);
