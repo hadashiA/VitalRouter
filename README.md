@@ -29,9 +29,21 @@ public partial class ExamplePresenter
     
     // Declare event handler with extra filter
     [Filter(typeof(ExtraFilter))]
-    public async UniTask On(BuzCommand cmd, CancellationToken cancellation)
+    public async UniTask On(BuzCommand cmd)
     {
         // Do something after all filters runs on.
+    }
+
+    // With cancellation token
+    public async UniTask On(FooCommand cmd, CancellationToken cancellation)
+    {
+        // Do something for await ...
+    }
+    
+    // With PublishContext for more information
+    public async UniTask On(FooCommand cmd, PublishContxt context)
+    {
+        // Do something for await ...
     }
 }
 ```
@@ -153,7 +165,10 @@ Types with the `[Routes]` attribute are analyzed at compile time and a method to
 
 Methods that satisfy the following conditions are eligible.
 - public accesibility.
--  The argument must be an `ICommand`, or `ICommand` and `CancellationToken`.
+- The argument matches one of the following
+    - `ICommand`
+    - `ICommand`, `CancellationToken`
+    - `ICommand`, `PublishContext`
 -  The return value must be `void`,  or `UniTask`.
 
 For example, all of the following are eligible. Method names can be arbitrary.
@@ -162,7 +177,7 @@ For example, all of the following are eligible. Method names can be arbitrary.
 public void On(FooCommand cmd) { /* .. */ }
 public async UniTask HandleAsync(FooCommand cmd) { /* .. */ }
 public async UniTask Recieve(FooCommand cmd, CancellationToken cancellation) { /* .. */ }
-
+public async UniTask RecieveAsync(FooCommand cmd, PublishContext context) { /* .. */ }
 ```
 
 > [!NOTE] 
@@ -344,17 +359,6 @@ publisher.PublishAsync(command3).Forget(); // Start processing command3 immediat
 
 If you want to treat the commands like a queue to be sequenced, see [FIFO](#fifo) section for more information.
 
-The following is same for the above.
-
-```cs
-publisher.Enqueue(command1);
-publisher.Enqueue(command2);
-publisher.Enqueue(command3);
-// ...
-```
-
-`Enqueue` is an alias to `PublishAsync(command).Forget()`.
-
 Of course, if you do `await`, you can try/catch all subscriber/routes exceptions.
 
 ```cs
@@ -365,6 +369,21 @@ try
 catch (Exception ex)
 {
     // ...
+}
+```
+
+### PublishContext
+
+`PublishContext` is a context object that contains information about the publish.
+
+```cs
+public class PublishContext
+{
+    public CancellationToken CancellationToken { get; set; }
+    public string? CallerMemberName { get; set; }
+    public int CallerLineNumber { get; set; }
+    public string? CallerFilePath { get; set; }
+    public IDictionary<string, object?> Extensions { get; } = new ConcurrentDictionary<string, object?>();
 }
 ```
 

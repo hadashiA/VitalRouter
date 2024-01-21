@@ -3,14 +3,27 @@ using Cysharp.Threading.Tasks;
 
 namespace VitalRouter;
 
-public class InvokeContext<T> where T : ICommand
+public class ReceiveContext<T> where T : ICommand
 {
-    static readonly ConcurrentQueue<InvokeContext<T>> Pool = new(new []
+    public static async UniTask InvokeAsync(T command, ICommandInterceptor[] interceptorStack, PublishContext context)
     {
-        new InvokeContext<T>(),
-        new InvokeContext<T>(),
-        new InvokeContext<T>(),
-        new InvokeContext<T>(),
+        var invoker = Rent(interceptorStack);
+        try
+        {
+            await invoker.InvokeRecursiveAsync(command, context);
+        }
+        finally
+        {
+            invoker.Return();
+        }
+    }
+
+    static readonly ConcurrentQueue<ReceiveContext<T>> Pool = new(new []
+    {
+        new ReceiveContext<T>(),
+        new ReceiveContext<T>(),
+        new ReceiveContext<T>(),
+        new ReceiveContext<T>(),
     });
 
     ICommandInterceptor[] interceptors = default!;
@@ -18,17 +31,17 @@ public class InvokeContext<T> where T : ICommand
 
     readonly PublishContinuation<T> continuation;
 
-    public static InvokeContext<T> Rent(ICommandInterceptor[] interceptors)
+    public static ReceiveContext<T> Rent(ICommandInterceptor[] interceptors)
     {
         if (!Pool.TryDequeue(out var value))
         {
-            value = new InvokeContext<T>();
+            value = new ReceiveContext<T>();
         }
         value.interceptors = interceptors;
         return value;
     }
 
-    InvokeContext()
+    ReceiveContext()
     {
         continuation = InvokeRecursiveAsync;
     }

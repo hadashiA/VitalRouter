@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using VitalRouter;
 
 public readonly struct CharacterMoveCommand : ICommand
@@ -19,9 +20,9 @@ public class LoggingInterceptor : ICommandInterceptor
 {
     public async UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next) where T : ICommand
     {
-        UnityEngine.Debug.Log($"start {GetType()} {command.GetType()}");
+        var path = ctx.CallerFilePath.Replace(Application.dataPath, "Assets");
+        UnityEngine.Debug.Log($"publish {ctx.CallerMemberName} at (<a href=\"{path}\" line=\"{ctx.CallerLineNumber}\">{path}:{ctx.CallerLineNumber}</a>) {command.GetType()}");
         await next(command, ctx);
-        UnityEngine.Debug.Log($"end {GetType()} {command.GetType()}");
     }
 }
 
@@ -44,6 +45,7 @@ public class BInterceptor : ICommandInterceptor
 }
 
 [Routes]
+// [Filter(typeof(LoggingInterceptor))]
 [Filter(typeof(AInterceptor))]
 public partial class SamplePresenter
 {

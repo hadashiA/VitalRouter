@@ -574,23 +574,9 @@ partial class {{typeMeta.TypeName}}
             if (MethodTable<T>.InterceptorFinder is { } finder)
             {
                 var interceptorStack = finder.Invoke(this);
-                return ReceiveWithInterceptorsAsync(command, interceptorStack, context);
+                return ReceiveContext<T>.InvokeAsync(command, interceptorStack, context);
             }
             return UniTask.CompletedTask;
-        }
-        
-        async UniTask ReceiveWithInterceptorsAsync<T>(T command, ICommandInterceptor[] interceptorStack, PublishContext context)
-            where T : ICommand
-        {
-            var invoker = InvokeContext<T>.Rent(interceptorStack);
-            try
-            {
-                await invoker.InvokeRecursiveAsync(command, context);
-            }
-            finally
-            {
-                context.Return();
-            }
         }
     }
 """);
