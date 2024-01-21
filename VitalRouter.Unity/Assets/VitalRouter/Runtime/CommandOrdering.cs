@@ -31,16 +31,13 @@ public class FirstInFirstOutOrdering : ICommandInterceptor, IDisposable
 
     readonly UniTaskAsyncLock publishLock = new();
 
-    public async UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
         await publishLock.WaitAsync();
         try
         {
-            await next(command, cancellation);
+            await next(command, context);
         }
         finally
         {

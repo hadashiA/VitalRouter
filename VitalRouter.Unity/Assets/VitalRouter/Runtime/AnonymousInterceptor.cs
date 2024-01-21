@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
@@ -9,7 +8,7 @@ public static class CommandBusAnonymousExtensions
 {
     public static void Filter<T>(
         this Router router,
-        Func<T, CancellationToken, Func<T, CancellationToken, UniTask>, UniTask> callback)
+        Func<T, PublishContext, PublishContinuation<T>, UniTask> callback)
         where T : ICommand
     {
         router.Filter(new AnonymousInterceptor<T>(callback));
@@ -18,26 +17,25 @@ public static class CommandBusAnonymousExtensions
 
 class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
 {
-    readonly Func<T, CancellationToken, Func<T, CancellationToken, UniTask>, UniTask> callback;
+    readonly Func<T, PublishContext, PublishContinuation<T>, UniTask> callback;
 
-    public AnonymousInterceptor(Func<T, CancellationToken, Func<T, CancellationToken, UniTask>, UniTask> callback)
+    public AnonymousInterceptor(Func<T, PublishContext, PublishContinuation<T>, UniTask> callback)
     {
         this.callback = callback;
     }
 
     public UniTask InvokeAsync<TReceive>(
         TReceive command,
-        CancellationToken cancellation,
-        Func<TReceive, CancellationToken, UniTask> next)
+        PublishContext context,
+        PublishContinuation<TReceive> next)
         where TReceive : ICommand
     {
-        if (command is T x)
+        if (typeof(TReceive) == typeof(T))
         {
-            var y = UnsafeHelper.As<
-                Func<TReceive, CancellationToken, UniTask>,
-                Func<T, CancellationToken, UniTask>>(ref next);
-            return callback(x, cancellation, y);
+            var commandCasted = UnsafeHelper.As<TReceive, T>(ref command);
+            var nextCasted = UnsafeHelper.As<PublishContinuation<TReceive>, PublishContinuation<T>>(ref next);
+            return callback(commandCasted, context, nextCasted);
         }
-        return next(command, cancellation);
+        return next(command, context);
     }
 }

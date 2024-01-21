@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Concurrent;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace VitalRouter;
@@ -18,7 +16,7 @@ public class InvokeContext<T> where T : ICommand
     ICommandInterceptor[] interceptors = default!;
     int currentInterceptorIndex = -1;
 
-    readonly Func<T, CancellationToken, UniTask> nextDelegate;
+    readonly PublishContinuation<T> continuation;
 
     public static InvokeContext<T> Rent(ICommandInterceptor[] interceptors)
     {
@@ -32,14 +30,14 @@ public class InvokeContext<T> where T : ICommand
 
     InvokeContext()
     {
-        nextDelegate = InvokeRecursiveAsync;
+        continuation = InvokeRecursiveAsync;
     }
 
-    public UniTask InvokeRecursiveAsync(T command, CancellationToken cancellation = default)
+    public UniTask InvokeRecursiveAsync(T command, PublishContext context)
     {
         if (MoveNextInterceptor(out var interceptor))
         {
-            return interceptor.InvokeAsync(command, cancellation, nextDelegate);
+            return interceptor.InvokeAsync(command, context, continuation);
         }
         return UniTask.CompletedTask;
     }

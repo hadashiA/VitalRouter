@@ -29,17 +29,20 @@ class RouteMethodMeta
     public string CommandFullTypeName { get; }
     public string CommandTypePrefix { get; }
     public bool TakeCancellationToken { get; }
+    public bool TakePublishContext { get; }
 
     public bool IsAsync => Symbol.IsAsync || !Symbol.ReturnsVoid;
 
     public RouteMethodMeta(
         IMethodSymbol symbol,
-        ITypeSymbol commandTypeSymbol,
-        ReferenceSymbols references,
-        int sequentialOrder)
+        IParameterSymbol commandParamSymbol,
+        IParameterSymbol? cancellationTokenParamSymbol,
+        IParameterSymbol? publishContextParamSymbol,
+        int sequentialOrder,
+        ReferenceSymbols references)
     {
         Symbol = symbol;
-        CommandTypeSymbol = commandTypeSymbol;
+        CommandTypeSymbol = commandParamSymbol.Type;
         SequentialOrder = sequentialOrder;
 
         InterceptorMetas = symbol.GetAttributes()
@@ -48,18 +51,16 @@ class RouteMethodMeta
             .Select(x => new InterceptorMeta(x, (INamedTypeSymbol)x.ConstructorArguments[0].Value!))
             .ToArray();
 
-        CommandFullTypeName = commandTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        CommandFullTypeName = CommandTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         CommandTypePrefix = CommandFullTypeName
             .Replace("global::", "")
             .Replace(".", "")
             .Replace("<", "_")
             .Replace(">", "_");
-        commandTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        CommandTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
-        if (symbol.Parameters.Length > 1)
-        {
-            TakeCancellationToken = SymbolEqualityComparer.Default.Equals(symbol.Parameters[1].Type, references.CancellationTokenType);
-        }
+        TakeCancellationToken = cancellationTokenParamSymbol is not null;
+        TakePublishContext = publishContextParamSymbol is not null;
     }
 
 

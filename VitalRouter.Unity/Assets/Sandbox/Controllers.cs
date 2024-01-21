@@ -17,24 +17,17 @@ public readonly struct CharacterExitCommand : ICommand
 
 public class LoggingInterceptor : ICommandInterceptor
 {
-    public async UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
-        where T : ICommand
+    public async UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next) where T : ICommand
     {
         UnityEngine.Debug.Log($"start {GetType()} {command.GetType()}");
-        await next(command, cancellation);
+        await next(command, ctx);
         UnityEngine.Debug.Log($"end {GetType()} {command.GetType()}");
     }
 }
 
 public class AInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext cancellation, PublishContinuation<T> next)
         where T : ICommand
     {
         return next(command, cancellation);
@@ -43,13 +36,10 @@ public class AInterceptor : ICommandInterceptor
 
 public class BInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
-        return next(command, cancellation);
+        return next(command, context);
     }
 }
 

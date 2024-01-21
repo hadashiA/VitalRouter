@@ -10,7 +10,7 @@ class TestSubscriber : ICommandSubscriber
 {
     public int Calls { get; private set; }
 
-    public void Receive<T>(T command) where T : ICommand
+    public void Receive<T>(T command, PublishContext context) where T : ICommand
     {
         Calls++;
     }
@@ -20,12 +20,9 @@ class TestAsyncSubscriber : IAsyncCommandSubscriber
 {
     public int Calls { get; private set; }
 
-    public async UniTask ReceiveAsync<T>(
-        T command,
-        CancellationToken cancellation = default)
-        where T : ICommand
+    public async UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
     {
-        await Task.Delay(10, cancellation);
+        await Task.Delay(10, context.CancellationToken);
         Calls++;
     }
 }
@@ -36,7 +33,7 @@ class TestSignalSubscriber : IAsyncCommandSubscriber, IDisposable
     public int Calls { get; private set; }
     public int Completed { get; private set; }
 
-    public async UniTask ReceiveAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand
+    public async UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
     {
         Calls++;
 
@@ -56,18 +53,17 @@ class TestInterceptor : ICommandInterceptor
 {
     public int Calls { get; private set; }
 
-    public UniTask InvokeAsync<T>(T command, CancellationToken cancellation, Func<T, CancellationToken, UniTask> next)
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Calls++;
-        return next(command, cancellation);
+        return next(command, ctx);
     }
 }
 
 class TestStopperInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(T command, CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next) where T : ICommand
+    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next) where T : ICommand
     {
         return UniTask.CompletedTask;
     }
@@ -75,7 +71,7 @@ class TestStopperInterceptor : ICommandInterceptor
 
 class TestThrowSubscriber : ICommandSubscriber
 {
-    public void Receive<T>(T command) where T : ICommand
+    public void Receive<T>(T command, PublishContext ctx) where T : ICommand
     {
         throw new TestException();
     }

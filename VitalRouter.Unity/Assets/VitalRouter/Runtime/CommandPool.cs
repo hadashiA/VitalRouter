@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace VitalRouter;
@@ -95,15 +94,12 @@ public class CommandPooling : ICommandInterceptor
 {
     public static readonly CommandPooling Instance = new();
 
-    public async UniTask InvokeAsync<T>(
-        T command,
-        CancellationToken cancellation,
-        Func<T, CancellationToken, UniTask> next)
+    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
         try
         {
-            await next(command, cancellation);
+            await next(command, context);
         }
         finally
         {
