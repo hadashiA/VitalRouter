@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "UniTask",
-        "VContainer"
+        "VContainer",
+        "R3.Unity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -17,6 +18,11 @@
             "name": "jp.hadashikick.vcontainer",
             "expression": "",
             "define": "VITALROUTER_VCONTAINER_INTEGRATION"
+        },
+        {
+            "name": "com.cysharp.r3",
+            "expression": "",
+            "define": "VITALROUTER_R3_INTEGRATION"
         }
     ],
     "noEngineReferences": false

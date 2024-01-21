@@ -7,12 +7,28 @@
       "dependencies": {},
       "hash": "baba5e36b5e93cb0a4d08e170e01aa3890d327bf"
     },
+    "com.cysharp.r3": {
+      "version": "https://github.com/Cysharp/R3.git?path=src/R3.Unity/Assets/R3.Unity",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.modules.imgui": "1.0.0"
+      },
+      "hash": "91914e08a271765306f35ff1c1eda0bb0f0df2b1"
+    },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "5cc97c7f0085624b6ef57853d70b404440060cef"
+    },
+    "com.github-glitchenzo.nugetforunity": {
+      "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "7388d28922b2144497f639630fd8b8b7a3c1ee6d"
     },
     "com.unity.ext.nunit": {
       "version": "2.0.3",
@@ -51,10 +67,11 @@
       }
     },
     "jp.hadashikick.vcontainer": {
-      "version": "file:../../../VContainer/VContainer/Assets/VContainer",
+      "version": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.14.0",
       "depth": 0,
-      "source": "local",
-      "dependencies": {}
+      "source": "git",
+      "dependencies": {},
+      "hash": "d37fb21ba4d17f3a80effdc8119d985d8d150ebe"
     },
     "com.unity.modules.animation": {
       "version": "1.0.0",
