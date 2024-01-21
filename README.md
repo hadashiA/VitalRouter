@@ -68,6 +68,7 @@ public partial class ExamplePresenter
 - [Command pooling](#command-pooling)
 - [Sequence Command](#sequence-command)
 - [Low-level API](#low-level-api)
+- [R3 integration (experimental)](#r3-integration)
 - [Performance](#performance)
 - [Concept, Technical Explanation](#concept-technical-explanation)
 - [Lisence](#lisence)
@@ -790,6 +791,36 @@ class AsyncSubscriber : IAsyncCommandSubscriber
 // Add interceptor via lambda expresion
 router.Filter<FooCommand>(async (cmd, cancellationToken, next) => { /* ... */ });
 ```
+
+## R3 integration
+
+[Cysharp/R3](https://github.com/Cysharp/R3) is a new Rx (Reactive extensions) library that works with Unity.
+It is the successor to the popular UniRx, with a more modern implementation, a refined API, and an abstraction layer.
+Check the R3 documentation for more details.
+
+VitalRouter supports experimental integration with R3.
+
+```cs
+publisher.AsObservable<TCommand>() // Convert pub/sub to R3 Observable
+```
+
+```cs
+// Subscibe and bind publisher.
+observable
+    .Select(x => new FooCommand { X = x }
+    .SubscribeToPublish(Router.Default);
+    
+// Subscibe and bind publisher and await for publishing all. (PublishAsync().Forget())
+await observable
+    .Select(x => new FooCommand { X = x }
+    .ForEachPublishAndForgetAsync(Router.Default);
+    
+// Subscibe and bind publisher and await for publishing all. (await PublishAsync() one by one)
+await observable
+    .Select(x => new FooCommand { X = x }
+    .ForEachPublishAndAwaitAsync(Router.Default);
+```
+
 
 ## Performance
 
