@@ -18,7 +18,7 @@ public partial class Router
         switch (ordering)
         {
             case CommandOrdering.FirstInFirstOut:
-                Filter(FirstInFirstOutOrdering.Instance);
+                Filter(new FirstInFirstOutOrdering());
                 break;
         }
         return this;
@@ -27,8 +27,6 @@ public partial class Router
 
 public class FirstInFirstOutOrdering : ICommandInterceptor, IDisposable
 {
-    public static readonly FirstInFirstOutOrdering Instance = new();
-
     readonly UniTaskAsyncLock publishLock = new();
 
     public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
