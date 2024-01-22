@@ -29,21 +29,9 @@ public partial class ExamplePresenter
     
     // Declare event handler with extra filter
     [Filter(typeof(ExtraFilter))]
-    public async UniTask On(BuzCommand cmd)
+    public async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
     {
         // Do something after all filters runs on.
-    }
-
-    // With cancellation token
-    public async UniTask On(FooCommand cmd, CancellationToken cancellation)
-    {
-        // Do something for await ...
-    }
-    
-    // With PublishContext for more information
-    public async UniTask On(FooCommand cmd, PublishContxt context)
-    {
-        // Do something for await ...
     }
 }
 ```
