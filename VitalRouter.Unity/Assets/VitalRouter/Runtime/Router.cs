@@ -2,7 +2,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using VContainer;
 using VitalRouter.Internal;
 
 namespace VitalRouter;
@@ -63,7 +62,9 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     readonly PublishCore publishCore;
 
-    [Inject]
+#if VITALROUTER_VCONTAINER_INTEGRATION
+    [VContainer.Inject]
+#endif
     public Router()
     {
         publishCore = new PublishCore(this);
