@@ -51,7 +51,7 @@ public partial class ExamplePresenter
 - [Getting Started](#getting-started)
 - [Publish](#publish)
 - [Interceptors](#interceptors)
-- [Command Ordering](#fifo)
+- [FIFO](#fifo)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
 - [Sequence Command](#sequence-command)
@@ -491,19 +491,19 @@ If you take the way of 2 or 3, the Interceptor instance is resolved as follows.
 
 ## FIFO
 
-If you want to treat the commands like a queue to be sequenced, do the following:
+If you want to treat the commands like a queue to be sequential processing, do the following:
 
 ```cs
-// Set FIFO constraint to the globally.
-Router.Default.Filter(CommandOrdering.FirstInFirstOut);
+// Set sequential constraint to the globally.
+Router.Default.Filter(CommandOrdering.Sequential);
 
-// Create FIFO router.
-var fifoRouter = new Router(CommandOrdering.FirstInFirstOut);
+// Create sequential router.
+var fifoRouter = new Router(CommandOrdering.Sequential);
 
-// Configure FIFO routing via DI
+// Configure sequential routing via DI
 builder.RegisterVitalRouter(routing => 
 {
-    routing.CommandOrdering = CommandOrdering.FirstInFirstOut;
+    routing.CommandOrdering = CommandOrdering.Sequential;
 });
 ```
 
@@ -532,8 +532,8 @@ When FIFO mode, if you want to group the awaiting subscribers, you can use `FanO
 
 ```cs
 var fanOut = new FanOutInterceptor();
-var groupA = new Router(CommandOrdering.FirstInFirstOut)
-var groupB = new Router(CommandOrdering.FirstInFirstOut);
+var groupA = new Router(CommandOrdering.Sequential)
+var groupB = new Router(CommandOrdering.Sequential);
 
 fanOut.Add(groupA);
 fanOut.Add(groupB);
@@ -733,7 +733,7 @@ router.Subscribe(Subscriber);
 
 class Subscriber : ICommandSubscriber
 {
-    pubilc void Receive<T>(T cmd) where T : ICommand { /* ... */ }
+    pubilc void Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
 }
 
 // Subscribe async handler
@@ -741,11 +741,38 @@ router.Subscribe(AsyncSubscriber);
 
 class AsyncSubscriber : IAsyncCommandSubscriber
 {
-    pubilc UniTask Receive<T>(T cmd, CancellationToken cancellation) where T : ICommand { /* ... */ }
+    pubilc UniTask Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
 }
 
 // Add interceptor via lambda expresion
-router.Filter<FooCommand>(async (cmd, cancellationToken, next) => { /* ... */ });
+router.Filter<FooCommand>(async (cmd, ctx, next) => { /* ... */ });
+```
+
+`PublishContext` has the following structure.
+
+```cs
+public class PublishContext
+{
+    /// <summary>
+    /// Cancellation token set by Publisher. Used to cancel this entire Publish.
+    /// </summary>
+    public CancellationToken CancellationToken { get; set; }
+
+    /// <summary>
+    /// The Member name of the caller who published. `[CallerMemberName]` is the source.
+    /// </summary>
+    public string? CallerMemberName { get; set; }
+
+    /// <summary>
+    /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
+    /// </summary>
+    public string? CallerFilePath { get; set; }
+
+    /// <summary>
+    /// The line number of the caller who published. `[CallerLineNumber]` is the source.
+    /// </summary>
+    public int CallerLineNumber { get; set; }
+}
 ```
 
 ## R3 integration
