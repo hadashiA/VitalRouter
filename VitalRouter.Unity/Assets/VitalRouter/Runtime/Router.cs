@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using VContainer;
 using VitalRouter.Internal;
 
 namespace VitalRouter;
@@ -62,9 +63,14 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     readonly PublishCore publishCore;
 
-    public Router(CommandOrdering ordering = CommandOrdering.Parallel)
+    [Inject]
+    public Router()
     {
         publishCore = new PublishCore(this);
+    }
+
+    public Router(CommandOrdering ordering) : this()
+    {
         Filter(ordering);
     }
 
