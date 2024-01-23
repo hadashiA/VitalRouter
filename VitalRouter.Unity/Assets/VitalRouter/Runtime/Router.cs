@@ -63,7 +63,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     readonly PublishCore publishCore;
 
 #if VITALROUTER_VCONTAINER_INTEGRATION
-    [VContainer.Inject]
+    [global::VContainer.Inject]
 #endif
     public Router()
     {
