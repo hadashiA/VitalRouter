@@ -164,9 +164,11 @@ For example, all of the following are eligible. Method names can be arbitrary.
 
 ```cs
 public void On(FooCommand cmd) { /* .. */ }
-public async UniTask HandleAsync(FooCommand cmd) { /* .. */ }
-public async UniTask Recieve(FooCommand cmd, CancellationToken cancellation) { /* .. */ }
-public async UniTask RecieveAsync(FooCommand cmd, PublishContext context) { /* .. */ }
+public void On(FooCommand cmd, CancellationToken cancellation) { /* .. */ }
+public void On(FooCommand cmd, PublishContext context) { /* .. */ }
+public async UniTask On(FooCommand cmd) { /* .. */ }
+public async UniTask On(FooCommand cmd, CancellationToken cancellation) { /* .. */ }
+public async UniTask On(FooCommand cmd, PublishContext context) { /* .. */ }
 ```
 
 > [!NOTE] 
