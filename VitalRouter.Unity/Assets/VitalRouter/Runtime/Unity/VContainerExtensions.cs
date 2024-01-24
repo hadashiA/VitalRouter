@@ -207,9 +207,11 @@ public static class VContainerExtensions
             case CommandOrdering.Sequential:
                 routing.Filters.Add<SequentialOrdering>();
                 break;
+#pragma warning disable CS0618 // Type or member is obsolete
             case CommandOrdering.FirstInFirstOut:
                 routing.Filters.Add<FirstInFirstOutOrdering>();
                 break;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         foreach (var interceptorType in routing.Filters.Types)
