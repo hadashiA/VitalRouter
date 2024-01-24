@@ -32,8 +32,10 @@ public partial class Router
             case CommandOrdering.Sequential:
                 Filter(new SequentialOrdering());
                 break;
+#pragma warning disable CS0618 // Type or member is obsolete
             case CommandOrdering.FirstInFirstOut:
                 Filter(new FirstInFirstOutOrdering());
+#pragma warning restore CS0618 // Type or member is obsolete
                 break;
         }
         return this;
