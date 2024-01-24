@@ -77,37 +77,46 @@ public class RoutingBuilder
         this.containerBuilder = containerBuilder;
     }
 
-    public void Map<T>()
+    public RegistrationBuilder Map<T>()
     {
+        RegistrationBuilder registrationBuilder;
         if (typeof(UnityEngine.Component).IsAssignableFrom(typeof(T)))
         {
-            containerBuilder.RegisterComponentOnNewGameObject(typeof(T), Lifetime.Singleton);
+            registrationBuilder = containerBuilder.RegisterComponentOnNewGameObject(typeof(T), Lifetime.Singleton);
         }
         else
         {
-            containerBuilder.Register<T>(Lifetime.Singleton);
+            registrationBuilder = containerBuilder.Register<T>(Lifetime.Singleton);
         }
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        return registrationBuilder;
     }
 
-    public void Map<T>(T instance) where T : class
+    public RegistrationBuilder Map<T>(T instance) where T : class
     {
-        containerBuilder.RegisterInstance(instance);
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        return containerBuilder.RegisterInstance(instance);
     }
 
-    public void MapComponentInHierarchy<T>() where T : UnityEngine.Component
+    public RegistrationBuilder MapComponentInHierarchy<T>() where T : UnityEngine.Component
     {
-        containerBuilder.RegisterComponentInHierarchy<T>();
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        return containerBuilder.RegisterComponentInHierarchy<T>();
     }
 
-    public void MapComponentInNewPrefab<T>(T prefab) where T : UnityEngine.Component
+    public RegistrationBuilder MapComponentInNewPrefab<T>(T prefab) where T : UnityEngine.Component
     {
-        containerBuilder.RegisterComponentInNewPrefab(prefab, Lifetime.Singleton);
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        return containerBuilder.RegisterComponentInNewPrefab(prefab, Lifetime.Singleton);
     }
 
+    public RoutingBuilder Sequential()
+    {
+        Filters.Add<SequentialOrdering>();
+        return this;
+    }
+
+    [Obsolete("Use Sequential instead.")]
     public RoutingBuilder FirstInFirstOut()
     {
         Filters.Add<FirstInFirstOutOrdering>();
@@ -195,6 +204,9 @@ public static class VContainerExtensions
     {
         switch (routing.Ordering)
         {
+            case CommandOrdering.Sequential:
+                routing.Filters.Add<SequentialOrdering>();
+                break;
             case CommandOrdering.FirstInFirstOut:
                 routing.Filters.Add<FirstInFirstOutOrdering>();
                 break;
