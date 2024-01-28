@@ -330,10 +330,9 @@ VitalRouter.Unity/[Oo]bj/
 VitalRouter.Unity/[Bb]uild/
 VitalRouter.Unity/[Bb]uilds/
 VitalRouter.Unity/Assets/AssetStoreTools*
-VItalRouter.Unity/*.csproj
-VItalRouter.Unity/*.sln
+VitalRouter.Unity/*.csproj
+VitalRouter.Unity/*.sln
 VitalRouter.Unity/UserSettings/*
-VitalRouter.Unity/Assets/Packages/*
 
 VitalRouter.Benchmark/[Ll]ibrary/
 VitalRouter.Benchmark/[Tt]emp/
@@ -346,20 +345,20 @@ VitalRouter.Benchmark/Assets/AssetStoreTools*
 VitalRouter/bin/*
 VitalRouter/obj/*
 
-VItalRouter.Benchmark/ExportedObj/
-VItalRouter.Benchmark/.consulo/
-VItalRouter.Benchmark/*.csproj
-VItalRouter.Benchmark/*.unityproj
-VItalRouter.Benchmark/*.sln
-VItalRouter.Benchmark/*.suo
-VItalRouter.Benchmark/*.tmp
-VItalRouter.Benchmark/*.user
-VItalRouter.Benchmark/*.userprefs
-VItalRouter.Benchmark/*.pidb
-VItalRouter.Benchmark/*.booproj
-VItalRouter.Benchmark/*.svd
-VItalRouter.Benchmark/bin/*
-VItalRouter.Benchmark/obj/*
+VitalRouter.Benchmark/ExportedObj/
+VitalRouter.Benchmark/.consulo/
+VitalRouter.Benchmark/*.csproj
+VitalRouter.Benchmark/*.unityproj
+VitalRouter.Benchmark/*.sln
+VitalRouter.Benchmark/*.suo
+VitalRouter.Benchmark/*.tmp
+VitalRouter.Benchmark/*.user
+VitalRouter.Benchmark/*.userprefs
+VitalRouter.Benchmark/*.pidb
+VitalRouter.Benchmark/*.booproj
+VitalRouter.Benchmark/*.svd
+VitalRouter.Benchmark/bin/*
+VitalRouter.Benchmark/obj/*
 
 # Rider
 **/.idea/*
