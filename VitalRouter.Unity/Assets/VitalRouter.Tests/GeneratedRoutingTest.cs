@@ -1,4 +1,6 @@
 #if UNITY_2021_3_OR_NEWER
+using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using NUnit.Framework;
