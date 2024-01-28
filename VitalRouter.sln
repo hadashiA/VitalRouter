@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.SourceGenerator", "VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj", "{1E429509-F841-48F1-A111-5D0CD35707CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VItalRouter", "VItalRouter\VItalRouter.csproj", "{DD9A5ED8-8B7E-4F41-BDB6-67294C5752D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter", "VitalRouter\VitalRouter.csproj", "{DD9A5ED8-8B7E-4F41-BDB6-67294C5752D9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Tests", "VitalRouter.Tests\VitalRouter.Tests.csproj", "{A7FF360B-BC95-4EDD-8905-6B39592840B3}"
 EndProject

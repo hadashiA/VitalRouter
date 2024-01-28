@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+#if UNITY_2021_3_OR_NEWER
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using VitalRouter.Internal;
@@ -31,3 +31,4 @@ public class WhenAllTest
         Assert.That(result2, Is.True);
     }
 }
+#endif

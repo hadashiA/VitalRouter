@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+#if UNITY_2021_3_OR_NEWER
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 
@@ -323,3 +321,4 @@ partial class ErrorHandlingInterceptorPresenter2
         return default;
     }
 }
+#endif
