@@ -36,6 +36,6 @@ jobs:
       env:
         UNITY_LICENSE: ${{ secrets[matrix.license] }}
       with:
-        projectPath: ./VitalRouter/Unity
+        projectPath: ./VitalRouter.Unity
         githubToken: ${{ secrets.GITHUB_TOKEN }}        
       
