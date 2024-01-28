@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0"/>
+        <PackageReference Include="NUnit" Version="3.13.3"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.2.1"/>
+        <PackageReference Include="NUnit.Analyzers" Version="3.6.1"/>
+        <PackageReference Include="coverlet.collector" Version="6.0.0"/>
+        <PackageReference Include="UniTask" Version="2.5.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\VitalRouter.Unity\Assets\VitalRouter.Tests\**\*.cs"
+                 Exclude="..\VitalRouter.Unity\Assets\VitalRouetr.Tests\Unity\**\*.cs;" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\VitalRouter\VitalRouter.csproj" />
+      <ProjectReference Include="..\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
+           <OutputItemType>Analyzer</OutputItemType>
+          <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      </ProjectReference>
+    </ItemGroup>
+
+</Project>
