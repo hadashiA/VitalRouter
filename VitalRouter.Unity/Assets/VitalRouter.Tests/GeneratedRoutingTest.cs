@@ -1,5 +1,6 @@
 #if UNITY_2021_3_OR_NEWER
 using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace VitalRouter.Tests;
