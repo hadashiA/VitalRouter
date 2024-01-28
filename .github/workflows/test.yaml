@@ -1,6 +1,12 @@
 name: Test
 
-on: push
+on:
+  push:
+    branches:
+    - "main"
+  pull_request:
+    branches:
+    - "main"
 
 jobs:
   test-dotnet:
@@ -12,8 +18,11 @@ jobs:
         with:
           dotnet-version: |
             8.0.x
+      - run: ls -l
+      - run: ls -l ./VitalRouter
       - run: dotnet build -c Debug
       - run: dotnet test -c Debug --no-build
+     
   test-unity:
     runs-on: ubuntu-latest
     strategy:
