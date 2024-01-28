@@ -1,0 +1,12 @@
+version: "3"
+services:
+  alf:
+    # image: unityci/editor:2022.2.21f1-linux-il2cpp-3
+    # image: unityci/editor:2022.3.18f1-linux-il2cpp-3.0
+    image: unityci/editor:2023.1.20f1-linux-il2cpp-3.0
+    platform: linux/amd64
+    volumes:
+    - "./:/license"
+    working_dir: /license
+    command: >
+      /opt/unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile
