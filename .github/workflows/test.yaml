@@ -1,13 +1,6 @@
 name: Test
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-    - "main"
-  pull_request:
-    branches:
-    - "main"
+on: push
 
 jobs:
   test-dotnet:
@@ -20,4 +13,29 @@ jobs:
           dotnet-version: |
             8.0.x
       - run: dotnet build -c Debug
-      - run: dotnet test -c Debug --no-build      
+      - run: dotnet test -c Debug --no-build
+  test-unity:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        unityVersion:
+        - 2022.2.21f1
+        include:
+        - unityVersion: 2022.2.21f1
+          license: UNITY_LICENSE_2022_2
+    
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v2
+      with:
+        path: ViralRouter/Library
+        key: Library-VitalRouter #-${{ matrix.unityVersion }}-${{ matrix.feature }}
+        restore-keys: |
+          Library-ViralRouter-
+          Library-
+    - uses: game-ci/unity-test-runner@v4
+      env:
+        UNITY_LICENSE: ${{ secrets[matrix.license] }}
+      with:
+        projectPath: ./VitalRouter/Unity
+        githubToken: ${{ secrets.GITHUB_TOKEN }}        
+      
