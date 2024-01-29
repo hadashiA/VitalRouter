@@ -306,7 +306,7 @@ partial class {{typeMeta.TypeName}}
         var subscription = new Subscription(subscribable, {{subscriptionArgs}});
 """);
 
-        if (typeMeta.Symbol.InheritsFrom(references.MonoBehaviourType))
+        if (references.MonoBehaviourType != null && typeMeta.Symbol.InheritsFrom(references.MonoBehaviourType))
         {
             builder.AppendLine($$"""
         

@@ -30,11 +30,11 @@ public class ReferenceSymbols
     public INamedTypeSymbol FilterAttribute { get; private set; } = default!;
     public INamedTypeSymbol CommandInterface { get; private set; } = default!;
     public INamedTypeSymbol InterceptorInterface { get; private set; } = default!;
-    public INamedTypeSymbol MonoBehaviourType { get; private set; } = default!;
     public INamedTypeSymbol CancellationTokenType { get; private set; } = default!;
     public INamedTypeSymbol PublishContextType { get; private set; } = default!;
-    public INamedTypeSymbol? UniTaskType { get; private set; } = default!;
-    public INamedTypeSymbol? AwaitableType { get; private set; } = default!;
-    public INamedTypeSymbol? TaskType { get; private set; } = default!;
-    public INamedTypeSymbol? ValueTaskType { get; private set; } = default!;
+    public INamedTypeSymbol? MonoBehaviourType { get; private set; }
+    public INamedTypeSymbol? UniTaskType { get; private set; }
+    public INamedTypeSymbol? AwaitableType { get; private set; }
+    public INamedTypeSymbol? TaskType { get; private set; }
+    public INamedTypeSymbol? ValueTaskType { get; private set; }
 }
