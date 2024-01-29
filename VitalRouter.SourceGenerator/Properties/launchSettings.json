@@ -3,7 +3,7 @@
   "profiles": {
     "DebugRoslynSourceGenerator": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "../VitalRouter.SourceGenerator.Sample/VitalRouter.SourceGenerator.Sample.csproj"
+      "targetProject": "../VitalRouter.Tests/VitalRouter.Tests.csproj"
     }
   }
 }
