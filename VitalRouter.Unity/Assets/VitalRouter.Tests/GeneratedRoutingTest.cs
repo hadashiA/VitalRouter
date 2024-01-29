@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -319,6 +320,31 @@ partial class ErrorHandlingInterceptorPresenter
 partial class ErrorHandlingInterceptorPresenter2
 {
     public UniTask On(CommandA cmd)
+    {
+        return default;
+    }
+}
+
+[Routes]
+partial class TaskPresenter
+{
+    Func<DefaultInterceptorPresenter, int, PublishContext, UniTask>? Value;
+    public Queue<ICommand> Receives { get; } = new();
+
+    public Task On(CommandA cmd)
+    {
+        Value = static async (source, command, context) => await V();
+        Receives.Enqueue(cmd);
+        return Task.CompletedTask;
+    }
+
+    public ValueTask On(CommandB cmd)
+    {
+        Receives.Enqueue(cmd);
+        return default;
+    }
+
+    public static ValueTask V()
     {
         return default;
     }

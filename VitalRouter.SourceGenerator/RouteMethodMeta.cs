@@ -32,6 +32,9 @@ class RouteMethodMeta
     public bool TakePublishContext { get; }
 
     public bool IsAsync => Symbol.IsAsync || !Symbol.ReturnsVoid;
+    public bool IsUniTask() => SymbolEqualityComparer.Default.Equals(Symbol, references.UniTaskType);
+
+    readonly ReferenceSymbols references;
 
     public RouteMethodMeta(
         IMethodSymbol symbol,
@@ -61,8 +64,9 @@ class RouteMethodMeta
 
         TakeCancellationToken = cancellationTokenParamSymbol is not null;
         TakePublishContext = publishContextParamSymbol is not null;
-    }
 
+        this.references = references;
+    }
 
     public Location GetLocation(TypeDeclarationSyntax fallback)
     {
