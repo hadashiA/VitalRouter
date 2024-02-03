@@ -15,7 +15,7 @@ public class FreeList<T> where T : class
 
     public FreeList(int initialCapacity)
     {
-        values = new T[4];
+        values = new T[initialCapacity];
     }
 
     public ReadOnlySpan<T?> AsSpan()
