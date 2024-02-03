@@ -65,17 +65,16 @@ class ErrorHandlingInterceptor : ICommandInterceptor
 {
     public Exception? Exception { get; private set; }
 
-    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
+    public async UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         try
         {
-            return next(command, ctx);
+            await next(command, ctx);
         }
         catch (Exception ex)
         {
             Exception = ex;
-            return UniTask.CompletedTask;
         }
     }
 }

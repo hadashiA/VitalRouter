@@ -106,7 +106,7 @@ One of the main advantages of event being a data type is that it is serializable
 
 ```cs
 [Serializable]       // < When you want to serialize to a scene or prefab in Unity.
-[MessagepackObject]  // < When you want to go through file or network I/O by MessagePack-Csharp.
+[MessagePackObject]  // < When you want to go through file or network I/O by MessagePack-Csharp.
 [YamlObject]         // < When you want to go through configuration files etc by VYaml.
 public readonly struct CharacterSpawnCommand : ICommand
 {
@@ -158,7 +158,7 @@ Methods that satisfy the following conditions are eligible.
     - `ICommand`
     - `ICommand`, `CancellationToken`
     - `ICommand`, `PublishContext`
--  The return value must be `void`,  or `UniTask`.
+-  The return value must be `void`, or `UniTask`, `Task`, `ValueTask`, `UnityEngine.Awaitable`.
 
 For example, all of the following are eligible. Method names can be arbitrary.
 

@@ -103,7 +103,8 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
             // check duplicates of the command argument
             foreach (var methodMeta in typeMeta.RouteMethodMetas)
             {
-                if (typeMeta.RouteMethodMetas.Any(x => x != methodMeta && SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)))
+                if (typeMeta.RouteMethodMetas.Any(x => x != methodMeta &&
+                                                       SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)))
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
                         DiagnosticDescriptors.DuplicateRouteMethodDefined,
@@ -451,59 +452,11 @@ partial class {{typeMeta.TypeName}}
             MethodTable<{{method.CommandFullTypeName}}>.InterceptorFinder = static self => self.interceptorStackDefault;
 """);
             }
-            else if (method.IsAsync)
-            {
-                if (method.TakePublishContext)
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, context) => source.{{method.Symbol.Name}}(command, context);
-""");
-                }
-                else if (method.TakeCancellationToken)
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, context) => source.{{method.Symbol.Name}}(command, context.CancellationToken);
-""");
-                }
-                else
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, context) => source.{{method.Symbol.Name}}(command);
-""");
-                }
-            }
             else
             {
-                if (method.TakePublishContext)
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, context) => 
-            {
-                generated.source.{{method.Symbol.Name}}(command, context);
-                return UniTask.CompletedTask;
-            }
+                builder.AppendLine($$"""
+            MethodTable<{{method.CommandFullTypeName}}>.Value = {{GetMethodTableEntry(method)}};
 """);
-                }
-                else if (method.TakeCancellationToken)
-                {
-                    builder.AppendLine($$$"""
-            MethodTable<{{{method.CommandFullTypeName}}}>.Value = static (source, command, context) => 
-            {
-                source.{{method.Symbol.Name}}(command, context.CancellationToken);
-                return UniTask.CompletedTask;
-            }
-""");
-                }
-                else
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, context) =>
-            {
-                source.{{method.Symbol.Name}}(command);
-                return UniTask.CompletedTask;
-            }
-""");
-                }
             }
         }
         builder.AppendLine($$"""
@@ -607,60 +560,9 @@ partial class {{typeMeta.TypeName}}
 """);
         foreach (var methodMeta in methods)
         {
-            if (methodMeta.IsAsync)
-            {
-                if (methodMeta.TakePublishContext)
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{methodMeta.CommandFullTypeName}}>.Value = static (source, command, context) => source.{{methodMeta.Symbol.Name}}(command, context);
+                builder.AppendLine($$"""
+            MethodTable<{{methodMeta.CommandFullTypeName}}>.Value = {{GetMethodTableEntry(methodMeta)}};
 """);
-                }
-                else if (methodMeta.TakeCancellationToken)
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{methodMeta.CommandFullTypeName}}>.Value = static (source, command, context) => source.{{methodMeta.Symbol.Name}}(command, context.CancellationToken);
-""");
-                }
-                else
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{methodMeta.CommandFullTypeName}}>.Value = static (source, command, context) => source.{{methodMeta.Symbol.Name}}(command);
-""");
-                }
-            }
-            else
-            {
-                if (methodMeta.TakePublishContext)
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{methodMeta.CommandFullTypeName}}>.Value = static (source, command, context) =>
-            {
-                source.{{methodMeta.Symbol.Name}}(command, context);
-                return UniTask.CompletedTask;
-            };
-""");
-                }
-                else if (methodMeta.TakeCancellationToken)
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{methodMeta.CommandFullTypeName}}>.Value = static (source, command, context) =>
-            {
-                source.{{methodMeta.Symbol.Name}}(command, context.CancellationToken);
-                return UniTask.CompletedTask;
-            };
-""");
-                }
-                else
-                {
-                    builder.AppendLine($$"""
-            MethodTable<{{methodMeta.CommandFullTypeName}}>.Value = static (source, command, context) =>
-            {
-                source.{{methodMeta.Symbol.Name}}(command);
-                return UniTask.CompletedTask;
-            };
-""");
-                }
-            }
         }
 
         builder.AppendLine($$"""
@@ -680,5 +582,44 @@ partial class {{typeMeta.TypeName}}
     }
 """);
         return true;
+    }
+
+    static string GetMethodTableEntry(RouteMethodMeta method)
+    {
+        if (method.IsAsync)
+        {
+            if (method.TakePublishContext)
+            {
+                if (method.IsUniTask())
+                {
+                    return $"static (source, command, context) => source.{method.Symbol.Name}(command, context)";
+                }
+                return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context)";
+            }
+            if (method.TakeCancellationToken)
+            {
+                if (method.IsUniTask())
+                {
+                    return $"static (source, command, context) => source.{method.Symbol.Name}(command, context.CancellationToken)";
+                }
+                return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context.CancellationToken)";
+            }
+            if (method.IsUniTask())
+            {
+                return $"static (source, command, context) => source.{method.Symbol.Name}(command)";
+            }
+            return $"static async (source, command, context) => await source.{method.Symbol.Name}(command)";
+        }
+
+        if (method.TakePublishContext)
+        {
+            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context); return UniTask.CompletedTask; }}";
+        }
+
+        if (method.TakeCancellationToken)
+        {
+            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context.CancellationToken); return UniTask.CompletedTask; }}";
+        }
+        return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command); return UniTask.CompletedTask; }}";
     }
 }
