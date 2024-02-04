@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter", "VitalRouter\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Tests", "VitalRouter.Tests\VitalRouter.Tests.csproj", "{A7FF360B-BC95-4EDD-8905-6B39592840B3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Extensions.Hosting", "VitalRouter.Extensions.Hosting\VitalRouter.Extensions.Hosting.csproj", "{1365D528-90A8-432A-8D5C-8C4C034A1245}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{A7FF360B-BC95-4EDD-8905-6B39592840B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7FF360B-BC95-4EDD-8905-6B39592840B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7FF360B-BC95-4EDD-8905-6B39592840B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1365D528-90A8-432A-8D5C-8C4C034A1245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1365D528-90A8-432A-8D5C-8C4C034A1245}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1365D528-90A8-432A-8D5C-8C4C034A1245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1365D528-90A8-432A-8D5C-8C4C034A1245}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
