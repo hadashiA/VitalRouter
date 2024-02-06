@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using VitalRouter.Internal;
 
@@ -11,6 +15,16 @@ public class VitalRouterOptions
 
     internal readonly List<MapRoutesInfo> MapRoutesInfos = [];
     internal readonly List<VitalRouterOptions> Subsequents = [];
+
+    public VitalRouterOptions MapAll(Assembly assembly)
+    {
+        var types = assembly.GetTypes().Where(x => x.GetCustomAttribute<RoutesAttribute>() != null);
+        foreach (var type in types)
+        {
+            MapRoutesInfos.Add(MapRoutesInfo.Analyze(type));
+        }
+        return this;
+    }
 
     public VitalRouterOptions Map<T>()
     {
@@ -52,8 +66,11 @@ public static class ServiceCollectionExtensions
         configure(options);
 
         var router = new Router();
-        services.TryAddSingleton<Router>();
-        services.AddVitalRouterRecursive(router, options);
+        services.AddSingleton(router);
+        var routers = new List<(Router, VitalRouterOptions)>();
+        services.AddVitalRouterRecursive(router, options, routers);
+        services.AddHostedService(container => new VitalRouterHostedService(container, routers));
+
         return services;
     }
 
@@ -83,14 +100,18 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    static void AddVitalRouterHostedService(this IServiceCollection services, Router router, VitalRouterOptions options)
-    {
-        services.AddHostedService(container => new VitalRouterHostedService(container, router, options));
-    }
-
-    static void AddVitalRouterRecursive(this IServiceCollection services, Router routerInstance, VitalRouterOptions options)
+    static void AddVitalRouterRecursive(
+        this IServiceCollection services,
+        Router routerInstance,
+        VitalRouterOptions options,
+        ICollection<(Router, VitalRouterOptions)> routers)
     {
         services.AddVitalRouterInterceptors(options);
+
+        foreach (var info in options.MapRoutesInfos)
+        {
+            services.TryAddSingleton(info.Type);
+        }
 
         if (options.Subsequents.Count > 0)
         {
@@ -98,12 +119,12 @@ public static class ServiceCollectionExtensions
             foreach (var subsequentOptions in options.Subsequents)
             {
                 var subsequentRouter = new Router();
-                services.AddVitalRouterRecursive(subsequentRouter, subsequentOptions);
+                services.AddVitalRouterRecursive(subsequentRouter, subsequentOptions, routers);
                 fanOut.Add(subsequentRouter);
             }
             routerInstance.Filter(fanOut);
         }
 
-        services.AddVitalRouterHostedService(routerInstance, options);
+        routers.Add((routerInstance, options));
     }
 }

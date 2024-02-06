@@ -90,7 +90,9 @@ class ExpandBuffer<T> : IReadOnlyList<T>
         {
             Array.Copy(buffer, index + 1, buffer, index, Count - index);
         }
+#if NETSTANDARD2_1_OR_GREATER
         if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+#endif
         {
             buffer[Count] = default!;
         }

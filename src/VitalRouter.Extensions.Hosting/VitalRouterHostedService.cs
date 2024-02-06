@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -5,30 +9,32 @@ namespace VitalRouter;
 
 public class VitalRouterHostedService(
     IServiceProvider serviceProvider,
-    Router router,
-    VitalRouterOptions options)
+    IReadOnlyCollection<(Router, VitalRouterOptions)> routers)
     : IHostedService, IDisposable
 {
     bool stopped;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        foreach (var interceptorType in options.Filters.Types)
+        foreach (var (router, options) in routers)
         {
-            router.Filter((ICommandInterceptor)serviceProvider.GetRequiredService(interceptorType));
-        }
-
-        foreach (var info in options.MapRoutesInfos)
-        {
-            var instance = serviceProvider.GetRequiredService(info.Type);
-
-            var parameters = new object[info.ParameterInfos.Length];
-            parameters[0] = router;
-            for (var paramIndex = 1; paramIndex < parameters.Length; paramIndex++)
+            foreach (var interceptorType in options.Filters.Types)
             {
-                parameters[paramIndex] = serviceProvider.GetRequiredService(info.ParameterInfos[paramIndex].ParameterType);
+                router.Filter((ICommandInterceptor)serviceProvider.GetRequiredService(interceptorType));
             }
-            info.MapToMethod.Invoke(instance, parameters);
+
+            foreach (var info in options.MapRoutesInfos)
+            {
+                var instance = serviceProvider.GetRequiredService(info.Type);
+
+                var parameters = new object[info.ParameterInfos.Length];
+                parameters[0] = router;
+                for (var paramIndex = 1; paramIndex < parameters.Length; paramIndex++)
+                {
+                    parameters[paramIndex] = serviceProvider.GetRequiredService(info.ParameterInfos[paramIndex].ParameterType);
+                }
+                info.MapToMethod.Invoke(instance, parameters);
+            }
         }
         return Task.CompletedTask;
     }
@@ -47,12 +53,16 @@ public class VitalRouterHostedService(
     void UnmapRoutes()
     {
         if (stopped) return;
-        foreach (var routesInfo in options.MapRoutesInfos)
+
+        foreach (var (router, options) in routers)
         {
-            var instance = serviceProvider.GetService(routesInfo.Type);
-            if (instance != null)
+            foreach (var routesInfo in options.MapRoutesInfos)
             {
-                routesInfo.UnmapRoutesMethod.Invoke(instance, null);
+                var instance = serviceProvider.GetService(routesInfo.Type);
+                if (instance != null)
+                {
+                    routesInfo.UnmapRoutesMethod.Invoke(instance, null);
+                }
             }
         }
         stopped = true;

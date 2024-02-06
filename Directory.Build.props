@@ -7,5 +7,6 @@
         <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Description>The zero-allocation in-memory message passing library. The very thin layer that encourages decrative routings.</Description>
     </PropertyGroup>
 </Project>

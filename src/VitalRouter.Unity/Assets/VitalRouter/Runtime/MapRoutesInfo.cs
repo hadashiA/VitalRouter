@@ -19,7 +19,13 @@ public class MapRoutesInfo
     public MapRoutesInfo(Type type)
     {
         Type = type;
-        MapToMethod = type.GetMethod("MapTo", BindingFlags.Instance | BindingFlags.Public)!;
+        var mapToMethod = type.GetMethod("MapTo", BindingFlags.Instance | BindingFlags.Public);
+        if (mapToMethod is null)
+        {
+            throw new ArgumentException($"{type.FullName} does not have MapTo method. Please set `[Routes]` attribute and build it.");
+        }
+
+        MapToMethod = mapToMethod;
         UnmapRoutesMethod = type.GetMethod("UnmapRoutes", BindingFlags.Instance | BindingFlags.Public)!;
         ParameterInfos = MapToMethod.GetParameters();
     }

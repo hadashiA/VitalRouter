@@ -20,6 +20,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\VitalRouter.Extensions.Hosting\VitalRouter.Extensions.Hosting.csproj" />
+      <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
+          <OutputItemType>Analyzer</OutputItemType>
+          <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      </ProjectReference>
     </ItemGroup>
 
 </Project>
