@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
+        <LangVersion>11</LangVersion>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\VitalRouter.Unity\Assets\VitalRouter\Runtime\**\*.cs"
+                 Exclude="&#xA;..\VitalRouter.Unity\Assets\VitalRouter\Runtime\Unity\**\*.cs;&#xA;" />
+        <Compile Update="..\VitalRouter.Unity\Assets\VitalRouter\Runtime\Internal\Shims.cs">
+          <Link>Internal\Shims.cs</Link>
+        </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="UniTask" Version="2.5.3" />
+    </ItemGroup>
+
+
+    <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0' Or $(TargetFramework) == 'netstandard2.1'">
+        <PackageReference Include="System.Memory" Version="4.5.4" />
+    </ItemGroup>
+
+    <!-- Bundle SourceGenerator -->
+    <ItemGroup>
+        <None Include="..\VitalRouter.SourceGenerator\bin\$(Configuration)\netstandard2.0\VitalRouter.SourceGenerator.dll"
+              PackagePath="analyzers\dotnet\roslyn\cs"
+              Pack="true"
+              Visible="false" />
+    </ItemGroup>
+
+</Project>

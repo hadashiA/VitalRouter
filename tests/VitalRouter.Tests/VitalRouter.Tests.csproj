@@ -17,13 +17,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\VitalRouter.Unity\Assets\VitalRouter.Tests\**\*.cs"
-                 Exclude="..\VitalRouter.Unity\Assets\VitalRouetr.Tests\Unity\**\*.cs;" />
+        <Compile Include="..\..\src\VitalRouter.Unity\Assets\VitalRouter.Tests\**\*.cs"
+                 Exclude="..\..\src\VitalRouter.Unity\Assets\VitalRouetr.Tests\Unity\**\*.cs;" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\VitalRouter\VitalRouter.csproj" />
-      <ProjectReference Include="..\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
+      <ProjectReference Include="..\..\src\VitalRouter.Extensions.Hosting\VitalRouter.Extensions.Hosting.csproj" />
+      <ProjectReference Include="..\..\src\VitalRouter\VitalRouter.csproj" />
+      <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
            <OutputItemType>Analyzer</OutputItemType>
           <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       </ProjectReference>
