@@ -32,7 +32,7 @@ class RouteMethodMeta
     public bool TakePublishContext { get; }
 
     public bool IsAsync => Symbol.IsAsync || !Symbol.ReturnsVoid;
-    public bool IsUniTask() => SymbolEqualityComparer.Default.Equals(Symbol, references.UniTaskType);
+    public bool IsUniTask() => SymbolEqualityComparer.Default.Equals(Symbol.ReturnType, references.UniTaskType);
 
     readonly ReferenceSymbols references;
 
