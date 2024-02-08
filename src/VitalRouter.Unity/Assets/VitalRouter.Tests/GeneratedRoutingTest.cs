@@ -291,7 +291,7 @@ partial class ComplexInterceptorPresenter
     }
 
     [Filter(typeof(CInterceptor))]
-    [Filter(typeof(DInterceptor))]
+    [Filter<DInterceptor>]
     public void On(CommandB cmd)
     {
         Receives.Enqueue(cmd);
