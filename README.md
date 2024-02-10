@@ -488,6 +488,44 @@ If you take the way of 2 or 3, the Interceptor instance is resolved as follows.
 	  // auto-generated
 	  public Subscription MapTo(ICommandSubscribable subscribable, Logging interceptor1, ErrorHandling interceptor2) { /* ... */ }
 	  ```
+      
+### C# 11 Generic attribute
+
+If you are using Unity 2022.3.12f1 or newer, you can use `langVersion:preview` allows parts of C# 11 features.
+
+If C# 11 is available, generic attributes can be used for interceptor settings.
+
+``` csharp
+[Filter<AInterceptor>] // < Generic attribute
+public partial class FooPresenter
+{
+    // ...
+}
+```
+
+How to enable C# 11 in Unity 2022.3.12f1 or newer:
+
+1. Setup the C# compiler for unity.
+  - Add a text file named csc.rsp with the following contents under your Assets/.
+    - ```
+      -langVersion:preview -nullable
+     ```
+  - Note:
+    - If you are using assembly definition, put it in the same folder as the asmdef.
+     
+2. Setup the C# compiler for your IDE.
+  - Install [CsProjModifier](https://github.com/Cysharp/CsprojModifier)
+  - Add a text file named LangVersion.props with the following contents
+    - ```xml
+      <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+        <PropertyGroup>
+          <LangVersion>11</LangVersion>
+          <Nullable>enable</Nullable>
+        </PropertyGroup>
+      </Project> 
+      ```
+  - Open Project Settings and [C# Project Modifier] section under the [Editor].
+  - Add the .props file you just created, to the list of [Additional project imports].
 
 ## FIFO
 
