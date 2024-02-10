@@ -54,7 +54,6 @@ public partial class ExamplePresenter
 - [FIFO](#fifo)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
-- [Sequence Command](#sequence-command)
 - [Low-level API](#low-level-api)
 - [R3 integration (experimental)](#r3-integration)
 - [Performance](#performance)
@@ -360,6 +359,20 @@ try
 catch (Exception ex)
 {
     // ...
+}
+```
+
+### Non-Generic
+
+A non-generic version of PublishAsync is also available for restoring commands saved as a collection.
+
+
+```cs
+var commands = new List<ICommand> { fooCommand, barCommand, ..  };
+
+foreach (var cmd in commands)
+{
+    await publisher.PublishAsync(cmd.GetType(), cmd);
 }
 ```
 
@@ -701,20 +714,6 @@ Router.Default.Filter(CommandPooling.Instance);
 
 // Or, return to pool manually.
 CommandPool<MyBoxedCommand>.Shard.Return(cmd);
-```
-
-## Sequence Command
-
-If your command implements `IEnumerable<ICommand>`, it represents a sequence of time series.
-
-```cs
-var sequenceCommand = new SequenceCommand
-{
-    new CommandA(), 
-    new CommandB(), 
-    new CommandC(),
-    // ...
-}
 ```
 
 ## Low-level API
