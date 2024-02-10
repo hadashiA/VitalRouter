@@ -276,8 +276,12 @@ partial class PerMethodInterceptorPresenter
 }
 
 [Routes]
-[Filter<AInterceptor>]
+[Filter(typeof(AInterceptor))]
+#if NET7_0_OR_GREATER
+[Filter<BInterceptor>]
+#else
 [Filter(typeof(BInterceptor))]
+#endif
 partial class ComplexInterceptorPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
@@ -290,8 +294,12 @@ partial class ComplexInterceptorPresenter
         return default;
     }
 
-    [Filter<CInterceptor>]
+    [Filter(typeof(CInterceptor))]
+#if NET7_0_OR_GREATER
+    [Filter<DInterceptor>]
+#else
     [Filter(typeof(DInterceptor))]
+#endif
     public void On(CommandB cmd)
     {
         Receives.Enqueue(cmd);
