@@ -66,10 +66,34 @@ public static class ServiceCollectionExtensions
         configure(options);
 
         var router = new Router();
-        services.AddSingleton(router);
         var routers = new List<(Router, VitalRouterOptions)>();
         services.AddVitalRouterRecursive(router, options, routers);
-        services.AddHostedService(container => new VitalRouterHostedService(container, routers));
+
+        services.AddSingleton(serviceProvider =>
+        {
+            foreach (var (r, o) in routers)
+            {
+                foreach (var interceptorType in o.Filters.Types)
+                {
+                    r.Filter((ICommandInterceptor)serviceProvider.GetRequiredService(interceptorType));
+                }
+
+                foreach (var info in o.MapRoutesInfos)
+                {
+                    var instance = serviceProvider.GetRequiredService(info.Type);
+
+                    var parameters = new object[info.ParameterInfos.Length];
+                    parameters[0] = r;
+                    for (var paramIndex = 1; paramIndex < parameters.Length; paramIndex++)
+                    {
+                        parameters[paramIndex] = serviceProvider.GetRequiredService(info.ParameterInfos[paramIndex].ParameterType);
+                    }
+                    info.MapToMethod.Invoke(instance, parameters);
+                }
+            }
+
+            return router;
+        });
 
         return services;
     }
