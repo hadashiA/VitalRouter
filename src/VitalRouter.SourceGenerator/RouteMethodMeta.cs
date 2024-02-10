@@ -56,7 +56,8 @@ class RouteMethodMeta
             {
                 interceptorMetas.Add(new InterceptorMeta(attr, (INamedTypeSymbol)attr.ConstructorArguments[0].Value!));
             }
-            else if (SymbolEqualityComparer.Default.Equals(attr.AttributeClass, references.FilterAttributeGeneric))
+            else if (attr.AttributeClass is { IsGenericType: true } x &&
+                     SymbolEqualityComparer.Default.Equals(x.ConstructedFrom, references.FilterAttributeGeneric))
             {
                 var filterType = attr.AttributeClass!.TypeArguments[0];
                 interceptorMetas.Add(new InterceptorMeta(attr, (INamedTypeSymbol)filterType));

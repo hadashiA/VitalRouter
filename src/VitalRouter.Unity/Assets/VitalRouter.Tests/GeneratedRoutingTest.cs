@@ -276,7 +276,7 @@ partial class PerMethodInterceptorPresenter
 }
 
 [Routes]
-[Filter(typeof(AInterceptor))]
+[Filter<AInterceptor>]
 [Filter(typeof(BInterceptor))]
 partial class ComplexInterceptorPresenter
 {
@@ -290,8 +290,8 @@ partial class ComplexInterceptorPresenter
         return default;
     }
 
-    [Filter(typeof(CInterceptor))]
-    [Filter<DInterceptor>]
+    [Filter<CInterceptor>]
+    [Filter(typeof(DInterceptor))]
     public void On(CommandB cmd)
     {
         Receives.Enqueue(cmd);
