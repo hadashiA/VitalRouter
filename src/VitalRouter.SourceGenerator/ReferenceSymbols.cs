@@ -14,6 +14,7 @@ public class ReferenceSymbols
         {
             RoutingAttribute = routingAttribute,
             FilterAttribute = compilation.GetTypeByMetadataName("VitalRouter.FilterAttribute")!,
+            FilterAttributeGeneric = compilation.GetTypeByMetadataName("VitalRouter.FilterAttribute`1"),
             CommandInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommand")!,
             InterceptorInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommandInterceptor")!,
             PublishContextType = compilation.GetTypeByMetadataName("VitalRouter.PublishContext")!,
@@ -28,6 +29,7 @@ public class ReferenceSymbols
 
     public INamedTypeSymbol RoutingAttribute { get; private set; } = default!;
     public INamedTypeSymbol FilterAttribute { get; private set; } = default!;
+    public INamedTypeSymbol? FilterAttributeGeneric { get; private set; }
     public INamedTypeSymbol CommandInterface { get; private set; } = default!;
     public INamedTypeSymbol InterceptorInterface { get; private set; } = default!;
     public INamedTypeSymbol CancellationTokenType { get; private set; } = default!;
