@@ -65,6 +65,7 @@ public partial class SamplePresenter
 
     public void On(CharacterExitCommand cmd)
     {
+        UnityEngine.Debug.Log($"SamplePresenter.On({cmd.ToString()})");
     }
 }
 

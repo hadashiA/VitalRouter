@@ -23,7 +23,7 @@ public class SampleBehaviour : MonoBehaviour
         using var subscription = p.MapTo(Router.Default, new AInterceptor());
         // var subscription = p.MapTo(Router.Default);
         Profiler.BeginSample("Test 1");
-        await Router.Default.PublishAsync(new CharacterExitCommand());
+        await Router.Default.PublishAsync(typeof(CharacterExitCommand), new CharacterExitCommand());
         Profiler.EndSample();
 
         Profiler.BeginSample("Test 2");
