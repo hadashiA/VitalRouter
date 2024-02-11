@@ -4,11 +4,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter", "src\VitalRou
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.SourceGenerator", "src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj", "{40D96280-07A3-408E-AB76-642FEE5E0EAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Extensions.Hosting", "src\VitalRouter.Extensions.Hosting\VitalRouter.Extensions.Hosting.csproj", "{4ECC08A7-9829-47DB-AA97-88CEE6743838}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Extensions.DependencyInjection", "src\VitalRouter.Extensions.DependencyInjection\VitalRouter.Extensions.DependencyInjection.csproj", "{4ECC08A7-9829-47DB-AA97-88CEE6743838}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Tests", "tests\VitalRouter.Tests\VitalRouter.Tests.csproj", "{163E0808-D858-4C31-9C37-A0B50B912608}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Extensions.Hosting.Tests", "tests\VitalRouter.Extensions.Hosting.Tests\VitalRouter.Extensions.Hosting.Tests.csproj", "{E6C26E17-4F85-48C8-B5C9-1DC1549C362D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VitalRouter.Extensions.DependencyInjection.Tests", "tests\VitalRouter.Extensions.DependencyInjection.Tests\VitalRouter.Extensions.DependencyInjection.Tests.csproj", "{E6C26E17-4F85-48C8-B5C9-1DC1549C362D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{40063808-A412-46A8-A4E2-E77256444895}"
 EndProject

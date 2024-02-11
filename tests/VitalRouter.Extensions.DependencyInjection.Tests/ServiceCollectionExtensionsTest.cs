@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace VitalRouter.Extensions.Hosting.Tests;
+namespace VitalRouter.Extensions.DependencyInjection.Tests;
 
 [TestFixture]
 public class ServiceCollectionExtensionsTest

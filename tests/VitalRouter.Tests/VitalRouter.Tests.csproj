@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\VitalRouter.Extensions.Hosting\VitalRouter.Extensions.Hosting.csproj" />
+      <ProjectReference Include="..\..\src\VitalRouter.Extensions.DependencyInjection\VitalRouter.Extensions.DependencyInjection.csproj" />
       <ProjectReference Include="..\..\src\VitalRouter\VitalRouter.csproj" />
       <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
            <OutputItemType>Analyzer</OutputItemType>
