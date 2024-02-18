@@ -6,6 +6,8 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PackageTags>mvp;eventbus;pubsub;</PackageTags>
+        <Description>The fast in-memory message passing tool with zero-allocation for Unity and .NET. And the very thin layer that organize application datal-flow.</Description>
     </PropertyGroup>
 
     <ItemGroup>
