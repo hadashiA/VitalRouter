@@ -69,8 +69,9 @@ public partial class ExamplePresenter
 THe foloowing NuGet packages are available.
 
 | Package Name | Description | .NET | .NET Standard |
+|:------------ |:----------- |:-----|:-----------------|
 | [VitalRouter](https://www.nuget.org/packages/VitalRouter) | Main package | 6.0, 8.0 | 2.0, 2.1 |
-| [VitalRouter.Extensions.DependencyInjection](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | Plugin for [Microsoft.Extensions.DependencyInjection](https://www.nuget.org/packages/Microsoft.Extensions.DependencyInjection) | 6.0, 8.0 | 2.0, 2.1 |
+| [VitalRouter.Extensions.DependencyInjection](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | Plugin for Microsoft.Extensions.DependencyInjection | 6.0, 8.0 | 2.0, 2.1 |
 
 ### Unity
 
