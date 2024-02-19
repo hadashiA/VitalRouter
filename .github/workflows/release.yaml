@@ -22,26 +22,26 @@ jobs:
       tag: ${{ github.event.inputs.tag }}
       dry-run: ${{ fromJson(github.event.inputs.dry-run) }}
    
-  # build-dotnet:
-  #   needs: [update-version-number]
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 10
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   - uses: actions/setup-dotnet@v3
-  #     with:
-  #       dotnet-version: |
-  #         8.0.x
-  #   - run: dotnet build -c Release
-  #   - run: dotnet test -c Release --no-build
-  #   - run: dotnet pack -c Release --no-build -o ./publish
-  #   - uses: actions/upload-artifact@v3
-  #     with:
-  #       name: nuget
-  #       path: ./publish
-  #   - name: Publish
-  #     if: github.event.inputs.dry-run == 'false'
-  #     run: dotnet nuget push ./publish/*.nupkg -s 'https://api.nuget.org/v3/index.json' -k ${{secrets.NUGET_API_KEY}}
+  build-dotnet:
+    needs: [update-version-number]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: |
+          8.0.x
+    - run: dotnet build -c Release
+    - run: dotnet test -c Release --no-build
+    - run: dotnet pack -c Release --no-build -o ./publish
+    - uses: actions/upload-artifact@v3
+      with:
+        name: nuget
+        path: ./publish
+    - name: Publish
+      if: github.event.inputs.dry-run == 'false'
+      run: dotnet nuget push ./publish/*.nupkg -s 'https://api.nuget.org/v3/index.json' -k ${{secrets.NUGET_API_KEY}}
       
   create-release:
     if: github.event.inputs.dry-run == 'false'    

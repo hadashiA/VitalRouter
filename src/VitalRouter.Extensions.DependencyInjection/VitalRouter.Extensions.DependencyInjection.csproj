@@ -5,6 +5,8 @@
         <LangVersion>12</LangVersion>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <PackageTags>mvp;eventbus;pubsub;</PackageTags>
+        <Description>VitalRouter extensions for Microsoft.Extensions.DependencyInjection.</Description>
     </PropertyGroup>
 
     <ItemGroup>

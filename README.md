@@ -2,11 +2,13 @@
 
 [![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
 ![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
+[![NuGet](https://img.shields.io/nuget/v/VitalRouter.svg)](https://www.nuget.org/packages/VitalRouter)
 
-VitalRouter, is a zero-allocation in-memory message passing tool for Unity (Game Engine). And the very thin layer that encourages unidirectional control-flow. 
+VitalRouter, is a zero-allocation fast in-memory message passing library for games and other complex GUI applications, and the very thin layer that organize application data-flow.
+It is focused with Unity and .NET. 
 Whether you're an individual developer or part of a larger team, VitalRouter can help you build complex game applications.
 
-Bring fast, declarative routing to your application. 
+Bring fast, declarative routing for your application. 
 
 ```cs
 [Routes]
@@ -62,7 +64,19 @@ public partial class ExamplePresenter
 
 ## Installation
 
+### NuGet
+
+THe foloowing NuGet packages are available.
+
+| Package Name | Description | .NET | .NET Standard |
+|:------------ |:----------- |:-----|:-----------------|
+| [VitalRouter](https://www.nuget.org/packages/VitalRouter) | Main package | 6.0, 8.0 | 2.0, 2.1 |
+| [VitalRouter.Extensions.DependencyInjection](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | Plugin for Microsoft.Extensions.DependencyInjection | 6.0, 8.0 | 2.0, 2.1 |
+
+### Unity
+
 Prerequirements:
+
 - Unity 2022.2+
   - This limitation is due to the use of the Incremental Source Generator.
 - Install [UniTask](https://github.com/Cysharp/UniTask)
@@ -175,7 +189,28 @@ public async UniTask On(FooCommand cmd, PublishContext context) { /* .. */ }
 
 Now, when and how does the routing defined here call? There are several ways to make it enable this.
 
-### MonoBehaviour based
+### Manual setup    
+
+If your project does not use DI, set it up in the way of bare bones.
+
+```cs
+var presenter = new FooPresenter();
+presenter.MapTo(Router.Default);
+```
+
+In this case, unmapping is required manually to discard the FooPresenter.
+
+```cs
+presenter.UnmapRoutes();
+```
+
+Or, handle subscription.
+
+```cs
+var subscription = presenter.MapTo(Router.Default);
+// ...
+subscription.Dispose();
+```
 
 In a naive Unity project, the easy way is to make MonoBehaviour into Routes.
 
@@ -217,9 +252,51 @@ MapTo(anotherRouter);
 anotherRouter.PublishAsync(..)
 ```
 
-### DI based
+### Setup with DI
 
-If DI is used, plain C# classes can be used as routing targets.
+If DI is used, plain Map/Unmap management and dependency resolution can be automated in a DI container.
+
+#### Setup with DI in Microsoft.Extensions.DependencyInjection
+
+```cs
+using VitalRouter;
+
+// Example of using Generic Host
+var builder = Host.CreateApplicationBuilder();
+
+builder.Services.AddVitalRouter(routing =>
+{
+    // Map all `[Routes]` targets in the specified assembly.
+    routing.MapAll(GetType().Assembly);
+    
+    // Map specific class.
+    routing.Map<FooPresenter>();
+});
+```
+
+The instances mapped here are released with to dispose of the DI container.
+
+In this case, publisher is also injectable.
+
+```cs
+class HogeController
+{
+    readonly ICommandPublisher publisher;
+    
+    public HogeController(ICommandPublisher publisher)
+    {
+        this.publisher = publisher;
+    }
+
+    public void DoSomething()
+    {
+        publisher.PublishAsync(new FooCommand { X = 1, Y = 2 }).Forget();
+    }
+}
+```
+        
+
+#### Setup with DI in VContainer (Unity)
 
 ```cs
 using VContainer;
@@ -295,28 +372,6 @@ public class GameLifetimeScope : LifetimeScope
 > [!NOTE]
 > This is a simple demonstration.
 > If your codebase is huge, just have the View component notify its own events on the outside, rather than Publish directly. And maybe only the class responsible for the control flow should Publish.
-
-### Manual setup 
-
-You can also set up your own entrypoint without using `MonoBehaviour` or a DI container.
-
-```cs
-var presenter = new FooPresenter();
-presenter.MapTo(Router.Default);
-```
-
-In this case, unmapping is required manually to discard the FooPresenter.
-```cs
-presenter.UnmapRoutes();
-```
-
-Or, handle subscription.
-
-```cs
-var subscription = presenter.MapTo(Router.Default);
-// ...
-subscription.Dispose();
-```
 
 ## Publish
 
@@ -476,6 +531,15 @@ builder.RegisterVitalRouter(routing =>
 ```
 
 ```cs
+// 1. Apply to the router with Microsoft.Extensions.DependencyInjection.
+builder.AddVitalRouter(routing => 
+{
+    routing.Filters.Add<Logging>();
+    routing.Filters.Add<ErrorHandling>();
+});
+```
+
+```cs
 [Routes]
 [Filter(typeof(Logging))] // 2. Apply to the type
 public partial class FooPresenter
@@ -600,7 +664,28 @@ presente3.MapTo(groupB);
 presente4.MapTo(groupB);
 ```
 
-For DI,
+With Microsoft.Extensions.DependencyInjection
+
+```cs
+builder.AddVitalRouter(routing =>
+{
+    routing
+        .FanOut(groupA =>
+        {
+            groupA.Ordering = CommandOrdering.FirstInFirstOut;
+            groupA.Map<Presenter1>();
+            groupA.Map<Presenter2>();
+        })    
+        .FanOut(groupB =>
+        {
+            groupB.Ordering = CommandOrdering.FirstInFirstOut;
+            groupB.Map<Presenter3>();
+            groupB.Map<Presenter4>();
+        })                
+});
+```
+
+With VContainer (Unity)
 
 ```cs
 public class SampleLifetimeScope : LifetimeScope
