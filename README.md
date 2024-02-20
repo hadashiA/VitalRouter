@@ -2,7 +2,6 @@
 
 [![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
 ![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
-[![NuGet](https://img.shields.io/nuget/v/VitalRouter.svg)](https://www.nuget.org/packages/VitalRouter)
 
 VitalRouter, is a zero-allocation fast in-memory message passing library for games and other complex GUI applications, and the very thin layer that organize application data-flow.
 It is focused with Unity and .NET. 
@@ -68,10 +67,10 @@ public partial class ExamplePresenter
 
 THe foloowing NuGet packages are available.
 
-| Package Name | Description | .NET | .NET Standard |
-|:------------ |:----------- |:-----|:-----------------|
-| [VitalRouter](https://www.nuget.org/packages/VitalRouter) | Main package | 6.0, 8.0 | 2.0, 2.1 |
-| [VitalRouter.Extensions.DependencyInjection](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | Plugin for Microsoft.Extensions.DependencyInjection | 6.0, 8.0 | 2.0, 2.1 |
+| Package | Latest version |
+|:------------ |:----------- |
+| VitalRouter | [![NuGet](https://img.shields.io/nuget/v/VitalRouter)](https://www.nuget.org/packages/ViralRouter/ "Download VitalRouter from NuGet.org") | 
+| VitalRouter.Extensions.DependencyInjection | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.Extensions.DependencyInjection)](https://www.nuget.org/packages/ViralRouter.Extensions.DependencyInjection/ "Download VitalRouter.Extensions.DependencyInjection from NuGet.org") | 
 
 ### Unity
 
