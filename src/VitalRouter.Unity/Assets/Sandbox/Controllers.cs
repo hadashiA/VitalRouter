@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using VContainer.Unity;
 using VitalRouter;
 
 public readonly struct CharacterMoveCommand : ICommand

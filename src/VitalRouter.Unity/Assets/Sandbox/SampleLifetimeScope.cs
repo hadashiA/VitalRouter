@@ -28,7 +28,7 @@ public class SampleLifetimeScope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
-        builder.RegisterEntryPoint<SampleEntryPoint>();
+        // builder.RegisterEntryPoint<SampleEntryPoint>();
 
         builder.RegisterVitalRouter(routing =>
         {
@@ -36,10 +36,10 @@ public class SampleLifetimeScope : LifetimeScope
             routing.Map<SamplePresenter>();
             routing.Map<RoutingBehaviour>();
 
-            routing.FanOut(childRouter =>
-            {
-                childRouter.Map<SamplePresenter2>();
-            });
+            // routing.FanOut(childRouter =>
+            // {
+            //     childRouter.Map<SamplePresenter2>();
+            // });
 
             routing.FanOut(childRouter =>
             {

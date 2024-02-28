@@ -81,7 +81,7 @@ Prerequirements:
 - Install [UniTask](https://github.com/Cysharp/UniTask)
   - Currently, VitalRouter uses UniTask instead of `UnityEngine.Awaitable`. UniTask is a fully featured and fast awaitable implementation.
   - In a future, if `UnityEngine.Awaitable` is enhanced in a future version of Unity, it may be migrated.
-- (optional) Install [VContainer](https://github.com/hadashiA/VContainer) 
+- (optional) Install [VContainer](https://github.com/hadashiA/VContainer) >= 1.15.1 
   -  For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
 
 Then, add git URL from Package Manager:

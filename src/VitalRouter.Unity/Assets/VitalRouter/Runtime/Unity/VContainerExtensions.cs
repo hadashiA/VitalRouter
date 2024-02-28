@@ -106,7 +106,7 @@ public static class VContainerExtensions
         var routing = new RoutingBuilder(builder);
         configure(routing);
 
-        if (routing.Isolated || !builder.Exists(typeof(Router)))
+        if (routing.Isolated || !builder.Exists(typeof(Router), findParentScopes: true))
         {
             builder.Register<Router>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
