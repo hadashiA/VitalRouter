@@ -50,12 +50,11 @@ public partial class ExamplePresenter
 
 - [Installation](#installation)
 - [Getting Started](#getting-started)
-- [Publish](#publish)
+- [Publish/Subscribe API](#publish-subscribe-api)
 - [Interceptors](#interceptors)
 - [FIFO](#fifo)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
-- [Low-level API](#low-level-api)
 - [R3 integration (experimental)](#r3-integration)
 - [Performance](#performance)
 - [Concept, Technical Explanation](#concept-technical-explanation)
@@ -372,7 +371,7 @@ public class GameLifetimeScope : LifetimeScope
 > This is a simple demonstration.
 > If your codebase is huge, just have the View component notify its own events on the outside, rather than Publish directly. And maybe only the class responsible for the control flow should Publish.
 
-## Publish
+## Publish/Subscribe API
 
 `ICommandPublisher` has an awaitable publish method.
 
@@ -416,10 +415,7 @@ catch (Exception ex)
 }
 ```
 
-### Non-Generic
-
 A non-generic version of PublishAsync is also available for restoring commands saved as a collection.
-
 
 ```cs
 var commands = new List<ICommand> { fooCommand, barCommand, ..  };
@@ -429,6 +425,66 @@ foreach (var cmd in commands)
     await publisher.PublishAsync(cmd.GetType(), cmd);
 }
 ```
+
+`ICommandSubscriber` provides a low-level API for consuming Commands as events.
+You can use this directly without using the [Routes] attribute.
+
+```cs
+ICommandSubscribale router = Router.Default;
+
+// Subscribe handler via lambda expression
+router.Subscribe<FooCommand>(cmd => { /* ... */ });
+
+// Subscribe async handler via lambda expression
+router.Subscribe<FooCommand>(async cmd => { /* ... */ });
+
+// Subscribe handler
+router.Subscribe(Subscriber);
+
+class Subscriber : ICommandSubscriber
+{
+    pubilc void Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
+}
+
+// Subscribe async handler
+router.Subscribe(AsyncSubscriber);
+
+class AsyncSubscriber : IAsyncCommandSubscriber
+{
+    pubilc UniTask Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
+}
+
+// Add interceptor via lambda expresion
+router.Filter<FooCommand>(async (cmd, ctx, next) => { /* ... */ });
+```
+
+`PublishContext` has the following structure.
+
+```cs
+public class PublishContext
+{
+    /// <summary>
+    /// Cancellation token set by Publisher. Used to cancel this entire Publish.
+    /// </summary>
+    public CancellationToken CancellationToken { get; set; }
+
+    /// <summary>
+    /// The Member name of the caller who published. `[CallerMemberName]` is the source.
+    /// </summary>
+    public string? CallerMemberName { get; set; }
+
+    /// <summary>
+    /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
+    /// </summary>
+    public string? CallerFilePath { get; set; }
+
+    /// <summary>
+    /// The line number of the caller who published. `[CallerLineNumber]` is the source.
+    /// </summary>
+    public int CallerLineNumber { get; set; }
+}
+```
+
 
 ## Interceptors
 
@@ -836,64 +892,6 @@ Router.Default.Filter(CommandPooling.Instance);
 
 // Or, return to pool manually.
 CommandPool<MyBoxedCommand>.Shard.Return(cmd);
-```
-
-## Low-level API
-
-```cs
-ICommandSubscribale router = Router.default;
-
-// Subscribe handler via lambda expression
-router.Subscribe<FooCommand>(cmd => { /* ... */ });
-
-// Subscribe async handler via lambda expression
-router.Subscribe<FooCommand>(async cmd => { /* ... */ });
-
-// Subscribe handler
-router.Subscribe(Subscriber);
-
-class Subscriber : ICommandSubscriber
-{
-    pubilc void Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
-}
-
-// Subscribe async handler
-router.Subscribe(AsyncSubscriber);
-
-class AsyncSubscriber : IAsyncCommandSubscriber
-{
-    pubilc UniTask Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
-}
-
-// Add interceptor via lambda expresion
-router.Filter<FooCommand>(async (cmd, ctx, next) => { /* ... */ });
-```
-
-`PublishContext` has the following structure.
-
-```cs
-public class PublishContext
-{
-    /// <summary>
-    /// Cancellation token set by Publisher. Used to cancel this entire Publish.
-    /// </summary>
-    public CancellationToken CancellationToken { get; set; }
-
-    /// <summary>
-    /// The Member name of the caller who published. `[CallerMemberName]` is the source.
-    /// </summary>
-    public string? CallerMemberName { get; set; }
-
-    /// <summary>
-    /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
-    /// </summary>
-    public string? CallerFilePath { get; set; }
-
-    /// <summary>
-    /// The line number of the caller who published. `[CallerLineNumber]` is the source.
-    /// </summary>
-    public int CallerLineNumber { get; set; }
-}
 ```
 
 ## R3 integration
