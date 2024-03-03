@@ -17,7 +17,19 @@ sealed class ReusableWhenAllSource : IUniTaskSource
 
     readonly List<Exception> exceptions = new();
 
+    static readonly ConcurrentQueue<ReusableWhenAllSource> pool = new();
     static readonly ConcurrentQueue<AwaiterState> statePool = new();
+
+    public static UniTask WhenAllAsync(IReadOnlyList<UniTask> tasks)
+    {
+        if (!pool.TryDequeue(out var source))
+        {
+            source = new ReusableWhenAllSource();
+        }
+
+        source.Reset(tasks);
+        return new UniTask(source, source.core.Version);
+    }
 
     class AwaiterState
     {
@@ -25,7 +37,7 @@ sealed class ReusableWhenAllSource : IUniTaskSource
         public UniTask.Awaiter Awaiter;
     }
 
-    public void Reset(IReadOnlyList<UniTask> tasks)
+    internal void Reset(IReadOnlyList<UniTask> tasks)
     {
         core.Reset();
         exceptions.Clear();
@@ -64,16 +76,16 @@ sealed class ReusableWhenAllSource : IUniTaskSource
                 state.Source = this;
                 state.Awaiter = awaiter;
 
-                awaiter.SourceOnCompleted(state =>
+                awaiter.SourceOnCompleted(x =>
                 {
-                    var x = (AwaiterState)state;
+                    var xs = (AwaiterState)x;
                     try
                     {
-                        x.Source.TryInvokeContinuation(in x.Awaiter);
+                        xs.Source.TryInvokeContinuation(in xs.Awaiter);
                     }
                     finally
                     {
-                        statePool.Enqueue(x);
+                        statePool.Enqueue(xs);
                     }
                 }, state);
             }
@@ -122,6 +134,7 @@ sealed class ReusableWhenAllSource : IUniTaskSource
             {
                 core.TrySetResult(AsyncUnit.Default);
             }
+            pool.Enqueue(this);
         }
     }
 

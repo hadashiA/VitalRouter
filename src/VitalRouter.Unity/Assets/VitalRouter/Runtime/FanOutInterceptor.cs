@@ -28,8 +28,7 @@ public class FanOutInterceptor : ICommandInterceptor
                 executingTasks.Add(x.PublishAsync(command, context.CancellationToken, context.CallerMemberName, context.CallerFilePath, context.CallerLineNumber));
             }
 
-            whenAllSource.Reset(executingTasks);
-            await whenAllSource.Task;
+            await ReusableWhenAllSource.WhenAllAsync(executingTasks);
         }
         finally
         {
