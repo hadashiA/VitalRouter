@@ -231,7 +231,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     class PublishCore : IAsyncCommandSubscriber
     {
         readonly Router source;
-        readonly ReusableWhenAllSource whenAllSource = new();
         readonly ExpandBuffer<UniTask> executingTasks = new(8);
 
         public PublishCore(Router source)
@@ -259,8 +258,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
                 if (executingTasks.Count > 0)
                 {
-                    whenAllSource.Reset(executingTasks);
-                    return whenAllSource.Task;
+                    return ReusableWhenAllSource.WhenAllAsync(executingTasks);
                 }
 
                 return UniTask.CompletedTask;
