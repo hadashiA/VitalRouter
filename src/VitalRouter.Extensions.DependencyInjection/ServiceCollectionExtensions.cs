@@ -95,6 +95,9 @@ public static class ServiceCollectionExtensions
             return router;
         });
 
+        services.AddSingleton<ICommandPublisher>(container => container.GetRequiredService<Router>());
+        services.AddSingleton<ICommandSubscribable>(container => container.GetRequiredService<Router>());
+
         return services;
     }
 
