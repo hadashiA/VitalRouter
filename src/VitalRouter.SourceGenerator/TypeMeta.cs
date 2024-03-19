@@ -78,8 +78,16 @@ class TypeMeta
         var i = 0;
         foreach (var member in Symbol.GetAllMembers())
         {
-            if (member is IMethodSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public } method)
+            if (member is IMethodSymbol { IsStatic: false } method)
             {
+                var hasRouteAttribute = method.ContainsAttribute(references.RouteAttribute);
+                if (method.DeclaredAccessibility != Accessibility.Public && !hasRouteAttribute)
+                    continue;
+
+                if (method.DeclaredAccessibility != Accessibility.Public &&
+                    !method.ContainsAttribute(references.RouteAttribute))
+                    continue;
+
                 if (method.Parameters.Length is <= 0 or >= 3)
                     continue;
 

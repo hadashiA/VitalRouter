@@ -171,6 +171,17 @@ public class GeneratedRoutingTest
 
         Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
     }
+
+    [Test]
+    public async Task MethodAttribute()
+    {
+        var x = new MethodAttributePresenter();
+        x.MapTo(router);
+
+        await router.PublishAsync(new CommandA(1));
+
+        Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
+    }
 }
 
 [Routes]
@@ -193,6 +204,18 @@ partial class SimpleAsyncPresenter
     {
         Receives.Enqueue(cmd);
         return default;
+    }
+}
+
+[Routes]
+partial class MethodAttributePresenter
+{
+    public Queue<ICommand> Receives { get; } = new();
+
+    [Route]
+    void On(CommandA cmd)
+    {
+        Receives.Enqueue(cmd);
     }
 }
 
