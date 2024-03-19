@@ -164,7 +164,7 @@ public partial class FooPresentor
 Types with the `[Routes]` attribute are analyzed at compile time and a method to subscribe to Command is automatically generated.
 
 Methods that satisfy the following conditions are eligible.
-- public accesibility.
+- With public accesibility, or with `[Route]` attribute.
 - The argument matches one of the following
     - `ICommand`
     - `ICommand`, `CancellationToken`
@@ -180,6 +180,9 @@ public void On(FooCommand cmd, PublishContext context) { /* .. */ }
 public async UniTask On(FooCommand cmd) { /* .. */ }
 public async UniTask On(FooCommand cmd, CancellationToken cancellation) { /* .. */ }
 public async UniTask On(FooCommand cmd, PublishContext context) { /* .. */ }
+
+[Route] // < `[Route]` attribute may be added instead of `public'.
+void On(FooCommand cmd) { /* .. */ }
 ```
 
 > [!NOTE] 

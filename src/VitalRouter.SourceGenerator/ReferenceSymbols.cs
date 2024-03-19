@@ -6,13 +6,14 @@ public class ReferenceSymbols
 {
     public static ReferenceSymbols? Create(Compilation compilation)
     {
-        var routingAttribute = compilation.GetTypeByMetadataName("VitalRouter.RoutesAttribute");
-        if (routingAttribute is null)
+        var routesAttribute = compilation.GetTypeByMetadataName("VitalRouter.RoutesAttribute");
+        if (routesAttribute is null)
             return null;
 
         return new ReferenceSymbols
         {
-            RoutingAttribute = routingAttribute,
+            RoutesAttribute = routesAttribute,
+            RouteAttribute = compilation.GetTypeByMetadataName("VitalRouter.RouteAttribute")!,
             FilterAttribute = compilation.GetTypeByMetadataName("VitalRouter.FilterAttribute")!,
             FilterAttributeGeneric = compilation.GetTypeByMetadataName("VitalRouter.FilterAttribute`1"),
             CommandInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommand")!,
@@ -27,7 +28,8 @@ public class ReferenceSymbols
         };
     }
 
-    public INamedTypeSymbol RoutingAttribute { get; private set; } = default!;
+    public INamedTypeSymbol RoutesAttribute { get; private set; } = default!;
+    public INamedTypeSymbol RouteAttribute { get; private set; } = default!;
     public INamedTypeSymbol FilterAttribute { get; private set; } = default!;
     public INamedTypeSymbol? FilterAttributeGeneric { get; private set; }
     public INamedTypeSymbol CommandInterface { get; private set; } = default!;

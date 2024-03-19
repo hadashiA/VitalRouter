@@ -11,6 +11,11 @@ public class RoutesAttribute : Attribute
 {
 }
 
+[AttributeUsage(AttributeTargets.Method)]
+public class RouteAttribute : Attribute
+{
+}
+
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class FilterAttribute : Attribute
 {
