@@ -103,7 +103,7 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            if (lastIndex > 0)
+            if (lastIndex >= 0)
             {
                 values.AsSpan(0, lastIndex + 1).Clear();
                 lastIndex = -1;
