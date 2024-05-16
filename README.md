@@ -3,11 +3,11 @@
 [![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
 ![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
 
-VitalRouter, is a zero-allocation fast in-memory message passing library for games and other complex GUI applications, and the very thin layer that organize application data-flow.
-It is focused with Unity and .NET. 
-Whether you're an individual developer or part of a larger team, VitalRouter can help you build complex game applications.
+VitalRouter, is a source-generator powered zero-allocation fast in-memory message passing library for games and other complex GUI applications, and the very thin layer that organize application data-flow.
+It is mainly focused on Unity, but also works with any .NET env.
 
-Bring fast, declarative routing for your application. 
+
+An simple example is below. Bringing declarative routing to client-side programming where control flow is complex.
 
 ```cs
 [Routes]
