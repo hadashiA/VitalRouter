@@ -5,8 +5,11 @@ namespace VitalRouter.Tests;
 
 class PoolableCommand : IPoolableCommand
 {
+    public bool ReturnCalled { get; private set; }
+
     public void OnReturnToPool()
     {
+        ReturnCalled = true;
     }
 }
 
@@ -24,5 +27,6 @@ public class CommandPoolingTest
         var pool = (ConcurrentQueueCommandPool<PoolableCommand>)CommandPool<PoolableCommand>.Shared;
 
         Assert.That(pool.queue.TryDequeue(out var command), Is.True);
+        Assert.That(command!.ReturnCalled, Is.True);
     }
 }
