@@ -224,7 +224,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     {
         if (disposed)
         {
-            throw new ObjectDisposedException(nameof(UniTaskAsyncLock));
+            throw new ObjectDisposedException(nameof(Router));
         }
     }
 

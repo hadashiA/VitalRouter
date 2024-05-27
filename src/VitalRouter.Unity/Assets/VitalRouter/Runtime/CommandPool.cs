@@ -9,7 +9,7 @@ public interface IPoolableCommand : ICommand
     void OnReturnToPool();
 }
 
-public interface ICommandPool<T> where T : IPoolableCommand
+public interface ICommandPool<T> where T : ICommand
 {
     T Rent(Func<T> factory);
     T Rent<TArg1>(Func<TArg1, T> factory, TArg1 arg1);
@@ -20,14 +20,14 @@ public interface ICommandPool<T> where T : IPoolableCommand
     void Return(T command);
 }
 
-public static class CommandPool<T> where T : IPoolableCommand
+public static class CommandPool<T> where T : ICommand
 {
     public static readonly ICommandPool<T> Shared = new ConcurrentQueueCommandPool<T>();
 }
 
-public class ConcurrentQueueCommandPool<T> : ICommandPool<T> where T : IPoolableCommand
+public class ConcurrentQueueCommandPool<T> : ICommandPool<T> where T : ICommand
 {
-    readonly ConcurrentQueue<T> queue = new();
+    internal readonly ConcurrentQueue<T> queue = new();
 
     public T Rent(Func<T> factory)
     {
@@ -85,7 +85,10 @@ public class ConcurrentQueueCommandPool<T> : ICommandPool<T> where T : IPoolable
 
     public void Return(T command)
     {
-        command.OnReturnToPool();
+        if (command is IPoolableCommand)
+        {
+            ((IPoolableCommand)command).OnReturnToPool();
+        }
         queue.Enqueue(command);
     }
 }
@@ -103,14 +106,14 @@ public class CommandPooling : ICommandInterceptor
         }
         finally
         {
-            if (command is IPoolableCommand pooled)
+            if (command is IPoolableCommand)
             {
-                Return(pooled);
+                Return(command);
             }
         }
     }
 
-    static void Return<T>(T command) where T : IPoolableCommand
+    static void Return<T>(T command) where T : ICommand
     {
         CommandPool<T>.Shared.Return(command);
     }
