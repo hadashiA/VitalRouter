@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Concurrent;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
+using VitalRouter.Internal;
 
 namespace VitalRouter;
 
@@ -20,12 +23,22 @@ public interface ICommandPool<T> where T : ICommand
     void Return(T command);
 }
 
+static class TypeAnalyzerCache<T> where T : ICommand
+{
+    public static bool IsPoolable;
+
+    static TypeAnalyzerCache()
+    {
+        IsPoolable = typeof(IPoolableCommand).IsAssignableFrom(typeof(T));
+    }
+}
+
 public static class CommandPool<T> where T : ICommand
 {
     public static readonly ICommandPool<T> Shared = new ConcurrentQueueCommandPool<T>();
 }
 
-public class ConcurrentQueueCommandPool<T> : ICommandPool<T> where T : ICommand
+class ConcurrentQueueCommandPool<T> : ICommandPool<T> where T : ICommand
 {
     internal readonly ConcurrentQueue<T> queue = new();
 
@@ -85,9 +98,9 @@ public class ConcurrentQueueCommandPool<T> : ICommandPool<T> where T : ICommand
 
     public void Return(T command)
     {
-        if (command is IPoolableCommand)
+        if (command is IPoolableCommand poolableCommand)
         {
-            ((IPoolableCommand)command).OnReturnToPool();
+            poolableCommand.OnReturnToPool();
         }
         queue.Enqueue(command);
     }
@@ -106,7 +119,7 @@ public class CommandPooling : ICommandInterceptor
         }
         finally
         {
-            if (command is IPoolableCommand)
+            if (TypeAnalyzerCache<T>.IsPoolable)
             {
                 Return(command);
             }
