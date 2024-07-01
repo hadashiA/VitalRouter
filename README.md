@@ -257,46 +257,6 @@ anotherRouter.PublishAsync(..)
 
 If DI is used, plain Map/Unmap management and dependency resolution can be automated in a DI container.
 
-#### Setup with DI in Microsoft.Extensions.DependencyInjection
-
-```cs
-using VitalRouter;
-
-// Example of using Generic Host
-var builder = Host.CreateApplicationBuilder();
-
-builder.Services.AddVitalRouter(routing =>
-{
-    // Map all `[Routes]` targets in the specified assembly.
-    routing.MapAll(GetType().Assembly);
-    
-    // Map specific class.
-    routing.Map<FooPresenter>();
-});
-```
-
-The instances mapped here are released with to dispose of the DI container.
-
-In this case, publisher is also injectable.
-
-```cs
-class HogeController
-{
-    readonly ICommandPublisher publisher;
-    
-    public HogeController(ICommandPublisher publisher)
-    {
-        this.publisher = publisher;
-    }
-
-    public void DoSomething()
-    {
-        publisher.PublishAsync(new FooCommand { X = 1, Y = 2 }).Forget();
-    }
-}
-```
-        
-
 #### Setup with DI in VContainer (Unity)
 
 ```cs
@@ -374,6 +334,45 @@ public class GameLifetimeScope : LifetimeScope
 > This is a simple demonstration.
 > If your codebase is huge, just have the View component notify its own events on the outside, rather than Publish directly. And maybe only the class responsible for the control flow should Publish.
 
+#### Setup with DI in Microsoft.Extensions.DependencyInjection
+
+```cs
+using VitalRouter;
+
+// Example of using Generic Host
+var builder = Host.CreateApplicationBuilder();
+
+builder.Services.AddVitalRouter(routing =>
+{
+    // Map all `[Routes]` targets in the specified assembly.
+    routing.MapAll(GetType().Assembly);
+    
+    // Map specific class.
+    routing.Map<FooPresenter>();
+});
+```
+
+The instances mapped here are released with to dispose of the DI container.
+
+In this case, publisher is also injectable.
+
+```cs
+class HogeController
+{
+    readonly ICommandPublisher publisher;
+    
+    public HogeController(ICommandPublisher publisher)
+    {
+        this.publisher = publisher;
+    }
+
+    public void DoSomething()
+    {
+        publisher.PublishAsync(new FooCommand { X = 1, Y = 2 }).Forget();
+    }
+}
+```
+        
 ## Publish/Subscribe API
 
 `ICommandPublisher` has an awaitable publish method.
