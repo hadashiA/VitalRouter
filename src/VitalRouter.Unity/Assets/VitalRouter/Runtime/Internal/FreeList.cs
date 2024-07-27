@@ -129,12 +129,12 @@ public class FreeList<T> where T : class
 
 #if NET6_0_OR_GREATER
 
-static int FindNullIndex(T?[] target)
-{
-    var span = MemoryMarshal.CreateReadOnlySpan(
-        ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), target.Length);
-    return span.IndexOf(IntPtr.Zero);
-}
+    static int FindNullIndex(T?[] target)
+    {
+        var span = MemoryMarshal.CreateReadOnlySpan(
+            ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), target.Length);
+        return span.IndexOf(IntPtr.Zero);
+    }
 
 #else
 
@@ -148,11 +148,11 @@ static int FindNullIndex(T?[] target)
 #if NETSTANDARD2_1
             return span.IndexOf(IntPtr.Zero);
 #else
-        for (int i = 0; i < span.Length; i++)
-        {
-            if (span[i] == IntPtr.Zero) return i;
-        }
-        return -1;
+            for (int i = 0; i < span.Length; i++)
+            {
+                if (span[i] == IntPtr.Zero) return i;
+            }
+            return -1;
 #endif
         }
     }
@@ -161,13 +161,13 @@ static int FindNullIndex(T?[] target)
 
 #if NET8_0_OR_GREATER
 
-static int FindLastNonNullIndex(T?[] target, int lastIndex)
-{
-    var span = MemoryMarshal.CreateReadOnlySpan(
-        ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), lastIndex); // without lastIndexed value.
-    var index = span.LastIndexOfAnyExcept(IntPtr.Zero);
-    return index; // return -1 is ok(means empty)
-}
+    static int FindLastNonNullIndex(T?[] target, int lastIndex)
+    {
+        var span = MemoryMarshal.CreateReadOnlySpan(
+            ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), lastIndex); // without lastIndexed value.
+        var index = span.LastIndexOfAnyExcept(IntPtr.Zero);
+        return index; // return -1 is ok(means empty)
+    }
 
 #else
 
