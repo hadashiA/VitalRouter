@@ -1,7 +1,7 @@
 using System;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public struct Subscription : IDisposable
 {
     readonly ICommandSubscribable commandBus;
@@ -43,4 +43,5 @@ public struct Subscription : IDisposable
             asyncSubscriber = null;
         }
     }
+}
 }

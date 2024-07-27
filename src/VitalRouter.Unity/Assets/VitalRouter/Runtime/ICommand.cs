@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public interface ICommand
 {
 }
@@ -43,4 +43,5 @@ public class SequenceCommand : ICommand, IReadOnlyList<ICommand>
     {
         commands.Add(cmd);
     }
+}
 }

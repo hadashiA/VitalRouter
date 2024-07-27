@@ -5,8 +5,8 @@ using VContainer;
 using VContainer.Unity;
 using VitalRouter.Internal;
 
-namespace VitalRouter.VContainer;
-
+namespace VitalRouter.VContainer
+{
 class RoutingDisposable : IDisposable
 {
     readonly IObjectResolver container;
@@ -237,3 +237,4 @@ public static class VContainerExtensions
     }
 }
 #endif
+}

@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 sealed class ReusableWhenAllSource : IUniTaskSource
 {
     public UniTask Task => new(this, core.Version);
@@ -151,4 +151,5 @@ sealed class ReusableWhenAllSource : IUniTaskSource
             if (lockTaken) spinLock.Exit();
         }
     }
+}
 }

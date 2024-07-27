@@ -2,8 +2,8 @@ using System;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public enum CommandOrdering
 {
     /// <summary>
@@ -89,4 +89,5 @@ public class FirstInFirstOutOrdering : ICommandInterceptor, IDisposable
     {
         publishLock.Dispose();
     }
+}
 }

@@ -5,8 +5,8 @@ using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public interface IPoolableCommand : ICommand
 {
     void OnReturnToPool();
@@ -130,4 +130,5 @@ public class CommandPooling : ICommandInterceptor
     {
         CommandPool<T>.Shared.Return(command);
     }
+}
 }

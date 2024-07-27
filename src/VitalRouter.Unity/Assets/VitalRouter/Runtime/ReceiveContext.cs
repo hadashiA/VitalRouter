@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using Cysharp.Threading.Tasks;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public class ReceiveContext<T> where T : ICommand
 {
     public static async UniTask InvokeAsync(T command, ICommandInterceptor[] interceptorStack, PublishContext context)
@@ -72,4 +72,5 @@ public class ReceiveContext<T> where T : ICommand
         nextInterceptor = default!;
         return false;
     }
+}
 }

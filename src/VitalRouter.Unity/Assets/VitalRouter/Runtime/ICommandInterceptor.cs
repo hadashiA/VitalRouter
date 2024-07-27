@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public delegate UniTask PublishContinuation<in T>(T cmd, PublishContext ctx) where T : ICommand;
 
 public interface ICommandInterceptor
@@ -30,4 +30,5 @@ public abstract class TypedCommandInterceptro<T> : ICommandInterceptor
         T command,
         PublishContext context,
         PublishContinuation<T> next);
+}
 }

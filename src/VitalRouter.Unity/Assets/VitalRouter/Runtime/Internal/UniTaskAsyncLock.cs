@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 class UniTaskAsyncLock : IDisposable
 {
     readonly Queue<AutoResetUniTaskCompletionSource> asyncWaitingQueue = new();
@@ -150,4 +150,5 @@ class UniTaskAsyncLock : IDisposable
             throw new ObjectDisposedException(nameof(UniTaskAsyncLock));
         }
     }
+}
 }

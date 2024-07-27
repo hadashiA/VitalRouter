@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 #if !NETSTANDARD2_1_OR_GREATER
 public static class Shims
 {
@@ -17,3 +17,4 @@ public static class Shims
     }
 }
 #endif
+}

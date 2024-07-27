@@ -5,8 +5,8 @@ using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using VitalRouter.Internal;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 [TestFixture]
 public class WhenAllTest
 {
@@ -34,3 +34,4 @@ public class WhenAllTest
     }
 }
 #endif
+}

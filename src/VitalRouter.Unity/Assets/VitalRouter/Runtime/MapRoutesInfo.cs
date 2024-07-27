@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 public class MapRoutesInfo
 {
     static readonly ConcurrentDictionary<Type, MapRoutesInfo> Cache = new();
@@ -40,4 +40,5 @@ public class InterceptorStackBuilder
         Types.Add(typeof(T));
         return this;
     }
+}
 }

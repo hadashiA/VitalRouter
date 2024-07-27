@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 class AInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
@@ -121,4 +121,5 @@ class CommandD : ICommand
     {
         Value = value;
     }
+}
 }

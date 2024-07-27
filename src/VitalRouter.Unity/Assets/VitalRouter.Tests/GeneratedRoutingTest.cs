@@ -5,8 +5,8 @@ using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 [TestFixture]
 public class GeneratedRoutingTest
 {
@@ -379,4 +379,5 @@ partial class TaskPresenter
     {
         return default;
     }
+}
 }

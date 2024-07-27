@@ -1,7 +1,7 @@
 using System;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public class PreserveAttribute : Attribute
 {
 }
@@ -26,10 +26,10 @@ public class FilterAttribute : Attribute
         InterceptorType = interceptorType;
     }
 }
-
 #if NET7_0_OR_GREATER
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class FilterAttribute<T> : Attribute where T : ICommandInterceptor
 {
 }
 #endif
+}

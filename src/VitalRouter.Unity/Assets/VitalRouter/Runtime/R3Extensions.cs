@@ -6,8 +6,8 @@ using Cysharp.Threading.Tasks;
 using R3;
 using VitalRouter.Internal;
 
-namespace VitalRouter.R3;
-
+namespace VitalRouter.R3
+{
 public static class R3Extensions
 {
     public static IDisposable SubscribeToPublish<T>(this Observable<T> source, ICommandPublisher publisher)
@@ -294,3 +294,4 @@ sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
     }
 }
 #endif
+}

@@ -1,7 +1,7 @@
 using System;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 sealed class CappedArrayPool<T>
 {
     internal const int InitialBucketSize = 4;
@@ -24,6 +24,7 @@ sealed class CappedArrayPool<T>
             {
                 buckets[i][j] = new T[arrayLength];
             }
+
             tails[i] = buckets[i].Length - 1;
         }
     }
@@ -67,4 +68,5 @@ sealed class CappedArrayPool<T>
                 tails[i] -= 1;
         }
     }
+}
 }

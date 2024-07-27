@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 class ExpandBuffer<T> : IReadOnlyList<T>
 {
     struct Enumerator : IEnumerator<T>
@@ -91,7 +91,7 @@ class ExpandBuffer<T> : IReadOnlyList<T>
             Array.Copy(buffer, index + 1, buffer, index, Count - index);
         }
 #if NETSTANDARD2_1_OR_GREATER
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+    if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
         {
             buffer[Count] = default!;
@@ -182,4 +182,5 @@ class ExpandBuffer<T> : IReadOnlyList<T>
         }
         SetCapacity(newCapacity);
     }
+}
 }
