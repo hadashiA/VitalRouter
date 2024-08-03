@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 public class FreeList<T> where T : class
 {
     public int LastIndex => lastIndex;
@@ -188,4 +188,5 @@ public class FreeList<T> where T : class
     }
 
 #endif
+}
 }

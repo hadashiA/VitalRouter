@@ -1,8 +1,8 @@
 using NUnit.Framework;
 using VitalRouter.Internal;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 [TestFixture]
 public class ExpandBufferTest
 {
@@ -24,4 +24,5 @@ public class ExpandBufferTest
         Assert.That(x[0], Is.EqualTo(111));
         Assert.That(x[1], Is.EqualTo(333));
     }
+}
 }

@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using VitalRouter.Internal;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 [TestFixture]
 class UniTaskAsyncLockTest
 {
@@ -112,4 +112,5 @@ class UniTaskAsyncLockTest
         Assert.That(result1, Is.True);
         Assert.That(result2, Is.True);
     }
+}
 }

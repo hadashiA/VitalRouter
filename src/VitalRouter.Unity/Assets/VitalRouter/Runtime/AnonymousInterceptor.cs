@@ -2,8 +2,8 @@ using System;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public static class CommandBusAnonymousExtensions
 {
     public static void Filter<T>(
@@ -38,4 +38,5 @@ class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
         }
         return next(command, context);
     }
+}
 }

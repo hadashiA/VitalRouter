@@ -1,8 +1,9 @@
 using NUnit.Framework;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 [TestFixture]
 public class UnsafeHelperTest
 {
+}
 }

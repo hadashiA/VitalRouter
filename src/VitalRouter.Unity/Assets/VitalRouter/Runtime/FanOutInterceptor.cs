@@ -4,8 +4,8 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public class FanOutInterceptor : ICommandInterceptor
 {
     readonly List<ICommandPublisher> subsequents = new();
@@ -35,4 +35,5 @@ public class FanOutInterceptor : ICommandInterceptor
             executingTasks.Clear();
         }
     }
+}
 }

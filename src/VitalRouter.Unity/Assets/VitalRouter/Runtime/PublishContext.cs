@@ -4,8 +4,8 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public class PublishContext
 {
     /// <summary>
@@ -141,4 +141,5 @@ public class PublishContext<T> : PublishContext where T : ICommand
         nextInterceptor = default!;
         return false;
     }
+}
 }

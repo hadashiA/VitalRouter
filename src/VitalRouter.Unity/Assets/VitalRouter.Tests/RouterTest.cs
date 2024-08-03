@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 class TestSubscriber : ICommandSubscriber
 {
     public int Calls { get; private set; }
@@ -203,4 +203,5 @@ public class RouterTest
         await task2;
         Assert.That(subscriber1.Completed, Is.EqualTo(2));
     }
+}
 }

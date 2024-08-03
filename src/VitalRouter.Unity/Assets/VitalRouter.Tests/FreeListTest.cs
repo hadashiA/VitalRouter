@@ -1,8 +1,8 @@
 using NUnit.Framework;
 using VitalRouter.Internal;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 [TestFixture]
 public class FreeListTest
 {
@@ -59,4 +59,5 @@ public class FreeListTest
         var span = freeList.AsSpan();
         Assert.That(span.Length, Is.EqualTo(0));
     }
+}
 }

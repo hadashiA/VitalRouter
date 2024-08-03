@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace VitalRouter.Unity;
-
+namespace VitalRouter.Unity
+{
 public class SubscriptionHandle : MonoBehaviour
 {
     public List<Subscription> Subscriptions { get; } = new();
@@ -14,4 +14,5 @@ public class SubscriptionHandle : MonoBehaviour
             subscription.Dispose();
         }
     }
+}
 }

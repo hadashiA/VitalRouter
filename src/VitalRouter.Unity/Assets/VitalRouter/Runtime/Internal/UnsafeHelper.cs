@@ -1,5 +1,5 @@
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 static class UnsafeHelper
 {
     public static ref TTo As<TFrom, TTo>(ref TFrom from)
@@ -10,4 +10,5 @@ static class UnsafeHelper
         return ref System.Runtime.CompilerServices.Unsafe.As<TFrom, TTo>(ref from);
 #endif
     }
+}
 }

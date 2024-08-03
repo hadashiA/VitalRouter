@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace VitalRouter.Internal;
-
+namespace VitalRouter.Internal
+{
 class ExpandBuffer<T> : IReadOnlyList<T>
 {
     struct Enumerator : IEnumerator<T>
@@ -182,4 +182,5 @@ class ExpandBuffer<T> : IReadOnlyList<T>
         }
         SetCapacity(newCapacity);
     }
+}
 }

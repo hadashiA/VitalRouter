@@ -1,8 +1,8 @@
 using UnityEngine;
 using VitalRouter;
 
-namespace MyNamespace;
-
+namespace MyNamespace
+{
 
 [Routes]
 public partial class RoutingBehaviour : MonoBehaviour
@@ -17,3 +17,4 @@ public partial class RoutingBehaviour : MonoBehaviour
     }
 }
 
+}

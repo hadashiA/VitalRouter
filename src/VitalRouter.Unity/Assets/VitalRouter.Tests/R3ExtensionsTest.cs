@@ -8,8 +8,8 @@ using NUnit.Framework;
 using R3;
 using VitalRouter.R3;
 
-namespace VitalRouter.Tests;
-
+namespace VitalRouter.Tests
+{
 [TestFixture]
 public class R3ExtensionsTest
 {
@@ -183,3 +183,4 @@ public class R3ExtensionsTest
     }
 }
 #endif
+}

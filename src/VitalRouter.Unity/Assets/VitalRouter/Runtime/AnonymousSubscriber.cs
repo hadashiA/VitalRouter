@@ -2,8 +2,8 @@ using System;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public static class SubscribableAnonymousExtensions
 {
     public static Subscription Subscribe<T>(this ICommandSubscribable subscribable, Action<T, PublishContext> callback)
@@ -58,4 +58,5 @@ class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
             callback(commandCasted, context);
         }
     }
+}
 }

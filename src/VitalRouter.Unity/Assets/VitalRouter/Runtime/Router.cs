@@ -6,8 +6,8 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
-namespace VitalRouter;
-
+namespace VitalRouter
+{
 public interface ICommandPublisher
 {
     UniTask PublishAsync<T>(
@@ -269,4 +269,5 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             }
         }
     }
+}
 }
