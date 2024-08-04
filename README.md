@@ -68,8 +68,8 @@ THe foloowing NuGet packages are available.
 
 | Package | Latest version |
 |:------------ |:----------- |
-| VitalRouter | [![NuGet](https://img.shields.io/nuget/v/VitalRouter)](https://www.nuget.org/packages/ViralRouter/ "Download VitalRouter from NuGet.org") | 
-| VitalRouter.Extensions.DependencyInjection | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.Extensions.DependencyInjection)](https://www.nuget.org/packages/ViralRouter.Extensions.DependencyInjection/ "Download VitalRouter.Extensions.DependencyInjection from NuGet.org") | 
+| VitalRouter | [![NuGet](https://img.shields.io/nuget/v/VitalRouter)](https://www.nuget.org/packages/VitalRouter) | 
+| VitalRouter.Extensions.DependencyInjection | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.Extensions.DependencyInjection)](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | 
 
 ### Unity
 
