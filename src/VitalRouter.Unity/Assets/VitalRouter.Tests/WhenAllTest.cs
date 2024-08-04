@@ -33,5 +33,5 @@ public class WhenAllTest
         Assert.That(result2, Is.True);
     }
 }
-#endif
 }
+#endif

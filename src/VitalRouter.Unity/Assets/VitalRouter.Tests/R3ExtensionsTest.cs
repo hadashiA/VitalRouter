@@ -182,5 +182,5 @@ public class R3ExtensionsTest
         }
     }
 }
-#endif
 }
+#endif

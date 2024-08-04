@@ -293,5 +293,5 @@ sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
         }
     }
 }
-#endif
 }
+#endif
