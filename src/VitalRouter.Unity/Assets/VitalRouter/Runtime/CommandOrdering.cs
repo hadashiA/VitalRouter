@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
@@ -17,10 +18,14 @@ public enum CommandOrdering
     Sequential,
 
     /// <summary>
-    /// If commands are published simultaneously, wait until the subscriber has processed the first command.
+    /// If commands are published simultaneously, ignore commands that come later.
     /// </summary>
-    [Obsolete("Use CommandOrdering.Sequential instead.")]
-    FirstInFirstOut,
+    Drop,
+
+    /// <summary>
+    /// If the previous asynchronous method is running, it is cancelled and the next asynchronous method is executed.
+    /// </summary>
+    Switch,
 }
 
 public partial class Router
@@ -32,11 +37,16 @@ public partial class Router
             case CommandOrdering.Sequential:
                 Filter(new SequentialOrdering());
                 break;
-#pragma warning disable CS0618 // Type or member is obsolete
-            case CommandOrdering.FirstInFirstOut:
-                Filter(new FirstInFirstOutOrdering());
-#pragma warning restore CS0618 // Type or member is obsolete
+            case CommandOrdering.Parallel:
                 break;
+            case CommandOrdering.Drop:
+                Filter(new DropOrdering());
+                break;
+            case CommandOrdering.Switch:
+                Filter(new SwitchOrdering());
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(ordering), ordering, null);
         }
         return this;
     }
@@ -66,28 +76,40 @@ public class SequentialOrdering : ICommandInterceptor, IDisposable
     }
 }
 
-[Obsolete("Use SequentialOrdering instead.")]
-public class FirstInFirstOutOrdering : ICommandInterceptor, IDisposable
+public class DropOrdering : ICommandInterceptor
 {
-    readonly UniTaskAsyncLock publishLock = new();
+    int executingCount;
 
-    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
-        where T : ICommand
+    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
-        await publishLock.WaitAsync();
-        try
+        if (Interlocked.CompareExchange(ref executingCount, 1, 0) == 0)
         {
-            await next(command, context);
-        }
-        finally
-        {
-            publishLock.Release();
+            try
+            {
+                await next(command, context);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref executingCount, 0);
+            }
         }
     }
+}
 
-    public void Dispose()
+public class SwitchOrdering : ICommandInterceptor
+{
+    CancellationTokenSource? previousCancellationSource;
+    readonly CancellationToken[] tokensBuffer = new CancellationToken[2];
+
+    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
-        publishLock.Dispose();
+        previousCancellationSource?.Cancel();
+        previousCancellationSource?.Dispose();
+        previousCancellationSource = new CancellationTokenSource();
+        tokensBuffer[0] = previousCancellationSource.Token;
+        tokensBuffer[1] = context.CancellationToken;
+        context.CancellationToken = CancellationTokenSource.CreateLinkedTokenSource(tokensBuffer).Token;
+        return next(command, context);
     }
 }
 }

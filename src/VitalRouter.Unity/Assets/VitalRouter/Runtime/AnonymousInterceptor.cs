@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using VitalRouter.Internal;
 
@@ -32,8 +33,8 @@ class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
     {
         if (typeof(TReceive) == typeof(T))
         {
-            var commandCasted = UnsafeHelper.As<TReceive, T>(ref command);
-            var nextCasted = UnsafeHelper.As<PublishContinuation<TReceive>, PublishContinuation<T>>(ref next);
+            var commandCasted = Unsafe.As<TReceive, T>(ref command);
+            var nextCasted = Unsafe.As<PublishContinuation<TReceive>, PublishContinuation<T>>(ref next);
             return callback(commandCasted, context, nextCasted);
         }
         return next(command, context);

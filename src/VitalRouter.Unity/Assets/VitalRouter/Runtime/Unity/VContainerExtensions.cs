@@ -77,19 +77,6 @@ public class RoutingBuilder
         return containerBuilder.RegisterComponentInNewPrefab(prefab, Lifetime.Singleton);
     }
 
-    public RoutingBuilder Sequential()
-    {
-        Filters.Add<SequentialOrdering>();
-        return this;
-    }
-
-    [Obsolete("Use Sequential instead.")]
-    public RoutingBuilder FirstInFirstOut()
-    {
-        Filters.Add<FirstInFirstOutOrdering>();
-        return this;
-    }
-
     public RoutingBuilder FanOut(Action<RoutingBuilder> configure)
     {
         var subsequent = new RoutingBuilder(containerBuilder);
@@ -174,11 +161,16 @@ public static class VContainerExtensions
             case CommandOrdering.Sequential:
                 routing.Filters.Add<SequentialOrdering>();
                 break;
-#pragma warning disable CS0618 // Type or member is obsolete
-            case CommandOrdering.FirstInFirstOut:
-                routing.Filters.Add<FirstInFirstOutOrdering>();
+            case CommandOrdering.Parallel:
                 break;
-#pragma warning restore CS0618 // Type or member is obsolete
+            case CommandOrdering.Drop:
+                routing.Filters.Add<DropOrdering>();
+                break;
+            case CommandOrdering.Switch:
+                routing.Filters.Add<SwitchOrdering>();
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
         foreach (var interceptorType in routing.Filters.Types)
