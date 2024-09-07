@@ -37,14 +37,14 @@ public partial class ExamplePresenter
 }
 ```
 
-| Feature                            | Description                                                                                                                                                                                                                                                                                                                                 |
-|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Declarative routing                | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                                                                                                                                                                                                           |
-| Async/non-Async handlers           | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                                                                                                                                                                                                              |
-| With DI and without DI             | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                                                                                                                                     |
-| Fast, less allocations           | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.                                                                                                                                                                                         |
-| Parallel N:N pub/sub               | Built on top of a thread-safe, in-memory, asynchronized  pub/sub system, which is critical in game design.                                                                                                                                                                                                                                  |                                                                                                                                                                                                               
-| FIFO (First in first out), Fan-out | Due to the async task's exclusivity control, events can be consumed in sequence. So it can be used as robust FIFO queue. <br /><br />In Game, it is very useful to have events processed in series, VitalRouter provide FIFO constraints. it is possible to fan-out to multiple FIFOs in concurernt. See [FIFO](#fifo) section for details. |
+| Feature                                                   | Description                                                                                                                                           |
+|-----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Declarative routing                                       | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                     |
+| Async/non-Async handlers                                  | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                        |
+| With DI and without DI                                    | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                               |
+| Fast, less allocations                                    | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.   |
+| Async sequence controlling (Parallel, FIFO, Drop, Switch) | The behavior when async processes are executed in parallel can be specified in detail. See [Command ordering](#command-ordering) section for details. |                                                                                                                                                                                                               
+| Fan-out                                                   | Several FIFOs can be combined. See [FIFO](#fifo) section for details.                                                                                 |
 
 ## Table of Contents
 
@@ -187,6 +187,13 @@ void On(FooCommand cmd) { /* .. */ }
 
 > [!NOTE] 
 > There are no restrictions by Interface but it will generate source code that will be resolved at compile time, so you will be able to follow the code well enough.
+
+Another, easier way is to register a lambda expression directly as a handler.
+
+```cs
+router.Subscribe<FooCommand>(cmd => { /* ... */ })
+router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ })
+```
 
 Now, when and how does the routing defined here call? There are several ways to make it enable this.
 
@@ -392,7 +399,6 @@ await publisher.PublishAsync(command2);  // Wait until all subscribers have fini
 // ...
 ```
 
-
 Note that by default, when Publish is executed in parallel, Subscribers is also executed in parallel.
 
 ```cs
@@ -402,7 +408,7 @@ publisher.PublishAsync(command3).Forget(); // Start processing command3 immediat
 // ...
 ```
 
-If you want to treat the commands like a queue to be sequenced, see [FIFO](#fifo) section for more information.
+If you want to treat the commands like a queue to be sequenced, see [Command ordering](#command-ordering) section for more information.
 
 Of course, if you do `await`, you can try/catch all subscriber/routes exceptions.
 
@@ -438,10 +444,10 @@ ICommandSubscribale router = Router.Default;
 router.Subscribe<FooCommand>(cmd => { /* ... */ });
 
 // Subscribe async handler via lambda expression
-router.Subscribe<FooCommand>(async cmd => { /* ... */ });
+router.SubscribeAwait<FooCommand>(async cmd => { /* ... */ });
 
 // Subscribe handler
-router.Subscribe(Subscriber);
+router.Subscribe(new Subscriber());
 
 class Subscriber : ICommandSubscriber
 {
@@ -449,7 +455,7 @@ class Subscriber : ICommandSubscriber
 }
 
 // Subscribe async handler
-router.Subscribe(AsyncSubscriber);
+router.SubscribeAwait(new AsyncSubscriber());
 
 class AsyncSubscriber : IAsyncCommandSubscriber
 {
@@ -661,46 +667,91 @@ How to enable C# 11 in Unity 2022.3.12f1 or newer:
   - Open Project Settings and [C# Project Modifier] section under the [Editor].
   - Add the .props file you just created, to the list of [Additional project imports].
 
-## FIFO
+## Command ordering
 
-If you want to treat the commands like a queue to be sequential processing, do the following:
+A method is provided to control the behavior of async handlers when they can be executed in duplicate.
+
+It is possible to specify `CommandOrdering` at each level, such as per Router instance, SubscribeAwait argument, Route method, etc.
+
+```cs
+public enum CommandOrdering
+{
+    /// <summary>
+    /// If commands are published simultaneously, subscribers are called in parallel.
+    /// </summary>
+    Parallel,
+
+    /// <summary>
+    /// If commands are published simultaneously, wait until the subscriber has processed the first command.
+    /// </summary>
+    Sequential,
+
+    /// <summary>
+    /// If commands are published simultaneously, ignore commands that come later.
+    /// </summary>
+    Drop,
+
+    /// <summary>
+    /// If the previous asynchronous method is running, it is cancelled and the next asynchronous method is executed.
+    /// </summary>
+    Switch,
+}
+```
 
 ```cs
 // Set sequential constraint to the globally.
 Router.Default.Filter(CommandOrdering.Sequential);
 
-// Create sequential router.
+// Or
 var fifoRouter = new Router(CommandOrdering.Sequential);
 
-// Configure sequential routing via DI
+// Or Configure sequential routing via DI
 builder.RegisterVitalRouter(routing => 
 {
     routing.CommandOrdering = CommandOrdering.Sequential;
 });
 ```
 
-In this case, the next command will not be delivered until all `[Routes]` classes and Interceptors have finished processing the Command.
-
-In other words, per Router, command acts as a FIFO queue for the async task.
 
 ```cs
-publisher.PublishAsync(command1).Forget(); // Start processing command1 immediately
-publisher.PublishAsync(command2).Forget(); // Queue command2 behaind command1
-publisher.PublishAsync(command3).Forget(); // Queue command3 behaind command2
-// ...
+// Command ordering per class level
+[Routes]
+[Filter(typeof(SequentialOrdering))]
+// [Filter(typeof(DropOrdering))]
+// [Filter(typeof(SwitchOrdering))]
+public FooPresenter
+{
+    public async UniTask On(FooCommand cmd)
+    {
+    }
+}
 ```
 
 ```cs
-publisher.Enqueue(command1); // Start processing command1 immediately
-publisher.Enqueue(command2); // Queue command2 behaind command1
-publisher.Enqueue(command3); // Queue command3 behaind command2
-// ...
+[Routes]
+public FooPresenter
+{
+    // Command ordering per method level
+    [Filter(typeof(SequentialOrdering))]
+    // [Filter(typeof(DropOrdering))]
+    // [Filter(typeof(SwitchOrdering))]
+    public async UniTask On(FooCommand cmd)
+    {
+    }
+}
 ```
 
+```cs
+// Command ordering per per lambda expressions
+router.SubscribeAwait(async (cmd, ctx) => 
+{
+    /* ... */
+}, CommandOrdering.Sequential);
+```
 
 ### Fan-out
 
-When FIFO mode, if you want to group the awaiting subscribers, you can use `FanOutInterceptor`
+If you want to group the awaiting subscribers, you can use `FanOutInterceptor`
 
 ```cs
 var fanOut = new FanOutInterceptor();

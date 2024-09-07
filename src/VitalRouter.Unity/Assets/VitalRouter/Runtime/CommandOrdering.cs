@@ -18,7 +18,7 @@ public enum CommandOrdering
     Sequential,
 
     /// <summary>
-    ///
+    /// If commands are published simultaneously, ignore commands that come later.
     /// </summary>
     Drop,
 
