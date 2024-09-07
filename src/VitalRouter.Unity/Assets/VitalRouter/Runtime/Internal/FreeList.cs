@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace VitalRouter.Internal
@@ -132,7 +133,7 @@ public class FreeList<T> where T : class
     static int FindNullIndex(T?[] target)
     {
         var span = MemoryMarshal.CreateReadOnlySpan(
-            ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), target.Length);
+            ref Unsafe.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), target.Length);
         return span.IndexOf(IntPtr.Zero);
     }
 
@@ -140,7 +141,7 @@ public class FreeList<T> where T : class
 
     static unsafe int FindNullIndex(T?[] target)
     {
-        ref var head = ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetReference(target.AsSpan()));
+        ref var head = ref Unsafe.As<T?, IntPtr>(ref MemoryMarshal.GetReference(target.AsSpan()));
         fixed (void* p = &head)
         {
             var span = new ReadOnlySpan<IntPtr>(p, target.Length);
@@ -164,7 +165,7 @@ public class FreeList<T> where T : class
     static int FindLastNonNullIndex(T?[] target, int lastIndex)
     {
         var span = MemoryMarshal.CreateReadOnlySpan(
-            ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), lastIndex); // without lastIndexed value.
+            ref Unsafe.As<T?, IntPtr>(ref MemoryMarshal.GetArrayDataReference(target)), lastIndex); // without lastIndexed value.
         var index = span.LastIndexOfAnyExcept(IntPtr.Zero);
         return index; // return -1 is ok(means empty)
     }
@@ -173,7 +174,7 @@ public class FreeList<T> where T : class
 
     static unsafe int FindLastNonNullIndex(T?[] target, int lastIndex)
     {
-        ref var head = ref UnsafeHelper.As<T?, IntPtr>(ref MemoryMarshal.GetReference(target.AsSpan()));
+        ref var head = ref Unsafe.As<T?, IntPtr>(ref MemoryMarshal.GetReference(target.AsSpan()));
         fixed (void* p = &head)
         {
             var span = new ReadOnlySpan<IntPtr>(p, lastIndex); // without lastIndexed value.

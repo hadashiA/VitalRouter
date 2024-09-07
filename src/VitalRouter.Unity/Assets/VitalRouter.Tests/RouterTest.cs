@@ -19,11 +19,13 @@ class TestSubscriber : ICommandSubscriber
 class TestAsyncSubscriber : IAsyncCommandSubscriber
 {
     public int Calls { get; private set; }
+    public ICommand? LastCommand { get; private set; }
 
     public async UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
     {
-        await Task.Delay(10, context.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(500), context.CancellationToken);
         Calls++;
+        LastCommand = command;
     }
 }
 
@@ -32,15 +34,26 @@ class TestSignalSubscriber : IAsyncCommandSubscriber, IDisposable
     public AutoResetEvent Signal { get; } = new(false);
     public int Calls { get; private set; }
     public int Completed { get; private set; }
+    public ICommand? LastCommand { get; private set; }
 
     public async UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
     {
         Calls++;
 
+        if (context.CancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         await UniTask.SwitchToThreadPool();
         Signal.WaitOne();
 
+        if (context.CancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         Completed++;
+        LastCommand = command;
     }
 
     public void Dispose()
@@ -79,12 +92,12 @@ class TestThrowSubscriber : ICommandSubscriber
 
 struct TestCommand1 : ICommand
 {
-    public int X;
+    public string Id;
 }
 
 struct TestCommand2 : ICommand
 {
-    public int X;
+    public string Id;
 }
 
 [TestFixture]
@@ -180,9 +193,9 @@ public class RouterTest
     }
 
     [Test]
-    public async Task FirstInFirstOut()
+    public async Task SequentialOrdering()
     {
-        var commandBus = new Router(CommandOrdering.FirstInFirstOut);
+        var commandBus = new Router(CommandOrdering.Sequential);
 
         using var subscriber1 = new TestSignalSubscriber();
         commandBus.Subscribe(subscriber1);
@@ -202,6 +215,48 @@ public class RouterTest
         subscriber1.Signal.Set();
         await task2;
         Assert.That(subscriber1.Completed, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task SwitchOrdering()
+    {
+        var commandBus = new Router(CommandOrdering.Switch);
+
+        var subscriber1 = new TestAsyncSubscriber();
+        commandBus.Subscribe(subscriber1);
+
+        var cmd1 = new TestCommand1 { Id = "1" };
+        var cmd2 = new TestCommand1 { Id = "2" };
+        var t1 = commandBus.PublishAsync(cmd1);
+        var t2 = commandBus.PublishAsync(cmd2);
+
+        try { await t1; }
+        catch (TaskCanceledException) { }
+        catch (AggregateException) { }
+        await t2;
+
+        Assert.That(subscriber1.Calls, Is.EqualTo(1));
+        Assert.That(((TestCommand1)subscriber1.LastCommand!).Id, Is.EqualTo("2"));
+    }
+
+    [Test]
+    public async Task DropOrdering()
+    {
+        var commandBus = new Router(CommandOrdering.Drop);
+
+        var subscriber1 = new TestAsyncSubscriber();
+        commandBus.Subscribe(subscriber1);
+
+        var cmd1 = new TestCommand1 { Id = "1" };
+        var cmd2 = new TestCommand1 { Id = "2" };
+        var t1 = commandBus.PublishAsync(cmd1);
+        var t2 = commandBus.PublishAsync(cmd2);
+
+        await t1;
+        await t2;
+
+        Assert.That(subscriber1.Calls, Is.EqualTo(1));
+        Assert.That(((TestCommand1)subscriber1.LastCommand!).Id, Is.EqualTo("1"));
     }
 }
 }
