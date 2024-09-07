@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using R3;
 using VitalRouter.Internal;
@@ -58,7 +59,7 @@ sealed class CommandSubscriberObservable<T> : Observable<T>, ICommandSubscriber 
     {
         if (typeof(TReceive) == typeof(T))
         {
-            observer.OnNext(UnsafeHelper.As<TReceive, T>(ref command));
+            observer.OnNext(Unsafe.As<TReceive, T>(ref command));
         }
     }
 }
