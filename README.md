@@ -34,6 +34,14 @@ public partial class ExamplePresenter
     {
         // Do something after all filters runs on.
     }
+    
+    
+    // Declare event handler with specifies behavior when async handlers are executed concurrently
+    [Route(CommandOrdering.Sequential)]
+    public async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
+    {
+        // Do something after all filters runs on.
+    }
 }
 ```
 
