@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
@@ -30,6 +31,30 @@ class InterceptorMeta
         TypeSymbol = typeSymbol;
         AttributeData = attributeData;
         FullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        VariableName = FullTypeName
+            .Replace("global::", "")
+            .Replace(".", "_")
+            .Replace("<", "_")
+            .Replace(">", "_");
+
+        if (char.IsUpper(VariableName[0]))
+        {
+            VariableName = char.ToLower(VariableName[0]) + VariableName[1..];
+        }
+    }
+
+    public InterceptorMeta(AttributeData attributeData, CommandOrdering ordering, ReferenceSymbols references)
+    {
+        TypeSymbol = ordering switch
+        {
+            CommandOrdering.Sequential => references.SequentialOrderingType,
+            CommandOrdering.Drop => references.DropOrderingType,
+            CommandOrdering.Switch => references.SwitchOrderingType,
+            _ => throw new ArgumentOutOfRangeException(nameof(ordering), ordering, null)
+        };
+        AttributeData = attributeData;
+
+        FullTypeName = TypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         VariableName = FullTypeName
             .Replace("global::", "")
             .Replace(".", "_")

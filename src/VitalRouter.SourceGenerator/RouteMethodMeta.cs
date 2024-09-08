@@ -42,13 +42,22 @@ class RouteMethodMeta
         IParameterSymbol? cancellationTokenParamSymbol,
         IParameterSymbol? publishContextParamSymbol,
         int sequentialOrder,
-        ReferenceSymbols references)
+        ReferenceSymbols references,
+        AttributeData? routeAttribute)
     {
         Symbol = symbol;
         CommandTypeSymbol = commandParamSymbol.Type;
         SequentialOrder = sequentialOrder;
 
         var interceptorMetas = new List<InterceptorMeta>();
+
+        if (routeAttribute is { ConstructorArguments.Length: > 0 } &&
+            routeAttribute.ConstructorArguments[0].Kind == TypedConstantKind.Enum &&
+            routeAttribute.ConstructorArguments[0].Value is int intValue and > 0)
+        {
+            interceptorMetas.Add(new InterceptorMeta(routeAttribute, (CommandOrdering)intValue, references));
+        }
+
         foreach (var attr in symbol.GetAttributes())
         {
             if (SymbolEqualityComparer.Default.Equals(attr.AttributeClass, references.FilterAttribute) &&
