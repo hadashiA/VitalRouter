@@ -34,8 +34,7 @@ public partial class ExamplePresenter
     {
         // Do something after all filters runs on.
     }
-    
-    
+       
     // Declare event handler with specifies behavior when async handlers are executed concurrently
     [Route(CommandOrdering.Sequential)]
     public async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
@@ -94,7 +93,7 @@ Prerequirements:
 Then, add git URL from Package Manager:
 
 ```
-https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#1.1.0
+https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#1.2.0
 ```
 
 ## Getting Started
