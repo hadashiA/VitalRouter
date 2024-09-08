@@ -380,4 +380,41 @@ partial class TaskPresenter
         return default;
     }
 }
+
+[Routes(CommandOrdering.Sequential)]
+partial class SequentialOrderingPresenter
+{
+    public Task On(CommandA cmd)
+    {
+        return Task.CompletedTask;
+    }
+}
+
+[Routes(CommandOrdering.Drop)]
+partial class DropOrderingPresenter
+{
+    public Task On(CommandA cmd)
+    {
+        return Task.CompletedTask;
+    }
+}
+
+[Routes(CommandOrdering.Switch)]
+partial class SwitchOrderingPresenter
+{
+    public Task On(CommandA cmd)
+    {
+        return Task.CompletedTask;
+    }
+}
+
+[Routes]
+partial class PerMethodOrderingPresenter
+{
+    [Route(CommandOrdering.Sequential)]
+    public Task On(CommandA cmd)
+    {
+        return Task.CompletedTask;
+    }
+}
 }

@@ -9,11 +9,23 @@ public class PreserveAttribute : Attribute
 [AttributeUsage(AttributeTargets.Class)]
 public class RoutesAttribute : Attribute
 {
+    public CommandOrdering Ordering { get; }
+
+    public RoutesAttribute(CommandOrdering ordering = CommandOrdering.Parallel)
+    {
+        Ordering = ordering;
+    }
 }
 
 [AttributeUsage(AttributeTargets.Method)]
 public class RouteAttribute : Attribute
 {
+    public CommandOrdering Ordering { get; }
+
+    public RouteAttribute(CommandOrdering ordering = CommandOrdering.Parallel)
+    {
+        Ordering = ordering;
+    }
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]

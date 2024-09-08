@@ -34,6 +34,14 @@ public partial class ExamplePresenter
     {
         // Do something after all filters runs on.
     }
+    
+    
+    // Declare event handler with specifies behavior when async handlers are executed concurrently
+    [Route(CommandOrdering.Sequential)]
+    public async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
+    {
+        // Do something after all filters runs on.
+    }
 }
 ```
 
@@ -44,7 +52,7 @@ public partial class ExamplePresenter
 | With DI and without DI                                    | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                               |
 | Fast, less allocations                                    | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.   |
 | Async sequence controlling (Parallel, FIFO, Drop, Switch) | The behavior when async processes are executed in parallel can be specified in detail. See [Command ordering](#command-ordering) section for details. |                                                                                                                                                                                                               
-| Fan-out                                                   | Several FIFOs can be combined. See [FIFO](#fifo) section for details.                                                                                 |
+| Fan-out                                                   | Several FIFOs can be combined. See [Command ordering](#command-ordering) section for details.                                                                                 |
 
 ## Table of Contents
 
@@ -52,7 +60,7 @@ public partial class ExamplePresenter
 - [Getting Started](#getting-started)
 - [Publish/Subscribe API](#publish-subscribe-api)
 - [Interceptors](#interceptors)
-- [FIFO](#fifo)
+- [Command ordering](#command-ordering)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
 - [R3 integration (experimental)](#r3-integration)
@@ -698,6 +706,7 @@ public enum CommandOrdering
 }
 ```
 
+
 ```cs
 // Set sequential constraint to the globally.
 Router.Default.Filter(CommandOrdering.Sequential);
@@ -715,10 +724,7 @@ builder.RegisterVitalRouter(routing =>
 
 ```cs
 // Command ordering per class level
-[Routes]
-[Filter(typeof(SequentialOrdering))]
-// [Filter(typeof(DropOrdering))]
-// [Filter(typeof(SwitchOrdering))]
+[Routes(CommandOrdering.Sequential)]
 public FooPresenter
 {
     public async UniTask On(FooCommand cmd)
@@ -732,9 +738,7 @@ public FooPresenter
 public FooPresenter
 {
     // Command ordering per method level
-    [Filter(typeof(SequentialOrdering))]
-    // [Filter(typeof(DropOrdering))]
-    // [Filter(typeof(SwitchOrdering))]
+    [Route(CommandOrdering.Sequential)]
     public async UniTask On(FooCommand cmd)
     {
     }

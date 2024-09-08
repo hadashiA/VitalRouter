@@ -18,6 +18,9 @@ public class ReferenceSymbols
             FilterAttributeGeneric = compilation.GetTypeByMetadataName("VitalRouter.FilterAttribute`1"),
             CommandInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommand")!,
             InterceptorInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommandInterceptor")!,
+            SequentialOrderingType = compilation.GetTypeByMetadataName("VitalRouter.SequentialOrdering")!,
+            DropOrderingType = compilation.GetTypeByMetadataName("VitalRouter.DropOrdering")!,
+            SwitchOrderingType = compilation.GetTypeByMetadataName("VitalRouter.SwitchOrdering")!,
             PublishContextType = compilation.GetTypeByMetadataName("VitalRouter.PublishContext")!,
             MonoBehaviourType = compilation.GetTypeByMetadataName("UnityEngine.MonoBehaviour")!,
             CancellationTokenType = compilation.GetTypeByMetadataName("System.Threading.CancellationToken")!,
@@ -34,6 +37,9 @@ public class ReferenceSymbols
     public INamedTypeSymbol? FilterAttributeGeneric { get; private set; }
     public INamedTypeSymbol CommandInterface { get; private set; } = default!;
     public INamedTypeSymbol InterceptorInterface { get; private set; } = default!;
+    public INamedTypeSymbol SequentialOrderingType { get; private set; } = default!;
+    public INamedTypeSymbol DropOrderingType { get; private set; } = default!;
+    public INamedTypeSymbol SwitchOrderingType { get; private set; } = default!;
     public INamedTypeSymbol CancellationTokenType { get; private set; } = default!;
     public INamedTypeSymbol PublishContextType { get; private set; } = default!;
     public INamedTypeSymbol? MonoBehaviourType { get; private set; }
