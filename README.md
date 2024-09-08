@@ -783,13 +783,13 @@ builder.AddVitalRouter(routing =>
     routing
         .FanOut(groupA =>
         {
-            groupA.Ordering = CommandOrdering.FirstInFirstOut;
+            groupA.Ordering = CommandOrdering.Sequential;
             groupA.Map<Presenter1>();
             groupA.Map<Presenter2>();
         })    
         .FanOut(groupB =>
         {
-            groupB.Ordering = CommandOrdering.FirstInFirstOut;
+            groupB.Ordering = CommandOrdering.Sequential;
             groupB.Map<Presenter3>();
             groupB.Map<Presenter4>();
         })                
@@ -808,13 +808,13 @@ public class SampleLifetimeScope : LifetimeScope
             routing
                 .FanOut(groupA =>
                 {
-                    groupA.Ordering = CommandOrdering.FirstInFirstOut;
+                    groupA.Ordering = CommandOrdering.Sequential;
                     groupA.Map<Presenter1>();
                     groupA.Map<Presenter2>();
                 })    
                 .FanOut(groupB =>
                 {
-                    groupB.Ordering = CommandOrdering.FirstInFirstOut;
+                    groupB.Ordering = CommandOrdering.Sequential;
                     groupB.Map<Presenter3>();
                     groupB.Map<Presenter4>();
                 })                
