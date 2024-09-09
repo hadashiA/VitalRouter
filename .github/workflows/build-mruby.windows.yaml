@@ -1,0 +1,21 @@
+name: Build mruby (Windows)
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    
+env:
+  MRUBY_DIR: ${{ github.workspace }}/src/vitalrouter-mruby/ext/mruby
+  PLUGINS_DIR: ${{ github.workspace }}/src/VitalRouter.Unity/Assets/VitalRouter.MRuby/Runtime/Plugins
+    
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+    - uses: microsoft/setup-msbuild@v2
