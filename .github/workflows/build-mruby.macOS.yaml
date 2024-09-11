@@ -1,0 +1,43 @@
+name: Build mruby (macOS)
+on:
+  workflow_call:
+  workflow_dispatch:
+    
+env:
+  MRUBY_DIR: ${{ github.workspace }}/src/vitalrouter-mruby/ext/mruby
+  CONFIG_DIR: ${{ github.workspace }}/src/vitalrouter-mruby  
+    
+jobs:
+  build-macOS:
+    runs-on: macos-latest
+    outputs:
+      artifact-url: ${{ steps.upload-build.artifact-url }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: mswin
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: amd64
+
+    - name: Build mruby (macOS)
+      working-directory: ${{ env.MRUBY_DIR }}
+      shell: bash
+      run: |
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.macOS.rb rake
+        
+    - name: Build mruby (iOS)
+      working-directory: ${{ env.MRUBY_DIR }}
+      shell: bash
+      run: |
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.ios.rb rake
+        
+    - uses: actions/upload-artifact@v3
+      id: upload-build
+      with:
+        name: macOS-build
+        path: ${{ env.MRUBY_DIR }}/build

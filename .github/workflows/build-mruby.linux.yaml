@@ -1,0 +1,55 @@
+name: Build mruby (Linux)
+on:
+  workflow_call:
+  workflow_dispatch:
+    
+env:
+  MRUBY_DIR: ${{ github.workspace }}/src/vitalrouter-mruby/ext/mruby
+  CONFIG_DIR: ${{ github.workspace }}/src/vitalrouter-mruby
+  
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      artifact-url: ${{ steps.upload-build.artifact-url }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+    - uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r23b
+
+    - name: Setup aarch64-linux-gnu-gcc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Build Android
+      working-directory: ${{ env.MRUBY_DIR }}
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+      run: |
+        MRUBY_CONFIG=${{ env.COFIG_DIR }}/build_config.android.rb rake
+
+    - name: Build WASM
+      working-directory: ${{ env.MRUBY_DIR }}
+      run: |
+        MRUBY_CONFIG=${{ env.COFIG_DIR }}/build_config.wasm.rb rake
+
+    - name: Build Linux
+      working-directory: ${{ env.MRUBY_DIR }}
+      run: |
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.linux.rb rake
+        
+    - uses: actions/upload-artifact@v3
+      id: upload-build
+      with:
+        name: linux-build
+        path: ${{ env.MRUBY_DIR }}/build
+

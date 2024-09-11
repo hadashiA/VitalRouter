@@ -7,15 +7,6 @@
       "dependencies": {},
       "hash": "baba5e36b5e93cb0a4d08e170e01aa3890d327bf"
     },
-    "com.cysharp.r3": {
-      "version": "https://github.com/Cysharp/R3.git?path=src/R3.Unity/Assets/R3.Unity",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.modules.imgui": "1.0.0"
-      },
-      "hash": "91914e08a271765306f35ff1c1eda0bb0f0df2b1"
-    },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
       "depth": 0,
@@ -28,7 +19,14 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "7388d28922b2144497f639630fd8b8b7a3c1ee6d"
+      "hash": "a011c51ed65c9abc3151a7a408bc70d408352933"
+    },
+    "com.github.messagepack-csharp": {
+      "version": "https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack#361fb4bf117243db41894c4d97cdd4a45ec63d90",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "361fb4bf117243db41894c4d97cdd4a45ec63d90"
     },
     "com.unity.ext.nunit": {
       "version": "2.0.3",
@@ -38,7 +36,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.27",
+      "version": "3.0.31",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -56,6 +54,24 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "com.unity.textmeshpro": {
+      "version": "3.0.9",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.ugui": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.modules.ui": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0"
+      }
     },
     "jp.hadashikick.vcontainer": {
       "version": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.15.1",

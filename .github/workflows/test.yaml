@@ -46,5 +46,33 @@ jobs:
         UNITY_LICENSE: ${{ secrets[matrix.license] }}
       with:
         projectPath: ./src/VitalRouter.Unity
-        githubToken: ${{ secrets.GITHUB_TOKEN }}        
+        githubToken: ${{ secrets.GITHUB_TOKEN }}
       
+  test-libmruby-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - working-directory: ${{ github.workspace }}/tests/vitalrouter-mruby-tests
+      run: MRUBY_LIBPATH=${{ github.workspace }}/src/VitalRouter.Unity/Assets/VitalRouter.MRuby/Runtime/Plugins/linux-x64/VitalRouter.MRuby.Native.so make
+    
+  test-libmruby-macOS:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - working-directory: ${{ github.workspace }}/tests/vitalrouter-mruby-tests
+      run: MRUBY_LIBPATH=${{ github.workspace }}/src/VitalRouter.Unity/Assets/VitalRouter.MRuby/Runtime/Plugins/macOS-arm64/VitalRouter.MRuby.Native.dylib make
+    
+  # test-libmruby-windows:
+  #   runs-on: windows-latest
+  #   timeout-minutes: 10
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - working-directory: ${{ github.workspace }}/tests/vitalrouter-mruby-tests
+  #       run: MRUBY_LIBRARY=${{ github.workspace }}/src/VitalRouter.Unity/Assets/VitalRouter.MRuby/Runtime/Plugins/linux-x64/VitalRouter.MRuby.Native.dylib make
+    
