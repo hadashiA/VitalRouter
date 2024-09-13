@@ -4,7 +4,7 @@ MRuby::Gem::Specification.new('vitalrouter-mruby') do |spec|
 end
 
 MRuby.each_target do
-  next unless name.match(/^(windows|macOS|linux|android)/i)
+  next unless name.match(/^(windows|macOS|android)/i)
 
   sharedlib_ext =
     if RUBY_PLATFORM.match(/darwin/i)
@@ -15,7 +15,7 @@ MRuby.each_target do
       'so'
     end
   
-  mruby_sharedlib = "#{build_dir}/lib/VitalRouter.MRuby.Native.#{sharedlib_ext}"
+  mruby_sharedlib = "#{build_dir}/lib/libmruby.#{sharedlib_ext}"
 
   products << mruby_sharedlib
 
@@ -42,13 +42,13 @@ MRuby.each_target do
         flags << deffile          
       else
         flags << '-Wl,--whole-archive'
-        flags_after_libraries << '-Wl,--whole1archi'
+        flags_after_libraries << '-Wl,--no-whole-archive'
       end
     end
 
     flags << "/MACHINE:#{ENV['Platform']}" if is_vc && ENV.include?('Platform')
     flags << libmruby_static
-
+    flags += flags_after_libraries
 
     linker.run mruby_sharedlib, [], [], [], flags
   end

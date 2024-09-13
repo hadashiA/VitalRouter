@@ -6,4 +6,3 @@ MRuby::CrossBuild.new('wasm') do |conf|
   conf.linker.command = 'emcc'
   conf.archiver.command = 'emar'
 end
-
