@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using R3;
 using VitalRouter.Internal;
