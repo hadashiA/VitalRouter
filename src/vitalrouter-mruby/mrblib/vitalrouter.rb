@@ -24,8 +24,7 @@ module VitalRouter
       h[camelize(k.to_s)] = v
       h
     }
-    msgpack = MessagePack.pack(camelized_props)
-    __cmd Fiber.current, name.to_s, msgpack
+    __cmd Fiber.current, name.to_s, camelized_props
   end
 
   def log(message)
