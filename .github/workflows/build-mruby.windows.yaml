@@ -10,6 +10,9 @@ env:
 jobs:
   build-windows:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [amd64, amd64_arm64]      
     outputs:
       artifact-url: ${{ steps.upload-windows-build.artifact-url }}
     steps:
@@ -22,7 +25,7 @@ jobs:
 
     - uses: ilammy/msvc-dev-cmd@v1
       with:
-        arch: amd64
+        arch: ${{ matrix.arch }}
 
     - name: Build mruby (windows x86)
       working-directory: ${{ env.MRUBY_DIR }}
