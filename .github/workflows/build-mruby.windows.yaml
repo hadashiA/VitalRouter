@@ -31,7 +31,7 @@ jobs:
       working-directory: ${{ env.MRUBY_DIR }}
       shell: bash
       run: |
-        MRUBY_CONFIG=${{ env.CONFIG_DIR }}\build_config.windows.rb rake
+        MRUBY_CONFIG=${GITHUB_WORKSPACE}/src/vitalrouter-mruby/build_config.windows.rb rake
         
     - uses: actions/upload-artifact@v3
       id: upload-windows-build
