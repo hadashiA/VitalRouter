@@ -17,9 +17,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
+        
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.3'
+        
     - uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
@@ -29,6 +31,12 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Setup emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 3.1.8
+        actions-cache-folder: 'emsdk-cache'
 
     - name: Build Android
       working-directory: ${{ env.MRUBY_DIR }}
