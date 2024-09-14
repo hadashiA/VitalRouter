@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using Unity.Collections;
 
 namespace VitalRouter.MRuby
 {
@@ -49,6 +48,7 @@ namespace VitalRouter.MRuby
 
         public unsafe void Load(ReadOnlySpan<byte> rubySource)
         {
+            EnsureNotDisposed();
             fixed (byte* ptr = rubySource)
             {
                 var source = new MrbSource
@@ -62,12 +62,14 @@ namespace VitalRouter.MRuby
 
         public MRubyScript CompileScript(string rubySource)
         {
+            EnsureNotDisposed();
             var bytes = System.Text.Encoding.UTF8.GetBytes(rubySource);
             return CompileScript(bytes);
         }
 
         public unsafe MRubyScript CompileScript(ReadOnlySpan<byte> rubySource)
         {
+            EnsureNotDisposed();
             fixed (byte* ptr = rubySource)
             {
                 var source = new MrbSource
@@ -95,6 +97,14 @@ namespace VitalRouter.MRuby
             if (IsClosed) return false;
             NativeMethods.MrbContextDispose(DangerousGetPtr());
             return true;
+        }
+
+        void EnsureNotDisposed()
+        {
+            if (IsClosed && IsInvalid)
+            {
+                throw new ObjectDisposedException("MRubyContext is already disposed.");
+            }
         }
     }
 }

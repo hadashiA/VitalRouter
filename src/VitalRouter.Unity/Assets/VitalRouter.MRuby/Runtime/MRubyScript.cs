@@ -45,6 +45,7 @@ namespace VitalRouter.MRuby
         {
             get
             {
+                EnsureNotDisposed();
                 var status = NativeMethods.MrbScriptStatus(Context.DangerousGetPtr(), DangerousGetPtr());
                 // enum mrb_fiber_state {
                 //     MRB_FIBER_CREATED = 0,
@@ -126,6 +127,8 @@ namespace VitalRouter.MRuby
 
         public unsafe void Resume()
         {
+            EnsureNotDisposed();
+
             var result = (NativeMethodResult)NativeMethods.MrbScriptResume(DangerousGetStatePtr(), DangerousGetPtr());
             switch (result)
             {
@@ -197,6 +200,14 @@ namespace VitalRouter.MRuby
             else
             {
                 MRubyContext.GlobalErrorHandler.Invoke(ex);
+            }
+        }
+
+        void EnsureNotDisposed()
+        {
+            if (IsClosed && IsInvalid)
+            {
+                throw new ObjectDisposedException("MRubyScript is already disposed.");
             }
         }
     }
