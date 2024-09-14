@@ -35,12 +35,12 @@ jobs:
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
-        MRUBY_CONFIG=${{ env.COFIG_DIR }}/build_config.android.rb rake
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.android.rb rake
 
     - name: Build WASM
       working-directory: ${{ env.MRUBY_DIR }}
       run: |
-        MRUBY_CONFIG=${{ env.COFIG_DIR }}/build_config.wasm.rb rake
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.wasm.rb rake
 
     - name: Build Linux
       working-directory: ${{ env.MRUBY_DIR }}

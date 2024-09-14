@@ -5,7 +5,7 @@ on:
     
 env:
   MRUBY_DIR: ${{ github.workspace }}/src/vitalrouter-mruby/ext/mruby
-  CONFIG_DIR: ${{ github.workspace }}/src/vitalrouter-mruby  
+  CONFIG_DIR: ${{ github.workspace }}/src/vitalrouter-mruby
     
 jobs:
   build-macOS:
