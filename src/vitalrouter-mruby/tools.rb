@@ -1,39 +1,37 @@
 require 'fileutils'
 
-PLATFORMS = %w(
-  windows-x64
-  macOS-arm64
-  macOS-x64
-  ios-arm64
-  ios-x64
-  linux-x64
-  linux-arm64
-  android-x64
-  android-arm64
-)
+PLATFORMS = {
+  'windows-x64' => 'dll',
+  'macOS-arm64' => 'dylib',
+  'macOS-x64' => 'dylib',
+  'ios-arm64' => 'a',
+  'ios-x64' => 'a',
+  'linux-x64' => 'so',
+  'linux-arm64' => 'so',
+  'android-x64' => 'so',
+  'android-arm64' => 'so',
+}
+
+def sh(cmd)
+  puts cmd
+  `#{cmd}`
+end
 
 def copy_to_unity(build_dir)
   build_dir = File.expand_path(build_dir)
   unity_plugins_dir = File.expand_path('../../VitalRouter.Unity/Assets/VitalRouter.MRuby/Runtime/Plugins', __FILE__)
 
   Dir.foreach(build_dir) do |dir|
-    next unless PLATFORMS.include?(dir)
+    ext = PLATFORMS[dir]
+    next if ext.nil?
 
-    ext =
-      if dir.start_with?('macOS') ||
-         dir.start_with?('macos')
-        'dylib'
-      elsif dir.start_with?('windows')
-        'dll'
-      elsif dir.start_with?('ios') ||
-            dir.start_with?('wasm')
-        'a'
-      else
-        'so'
-      end
     src = File.join(build_dir, dir, 'lib', "libmruby.#{ext}")
     dst = File.join(unity_plugins_dir, dir, "VitalRouter.MRuby.Native.#{ext}")
     FileUtils.cp src, dst, verbose: true
+
+    if ext == 'dylib'
+      sh %Q{codesign -s "Apple Development: Ryuji Kubota (L3HMXJU7Y4)" #{dst}"}
+    end
   end
 end
 
