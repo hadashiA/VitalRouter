@@ -32,7 +32,7 @@ namespace VitalRouter.Tests
             ctx.SharedState.SetInt("i", 123);
             ctx.SharedState.SetString("s", "hoge moge");
 
-            using var script = ctx.CompileScript(
+            var script = ctx.CompileScript(
                 "cmd :state,\n" +
                 "  intValue: state[:i],\n" +
                 "  stringValue: state[:s],\n" +
@@ -46,6 +46,10 @@ namespace VitalRouter.Tests
             });
 
             await script.RunAsync();
+
+            script.Dispose();
+            script.Dispose();
+            script.Dispose();
 
             Assert.That(stateCommand!.BoolValue, Is.True);
             Assert.That(stateCommand!.IntValue, Is.EqualTo(123));

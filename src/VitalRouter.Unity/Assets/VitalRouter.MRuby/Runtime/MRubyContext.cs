@@ -92,6 +92,7 @@ namespace VitalRouter.MRuby
 
         protected override unsafe bool ReleaseHandle()
         {
+            if (IsClosed) return false;
             NativeMethods.MrbContextDispose(DangerousGetPtr());
             return true;
         }

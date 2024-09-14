@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using AOT;
-using MessagePack;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -84,6 +83,7 @@ namespace VitalRouter.MRuby
 
         protected override unsafe bool ReleaseHandle()
         {
+            if (IsClosed) return false;
             NativeMethods.MrbScriptDispose(DangerousGetStatePtr(), DangerousGetPtr());
             return true;
         }
