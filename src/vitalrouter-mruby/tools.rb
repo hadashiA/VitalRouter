@@ -30,7 +30,7 @@ def copy_to_unity(build_dir)
     FileUtils.cp src, dst, verbose: true
 
     if ext == 'dylib'
-      sh %Q{codesign -s "Apple Distribution: Ryuji Kubota (NF85SGN8DN)" #{dst}}
+      sh %Q{codesign --sign - -force #{dst}}
     end
   end
 end
