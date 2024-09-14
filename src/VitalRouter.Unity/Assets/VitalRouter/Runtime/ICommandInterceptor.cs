@@ -19,8 +19,8 @@ public abstract class TypedCommandInterceptro<T> : ICommandInterceptor
     {
         if (typeof(TReceive) == typeof(T))
         {
-            var nextCasted = Unsafe.As<PublishContinuation<TReceive>, PublishContinuation<T>>(ref next);
-            var commandCasted = Unsafe.As<TReceive, T>(ref command);
+            var nextCasted = UnsafeHelper.As<PublishContinuation<TReceive>, PublishContinuation<T>>(ref next);
+            var commandCasted = UnsafeHelper.As<TReceive, T>(ref command);
             return InvokeAsync(commandCasted, context, nextCasted);
         }
         return next(command, context);
