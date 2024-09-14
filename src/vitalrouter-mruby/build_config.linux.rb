@@ -1,6 +1,6 @@
 # For x64 linux machine
 MRuby::CrossBuild.new("linux-x64") do |conf|
-  conf.toolchain
+  conf.toolchain :gcc
   conf.gembox '../../../vitalrouter'
 
   conf.cc.defines << 'MRB_NO_STDIO'
@@ -15,11 +15,9 @@ MRuby::CrossBuild.new("linux-x64") do |conf|
   end
 
   conf.linker do |linker|
-    linker.command = ENV['LD'] || 'gcc'
-    linker.flags = [ENV['LDFLAGS'] || []]
+    linker.flags = ['-Wl,--whole-archive']
     linker.libraries = %w(m)
   end
-  
 
   # file extensions
   conf.exts do |exts|
@@ -28,14 +26,14 @@ MRuby::CrossBuild.new("linux-x64") do |conf|
 end
 
 MRuby::CrossBuild.new("linux-arm64") do |conf|
-  conf.toolchain
+  conf.toolchain :gcc
   conf.gembox '../../../vitalrouter'
+
+  conf.cc.defines << 'MRB_NO_STDIO'
 
   conf.cc.command = 'aarch64-linux-gnu-gcc'
   conf.linker.command = 'aarch64-linux-gnu-gcc'
   conf.archiver.command = 'aarch64-linux-gnu-ar'
-
-  conf.cc.defines << 'MRB_NO_STDIO'
 
   conf.compilers.each do |cc|
     cc.flags << '-fPIC'
@@ -47,8 +45,7 @@ MRuby::CrossBuild.new("linux-arm64") do |conf|
   end
 
   conf.linker do |linker|
-    linker.command = ENV['LD'] || 'gcc'
-    linker.flags = [ENV['LDFLAGS'] || []]
+    linker.flags = ['-Wl,--whole-archive']    
     linker.libraries = %w(m)
   end
   

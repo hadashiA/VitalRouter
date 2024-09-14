@@ -38,6 +38,7 @@ MRuby.each_target do
       flags << '-fpic'
       if sharedlib_ext == 'dylib'
         flags << '-Wl,-force_load'
+        # flags << '-install_name @rpath/libmruby.dylib'
       elsif is_mingw
         flags << deffile          
       else

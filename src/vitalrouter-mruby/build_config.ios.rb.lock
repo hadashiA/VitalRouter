@@ -2,16 +2,3 @@
 mruby:
   version: 3.3.0
   release_no: 30300
-builds:
-  ios-arm64:
-    https://github.com/suzukaze/mruby-msgpack.git:
-      url: https://github.com/suzukaze/mruby-msgpack.git
-      branch: master
-      commit: d2538d8d1decc45953b21f41a5e07b9404df7bf7
-      version: 0.0.0
-  ios-x64:
-    https://github.com/suzukaze/mruby-msgpack.git:
-      url: https://github.com/suzukaze/mruby-msgpack.git
-      branch: master
-      commit: d2538d8d1decc45953b21f41a5e07b9404df7bf7
-      version: 0.0.0

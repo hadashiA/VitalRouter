@@ -1,7 +1,7 @@
 PROJECT_DIR = $(shell realpath ../../src/vitalrouter-mruby)
 CC = gcc
 CFLAGS = -Wall -I$(PROJECT_DIR)/ext/mruby/include -I$(PROJECT_DIR)/src
-LDFLAGS = -L. $(MRUBY_LIBPATH)
+LDFLAGS = -L. $(MRUBY_LIBPATH) -lm
 
 TARGET = ./vitalrouter-mruby-tests
 
