@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     
 env:
-  MRUBY_DIR: ${{ github.workspace }}/src/vitalrouter-mruby/ext/mruby
-  CONFIG_DIR: ${{ github.workspace }}/src/vitalrouter-mruby
+  MRUBY_DIR: ${{ github.workspace }}\src\vitalrouter-mruby\ext\mruby
+  CONFIG_DIR: ${{ github.workspace }}\src\vitalrouter-mruby
     
 jobs:
   build-windows:
@@ -23,15 +23,15 @@ jobs:
       with:
         ruby-version: mswin
 
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: ilammy/msvc-dev-cmd@v1.13.0
       with:
         arch: ${{ matrix.arch }}
 
-    - name: Build mruby (windows x86)
+    - name: Build mruby (windows)
       working-directory: ${{ env.MRUBY_DIR }}
       shell: bash
       run: |
-        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.windows.rb rake
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}\build_config.windows.rb rake
         
     - uses: actions/upload-artifact@v3
       id: upload-windows-build
