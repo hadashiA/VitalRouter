@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace VitalRouter.MRuby
@@ -12,7 +11,13 @@ namespace VitalRouter.MRuby
         fixed byte bytes[MaxLength];
 
         // this.bytes is not GC target, it is located as a value on this struct
-        public ReadOnlySpan<byte> AsSpan() => new((byte*)Unsafe.AsPointer(ref bytes[0]), Length);
+        public ReadOnlySpan<byte> AsSpan()
+        {
+            fixed (byte* ptr = bytes)
+            {
+                return new ReadOnlySpan<byte>(ptr, Length);
+            }
+        }
 
         public FixedUtf8String(byte* bytes, int length)
         {
@@ -63,23 +68,14 @@ namespace VitalRouter.MRuby
 
         public override int GetHashCode()
         {
-            // var n = Length;
-            // ulong hash = 5381;
-            // while (n > 0)
-            // {
-            //     ulong c = bytes[--n];
-            //     hash = (hash << 5) + hash + c;
-            // }
-            // return (int)hash;
-
-            var hashCode = new HashCode();
-            for (var i = 0; i < Length; i += sizeof(long))
+            var n = Length;
+            ulong hash = 5381;
+            while (n > 0)
             {
-                // Assuming free space is zero.
-                var n = Unsafe.As<byte, long>(ref Unsafe.AsRef(in bytes[i]));
-                hashCode.Add(n);
+                ulong c = bytes[--n];
+                hash = (hash << 5) + hash + c;
             }
-            return hashCode.ToHashCode();
+            return (int)hash;
         }
     }
 }

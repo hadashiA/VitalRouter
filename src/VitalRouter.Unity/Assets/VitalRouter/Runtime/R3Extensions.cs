@@ -58,7 +58,7 @@ sealed class CommandSubscriberObservable<T> : Observable<T>, ICommandSubscriber 
     {
         if (typeof(TReceive) == typeof(T))
         {
-            observer.OnNext(Unsafe.As<TReceive, T>(ref command));
+            observer.OnNext(UnsafeHelper.As<TReceive, T>(ref command));
         }
     }
 }
