@@ -1,4 +1,4 @@
 MRuby::CrossBuild.new("windows") do |conf|
-  conf.toolchain :visualcpp
+  conf.toolchain
   conf.gembox '../../../vitalrouter'
 end
