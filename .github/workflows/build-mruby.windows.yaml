@@ -12,7 +12,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        arch: [amd64, amd64_arm64]      
+        arch:
+        - amd64
+        # - amd64_arm64
     outputs:
       artifact-url: ${{ steps.upload-windows-build.artifact-url }}
     steps:
