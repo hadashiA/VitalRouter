@@ -19,6 +19,8 @@ public struct PositionCommand : ICommand
     public int X;
 }
 
+
+
 [MRubyCommand("text", typeof(TextCommand))]
 [MRubyCommand("pos", typeof(PositionCommand))]
 public partial class MyCommands : MRubyCommandPreset {}
@@ -30,10 +32,6 @@ public class SampleMruby : MonoBehaviour
 
     async UniTaskVoid Start()
     {
-        var option = MessagePackSerializerOptions.Standard.WithResolver(StaticCompositeResolver.Instance);
-
-        MessagePackSerializer.DefaultOptions = option;
-
         var router = Router.Default;
         router.Subscribe<TextCommand>(async (cmd, ctx) =>
         {
