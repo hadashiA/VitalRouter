@@ -18,7 +18,7 @@ jobs:
         submodules: recursive
     - uses: ruby/setup-ruby@v1
       with:
-        ruby-version: mswin
+        ruby-version: '3.3'
 
     - uses: ilammy/msvc-dev-cmd@v1
       with:
