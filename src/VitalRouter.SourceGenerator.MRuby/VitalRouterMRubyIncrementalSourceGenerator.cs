@@ -1,0 +1,230 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.DotnetRuntime.Extensions;
+
+namespace VitalRouter.SourceGenerator.MRuby;
+
+[Generator]
+public class VitalRouterMRubyIncrementalSourceGenerator : IIncrementalGenerator
+{
+    class Comparer : IEqualityComparer<(GeneratorAttributeSyntaxContext, Compilation)>
+    {
+        public static readonly Comparer Instance = new();
+
+        public bool Equals((GeneratorAttributeSyntaxContext, Compilation) x, (GeneratorAttributeSyntaxContext, Compilation) y)
+        {
+            return x.Item1.TargetNode.Equals(y.Item1.TargetNode);
+        }
+
+        public int GetHashCode((GeneratorAttributeSyntaxContext, Compilation) obj)
+        {
+            return obj.Item1.TargetNode.GetHashCode();
+        }
+    }
+
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var provider = context.SyntaxProvider
+            .ForAttributeWithMetadataName(
+                context,
+                "VitalRouter.MRuby.MRubyCommandAttribute",
+                static (node, cancellation) => node is ClassDeclarationSyntax,
+                static (context, cancellation) => context)
+            .Combine(context.CompilationProvider)
+            .WithComparer(Comparer.Instance);
+
+        context.RegisterSourceOutput(
+            context.CompilationProvider.Combine(provider.Collect()),
+            ((productionContext, t) =>
+            {
+                var (compilation, list) = t;
+                var references = ReferenceSymbols.Create(compilation);
+                if (references is null)
+                {
+                    return;
+                }
+
+                var stringBuilder = new StringBuilder();
+
+                foreach (var (x, _) in list)
+                {
+                    var typeMeta = new TypeMeta(
+                        (TypeDeclarationSyntax)x.TargetNode,
+                        (INamedTypeSymbol)x.TargetSymbol,
+                        x.Attributes);
+
+                    if (TryEmit(typeMeta, references, stringBuilder, productionContext))
+                    {
+                        var fullType = typeMeta.Symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                            .Replace("global::", "")
+                            .Replace("<", "_")
+                            .Replace(">", "_");
+
+                        productionContext.AddSource($"{fullType}.g.cs", stringBuilder.ToString());
+                    }
+                    stringBuilder.Clear();
+                }
+            }));
+    }
+
+    bool TryEmit(TypeMeta typeMeta, ReferenceSymbols referenceSymbols, StringBuilder builder, in SourceProductionContext context)
+    {
+        var error = false;
+
+        // verify is partial
+        if (!typeMeta.IsPartial())
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.MustBePartial,
+                typeMeta.Syntax.Identifier.GetLocation(),
+                typeMeta.Symbol.Name));
+            error = true;
+        }
+
+        // nested is not allowed
+        if (typeMeta.IsNested())
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.NestedNotAllow,
+                typeMeta.Syntax.Identifier.GetLocation(),
+                typeMeta.Symbol.Name));
+            error = true;
+        }
+
+        if (!typeMeta.Symbol.InheritsFrom(referenceSymbols.MRubyCommandPresetType))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.InvalidPresetType,
+                typeMeta.Syntax.GetLocation(),
+                typeMeta.Symbol.Name));
+            error = true;
+        }
+
+        // Check CommandType
+        foreach (var commandMeta in typeMeta.CommandMetas)
+        {
+            if (!commandMeta.CommandType.AllInterfaces.Any(x =>
+                {
+                    return SymbolEqualityComparer.Default.Equals(x, referenceSymbols.CommandInterface);
+                }))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.InvalidCommandType,
+                    commandMeta.Syntax.GetLocation(),
+                    commandMeta.CommandType.Name));
+                error = true;
+            }
+            if (!commandMeta.IsMessagePackObjectStringKey(referenceSymbols))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    DiagnosticDescriptors.MustBeSerializable,
+                    commandMeta.Syntax.GetLocation(),
+                    commandMeta.CommandType.Name));
+                error = true;
+            }
+        }
+
+        if (error)
+        {
+            return false;
+        }
+
+        builder.AppendLine("""
+// <auto-generated />
+#nullable enable
+#pragma warning disable CS0162 // Unreachable code
+#pragma warning disable CS0219 // Variable assigned but never used
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8601 // Possible null reference assignment
+#pragma warning disable CS8602 // Possible null return
+#pragma warning disable CS8604 // Possible null reference argument for parameter
+#pragma warning disable CS8631 // The type cannot be used as type parameter in the generic type or method
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using VitalRouter;
+using VitalRouter.MRuby;
+""");
+        var ns = typeMeta.Symbol.ContainingNamespace;
+        if (!ns.IsGlobalNamespace)
+        {
+            builder.AppendLine($$"""
+namespace {{ns}} 
+{
+""");
+        }
+        builder.AppendLine($$"""
+partial class {{typeMeta.TypeName}}
+{
+""");
+
+        builder.AppendLine($$"""
+    static readonly Dictionary<global::VitalRouter.MRuby.FixedUtf8String, int> __Names = new()
+    {
+""");
+        for (var i = 0; i < typeMeta.CommandMetas.Count; i++)
+        {
+            builder.AppendLine($$"""
+        { new global::VitalRouter.MRuby.FixedUtf8String("{{typeMeta.CommandMetas[i].Key}}"), {{i}} },
+""");
+        }
+        builder.AppendLine($$"""
+    };
+    
+    public override async global::System.Threading.Tasks.ValueTask CommandCallFromMrubyAsync(
+        global::VitalRouter.MRuby.MRubyScript script,
+        global::VitalRouter.MRuby.FixedUtf8String commandName,
+        global::Unity.Collections.NativeArray<byte> payload,
+        global::System.Threading.CancellationToken cancellation = default)
+    {
+        try
+        {
+            if (!__Names.TryGetValue(commandName, out var index))
+            {
+                script.Fail(new ArgumentOutOfRangeException(nameof(commandName), $"No such command {commandName} in {GetType().Name}. Please use `[MRubyCommand(...)]` attribute and register it."));
+                return;
+            }
+
+            switch (index)
+            {
+""");
+        for (var i = 0; i < typeMeta.CommandMetas.Count; i++)
+        {
+            builder.AppendLine($$"""
+                case {{i}}:
+                {
+                    var cmd = Deserialize<{{typeMeta.CommandMetas[i].CommandType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}}>(payload);
+                    await script.Context.Publisher.PublishAsync(cmd, cancellation);
+                    break;
+                }
+""");
+        }
+        builder.Append($$"""
+            }
+            script.Resume();
+        }
+        catch (Exception ex)
+        {
+            script.Fail(ex);
+        }
+    }
+
+    [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    static T Deserialize<T>(global::Unity.Collections.NativeArray<byte> payload) where T : global::VitalRouter.ICommand
+    {
+        return global::MessagePack.MessagePackSerializer.Deserialize<T>(payload.AsMemory());
+    }
+}
+""");
+        if (!ns.IsGlobalNamespace)
+        {
+            builder.AppendLine("}");
+        }
+
+        return true;
+    }
+}

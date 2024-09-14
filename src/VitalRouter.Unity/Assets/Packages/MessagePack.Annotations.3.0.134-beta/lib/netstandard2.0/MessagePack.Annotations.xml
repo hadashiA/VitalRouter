@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MessagePack.Annotations</name>
+    </assembly>
+    <members>
+        <member name="T:MessagePack.MessagePackKnownFormatterAttribute">
+            <summary>
+            Identifies a custom formatter (one that implements one or more <c>IMessagePackFormatter&lt;T&gt;</c> interfaces)
+            that should be considered when checking that types are serializable and/or included in a source-generated resolver.
+            </summary>
+            <remarks>
+            Formatters identified with this attribute will be included in the source-generated resolver.
+            </remarks>
+        </member>
+        <member name="P:MessagePack.MessagePackKnownFormatterAttribute.FormatterType">
+            <summary>
+            Gets a type that implements one or more <c>IMessagePackFormatter&lt;T&gt;</c> interfaces.
+            </summary>
+        </member>
+        <member name="T:MessagePack.MessagePackAssumedFormattableAttribute">
+            <summary>
+            Identifies a type for which a <c>IMessagePackFormatter&lt;T&gt;</c> exists and will be added manually to the <c>IFormatterResolver</c> by the program.
+            </summary>
+            <remarks>
+            <para>This attribute suppresses warnings by the MessagePack analyzer when it encounters references to the specified type within another serializable type.</para>
+            <para>When possible, using the <see cref="T:MessagePack.MessagePackKnownFormatterAttribute"/> is preferred.</para>
+            </remarks>
+        </member>
+        <member name="P:MessagePack.MessagePackAssumedFormattableAttribute.FormattableType">
+            <summary>
+            Gets a type for which an <c>IMessagePackFormatter&lt;T&gt;</c> is known to exist and will be added via a custom resolver by the program at runtime.
+            </summary>
+        </member>
+        <member name="T:MessagePack.ExcludeFormatterFromSourceGeneratedResolverAttribute">
+            <summary>
+            Causes the source generated resolver, which typically includes all implementations of <c>IMessagePackFormatter&lt;T&gt;</c>,
+            to exclude this particular formatter.
+            </summary>
+            <remarks>
+            This is useful when the formatter is intended for special case members,
+            which may apply the <see cref="T:MessagePack.MessagePackFormatterAttribute"/> to select the private formatter.
+            </remarks>
+        </member>
+        <member name="P:MessagePack.MessagePackObjectAttribute.KeyAsPropertyName">
+            <summary>
+            Gets a value indicating whether to automatically serialize all internal and public fields and properties using their property name as the key in a map.
+            </summary>
+        </member>
+        <member name="M:MessagePack.MessagePackObjectAttribute.#ctor(System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MessagePack.MessagePackObjectAttribute"/> class.
+            </summary>
+            <param name="keyAsPropertyName">
+            <see langword="true" /> to automatically serialize all internal and public fields and properties using their property name as the key in a map;
+            or <see langword="false" /> to use the <see cref="T:MessagePack.KeyAttribute"/> attribute to specify the key for each field or property.
+            </param>
+        </member>
+        <member name="P:MessagePack.MessagePackObjectAttribute.SuppressSourceGeneration">
+            <summary>
+            Gets or sets a value indicating whether the source generator should <em>not</em>
+            generate a formatter for this type at compile-time.
+            </summary>
+            <remarks>
+            By default, source generators will generate a formatter for every type that is annotated with
+            this attribute to improve startup performance.
+            However if this leads to malfunctions during code generation or at runtime,
+            it can be disabled by setting this property to <see langword="true"/>.
+            When no precompiled formatter is found at runtime, the <c>DynamicObjectResolver</c>
+            will generate a formatter at runtime instead.
+            </remarks>
+        </member>
+        <member name="P:MessagePack.UnionAttribute.Key">
+            <summary>
+            Gets the distinguishing value that identifies a particular subtype.
+            </summary>
+        </member>
+        <member name="P:MessagePack.UnionAttribute.SubType">
+            <summary>
+            Gets the derived or implementing type.
+            </summary>
+        </member>
+        <member name="M:MessagePack.UnionAttribute.#ctor(System.Int32,System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MessagePack.UnionAttribute"/> class.
+            </summary>
+            <param name="key">The distinguishing value that identifies a particular subtype.</param>
+            <param name="subType">The derived or implementing type.</param>
+        </member>
+        <member name="M:MessagePack.UnionAttribute.#ctor(System.Int32,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MessagePack.UnionAttribute"/> class.
+            </summary>
+            <param name="key">The distinguishing value that identifies a particular subtype.</param>
+            <param name="subType">The full name (should be assembly qualified) of the derived or implementing type.</param>
+        </member>
+    </members>
+</doc>

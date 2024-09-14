@@ -1,0 +1,12 @@
+name: Build VitalRouter.MRuby
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    uses: ./.github/workflows/build-mruby.windows.yaml
+  build-linux:
+    uses: ./.github/workflows/build-mruby.linux.yaml
+  build-macOS:
+    uses: ./.github/workflows/build-mruby.macOS.yaml

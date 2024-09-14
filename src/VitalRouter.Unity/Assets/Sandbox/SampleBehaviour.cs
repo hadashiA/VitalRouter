@@ -1,7 +1,38 @@
+using System;
 using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Profiling;
 using VitalRouter;
+
+// public struct TextCommand : ICommand
+// {
+//     public string Body;
+// }
+//
+// public class SampleMruby : MonoBehaviour
+// {
+//     [SerializeField]
+//     TextMeshProUGUI label;
+//
+//     async UniTaskVoid Start()
+//     {
+//         var router = Router.Default;
+//         router.Subscribe<TextCommand>(async (cmd, ctx) =>
+//         {
+//             label.text += $"From mruby: {cmd.GetType().Name}: {cmd.Body}\n";
+//             await UniTask.Delay(TimeSpan.FromSeconds(1));
+//         });
+//
+//         var context = MRubyContext.Create(router, new MyCommands());
+//
+//         const string ruby = "3.times { |i| cmd :text, body: \"ほげほげ #{i}\" }\n" +
+//                             "\n";
+//         var script = context.CompileScript(ruby);
+//
+//         await script.RunAsync();
+//     }
+// }
 
 public struct DataCommand : ICommand
 {
