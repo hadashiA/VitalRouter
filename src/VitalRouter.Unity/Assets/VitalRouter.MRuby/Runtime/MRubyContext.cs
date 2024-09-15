@@ -9,16 +9,19 @@ namespace VitalRouter.MRuby
 
     public class MRubyContext : SafeHandle
     {
-        public static unsafe MRubyContext Create(ICommandPublisher publisher, MRubyCommandPreset commandPreset)
+        public static unsafe MRubyContext Create(Router publisher, MRubyCommandPreset commandPreset)
         {
             var ptr = NativeMethods.MrbContextNew();
             NativeMethods.MrbCallbacksSet(ptr, MRubyScript.OnCommandCalled, MRubyScript.OnError);
 
-            return new MRubyContext(ptr)
+            var context = new MRubyContext(ptr)
             {
                 Publisher = publisher,
                 CommandPreset = commandPreset,
             };
+
+            publisher.Filter(new MRubyContextInterceptor(context));
+            return context;
         }
 
         public static Action<Exception> GlobalErrorHandler { get; set; } = UnityEngine.Debug.LogError;

@@ -3,7 +3,7 @@
   "displayName": "VitalRouter.MRuby",
   "version": "1.0.0",
   "unity": "2022.2",
-  "description": "The VitalRouter extension to allow scriptiong by mruby",
+  "description": "The VitalRouter extension to allow scripting by mruby",
   "keywords": ["pubsub", "event", "mvc", "framework", "ruby", "mruby"],
   "license": "MIT",
   "documentationUrl": "https://github.com/hadashiA/VitalRouter",

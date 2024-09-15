@@ -6,7 +6,7 @@ using VitalRouter.Internal;
 
 namespace VitalRouter
 {
-public class PublishContext
+public partial class PublishContext
 {
     /// <summary>
     /// Cancellation token set by Publisher. Used to cancel this entire Publish.
@@ -99,6 +99,7 @@ public class PublishContext<T> : PublishContext where T : ICommand
         value.CallerMemberName = callerMemberName;
         value.CallerFilePath = callerFilePath;
         value.CallerLineNumber = callerLineNumber;
+        value.Extensions.Clear();
         return value;
     }
 
