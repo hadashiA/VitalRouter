@@ -44,17 +44,17 @@ module VitalRouter
   end
 
   def log(message)
-    __cmd Fiber.current, 'vitalrouter:log', message.to_s
+    __cmd Fiber.current, 'vitalrouter:log', message: message.to_s
   end
 
   def wait(duration)
     case duration
     when TimeDuration
-      __cmd Fiber.current, 'vitalrouter:wait_secs', MessagePack.pack(duration.secs)
+      __cmd Fiber.current, 'vitalrouter:wait_secs', duration: duration.secs
     when FrameDuration
-      __cmd Fiber.current, 'vitalrouter:wait_frames', MessagePack.pack(duration.frames)
+      __cmd Fiber.current, 'vitalrouter:wait_frames', duration: duration.frames
     else
-      __cmd Fiber.current, 'vitalrouter:wait_secs', MessagePack.pack(duration)
+      __cmd Fiber.current, 'vitalrouter:wait_secs', duration: duration.to_f
     end
   end
 

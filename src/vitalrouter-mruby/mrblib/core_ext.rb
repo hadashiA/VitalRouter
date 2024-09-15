@@ -1,6 +1,6 @@
 class Numeric
   def secs
-    VitalRouter::TimeDuration.new self
+    VitalRouter::TimeDuration.new self.to_f
   end
   alias :sec :secs
 

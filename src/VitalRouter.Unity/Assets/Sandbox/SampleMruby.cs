@@ -50,7 +50,9 @@ public class SampleMruby : MonoBehaviour
         context.SharedState.Set("i", 12345);
         context.SharedState.Set("b", true);
 
-        const string ruby = "3.times { |i| cmd :text, body: \"ほげほげ #{i}\" }\n" +
+        const string ruby = "wait 2.secs\n" +
+                            "log \"@@@@@\"\n" +
+                            "3.times { |i| cmd :text, body: \"ほげほげ #{i}\" }\n" +
                             "\n";
         var script = context.CompileScript(ruby);
 
