@@ -3,8 +3,6 @@ MRuby::CrossBuild.new("linux-x64") do |conf|
   conf.toolchain :gcc
   conf.gembox '../../../vitalrouter'
 
-  conf.cc.defines << 'MRB_NO_STDIO'
-
   conf.compilers.each do |cc|
     cc.flags << '-fPIC'
   end
@@ -28,8 +26,6 @@ end
 MRuby::CrossBuild.new("linux-arm64") do |conf|
   conf.toolchain :gcc
   conf.gembox '../../../vitalrouter'
-
-  conf.cc.defines << 'MRB_NO_STDIO'
 
   conf.cc.command = 'aarch64-linux-gnu-gcc'
   conf.linker.command = 'aarch64-linux-gnu-gcc'

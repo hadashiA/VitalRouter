@@ -31,15 +31,15 @@ def copy_to_unity(build_dir)
     FileUtils.cp src, dst, verbose: true
 
     if ext == 'dylib'
-      sh %Q{codesign --sign - -force #{dst}}
+      sh %Q{codesign --sign - --force #{dst}}
       dylibs << dst
     end
   end
 
-  if dyibs.any?
+  if dylibs.any?
     universal_dylib = File.join(unity_plugins_dir, 'macOS-universal', "VitalRouter.MRUby.Native.dylib")
     sh %Q{lipo -create #{dylibs.join(' ')} -output #{universal_dylib}}
-    sh %Q{codesign --sign - -force #{universal_dylib}}
+    sh %Q{codesign --sign - --force #{universal_dylib}}
   end
 end
 

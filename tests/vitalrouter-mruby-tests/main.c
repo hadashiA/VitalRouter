@@ -47,6 +47,7 @@ int main() {
 
   ctx = vitalrouter_mrb_ctx_new();
   if (ctx == NULL) {
+    printf("Failed to create ctx!!\n");
     return 1;
   }
   printf("CREATED ctx\n");  
