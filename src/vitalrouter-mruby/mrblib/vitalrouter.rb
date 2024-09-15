@@ -31,8 +31,8 @@ module VitalRouter
     __cmd Fiber.current, 'vitalrouter:log', message.to_s
   end
 
-  def wait(sec)
-    __cmd Fiber.current, 'vitalrouter:wait', MessagePack.pack(sec)
+  def wait(secs)
+    __cmd Fiber.current, 'vitalrouter:wait', MessagePack.pack(secs)
   end
 
   private

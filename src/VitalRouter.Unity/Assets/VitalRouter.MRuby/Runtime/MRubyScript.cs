@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using AOT;
+using Cysharp.Threading.Tasks;
+using MessagePack;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -26,10 +28,35 @@ namespace VitalRouter.MRuby
         Terminated,
     }
 
-    static class SystemCommandNames
+    static class SystemCommands
     {
-        public static FixedUtf8String Log = new("vitalrouter:log");
-        public static FixedUtf8String Wait = new("vitalrouter:wait");
+        static class Names
+        {
+            public static readonly FixedUtf8String Log = new("vitalrouter:log");
+            public static readonly FixedUtf8String Wait = new("vitalrouter:wait");
+        }
+
+        public static bool TryRun(MRubyScript script, FixedUtf8String commandName, NativeArray<byte> payload)
+        {
+            if (commandName.Equals(Names.Log))
+            {
+                MRubyContext.GlobalLogHandler.Invoke(System.Text.Encoding.UTF8.GetString(payload));
+                script.Resume();
+                return true;
+            }
+
+            if (commandName.Equals(Names.Wait))
+            {
+                var secs = MessagePackSerializer.Deserialize<float>(payload.AsMemory());
+                UniTask.Create(async () =>
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(secs));
+                    script.Resume();
+                });
+                return true;
+            }
+            return false;
+        }
     }
 
     public class MRubyScript : SafeHandle
@@ -162,20 +189,11 @@ namespace VitalRouter.MRuby
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                     NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref payload, AtomicSafetyHandle.GetTempMemoryHandle());
 #endif
-
-                    if (SystemCommandNames.Log.Equals(commandName))
+                    if (SystemCommands.TryRun(script, commandName, payload))
                     {
-                        MRubyContext.GlobalLogHandler.Invoke(System.Text.Encoding.UTF8.GetString(payload));
+                        return;
                     }
-                    else if (SystemCommandNames.Wait.Equals(commandName))
-                    {
-                        // var duration = MessagePackSerializer.Deserialize<float>(payload.AsMemory());
-                        throw new NotImplementedException();
-                    }
-                    else
-                    {
-                        _ = script.Context.CommandPreset.CommandCallFromMrubyAsync(script, commandName, payload);
-                    }
+                    _ = script.Context.CommandPreset.CommandCallFromMrubyAsync(script, commandName, payload);
                 }
                 catch (Exception ex)
                 {
