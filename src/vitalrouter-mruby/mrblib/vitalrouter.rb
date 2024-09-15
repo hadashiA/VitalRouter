@@ -15,6 +15,22 @@ module VitalRouter
     end
   end
 
+  class TimeDuration
+    attr_reader :secs
+
+    def initialize(secs)
+      @secs = secs
+    end
+  end
+
+  class FrameDuration
+    attr_reader :frames
+
+    def initialize(frames)
+      @frames = frames
+    end
+  end
+
   def state
     @shared_state ||= SharedState.new
   end
@@ -31,8 +47,15 @@ module VitalRouter
     __cmd Fiber.current, 'vitalrouter:log', message.to_s
   end
 
-  def wait(secs)
-    __cmd Fiber.current, 'vitalrouter:wait', MessagePack.pack(secs)
+  def wait(duration)
+    case duration
+    when TimeDuration
+      __cmd Fiber.current, 'vitalrouter:wait_secs', MessagePack.pack(duration.secs)
+    when FrameDuration
+      __cmd Fiber.current, 'vitalrouter:wait_frames', MessagePack.pack(duration.frames)
+    else
+      __cmd Fiber.current, 'vitalrouter:wait_secs', MessagePack.pack(duration)
+    end
   end
 
   private

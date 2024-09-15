@@ -33,7 +33,8 @@ namespace VitalRouter.MRuby
         static class Names
         {
             public static readonly FixedUtf8String Log = new("vitalrouter:log");
-            public static readonly FixedUtf8String Wait = new("vitalrouter:wait");
+            public static readonly FixedUtf8String WaitSecs = new("vitalrouter:wait_secs");
+            public static readonly FixedUtf8String WaitFrames = new("vitalrouter:wait_frames");
         }
 
         public static bool TryRun(MRubyScript script, FixedUtf8String commandName, NativeArray<byte> payload)
@@ -45,12 +46,23 @@ namespace VitalRouter.MRuby
                 return true;
             }
 
-            if (commandName.Equals(Names.Wait))
+            if (commandName.Equals(Names.WaitSecs))
             {
                 var secs = MessagePackSerializer.Deserialize<float>(payload.AsMemory());
                 UniTask.Create(async () =>
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(secs));
+                    script.Resume();
+                });
+                return true;
+            }
+
+            if (commandName.Equals(Names.WaitFrames))
+            {
+                var frames = MessagePackSerializer.Deserialize<int>(payload.AsMemory());
+                UniTask.Create(async () =>
+                {
+                    await UniTask.DelayFrame(frames);
                     script.Resume();
                 });
                 return true;
