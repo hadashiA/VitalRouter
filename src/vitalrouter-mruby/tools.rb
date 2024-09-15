@@ -21,6 +21,7 @@ def copy_to_unity(build_dir)
   build_dir = File.expand_path(build_dir)
   unity_plugins_dir = File.expand_path('../../VitalRouter.Unity/Assets/VitalRouter.MRuby/Runtime/Plugins', __FILE__)
 
+  dylibs = []
   Dir.foreach(build_dir) do |dir|
     ext = PLATFORMS[dir]
     next if ext.nil?
@@ -31,7 +32,14 @@ def copy_to_unity(build_dir)
 
     if ext == 'dylib'
       sh %Q{codesign --sign - -force #{dst}}
+      dylibs << dst
     end
+  end
+
+  if dyibs.any?
+    universal_dylib = File.join(unity_plugins_dir, 'macOS-universal', "VitalRouter.MRUby.Native.dylib")
+    sh %Q{lipo -create #{dylibs.join(' ')} -output #{universal_dylib}}
+    sh %Q{codesign --sign - -force #{universal_dylib}}
   end
 end
 
