@@ -39,19 +39,20 @@ namespace VitalRouter.MRuby
 
         public static bool TryRun(MRubyScript script, FixedUtf8String commandName, NativeArray<byte> payload)
         {
-            var dict = MessagePackSerializer.Deserialize<Dictionary<string, object>>(payload.AsMemory());
             if (commandName.Equals(Names.Log))
             {
-                MRubyContext.GlobalLogHandler.Invoke((string)dict["message"]);
+                var message = System.Text.Encoding.UTF8.GetString(payload);
+                MRubyContext.GlobalLogHandler.Invoke(message);
                 script.Resume();
                 return true;
             }
 
             if (commandName.Equals(Names.WaitSecs))
             {
+                var duration = MessagePackSerializer.Deserialize<double>(payload.AsMemory());
                 UniTask.Create(async () =>
                 {
-                    await UniTask.Delay(TimeSpan.FromSeconds((double)dict["duration"]));
+                    await UniTask.Delay(TimeSpan.FromSeconds(duration));
                     script.Resume();
                 });
                 return true;
@@ -59,9 +60,10 @@ namespace VitalRouter.MRuby
 
             if (commandName.Equals(Names.WaitFrames))
             {
+                var duration = MessagePackSerializer.Deserialize<int>(payload.AsMemory());
                 UniTask.Create(async () =>
                 {
-                    await UniTask.DelayFrame((int)dict["duration"]);
+                    await UniTask.DelayFrame(duration);
                     script.Resume();
                 });
                 return true;

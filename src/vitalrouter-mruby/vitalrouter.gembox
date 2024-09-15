@@ -1,5 +1,6 @@
 MRuby::GemBox.new do |conf|
   conf.gem core: 'mruby-compiler'
   conf.gem core: 'mruby-fiber'
+  conf.gem github: 'suzukaze/mruby-msgpack'
   conf.gem '.'
 end

@@ -6,7 +6,6 @@
 #include <mruby/class.h>
 #include <mruby/object.h>
 #include <mruby/variable.h>
-#include "msgpack_packer.h"
 #include "vitalrouter-mruby.h"
 
 #define SCRIPT_RUNNING_LIMIT 16
@@ -261,8 +260,9 @@ mrb_value mrb_vitalrouter_cmd(mrb_state *mrb, mrb_value self) {
   mrb_value fiber;
   char *name;
   mrb_int name_len;
-  mrb_value props;
-  mrb_get_args(mrb, "osH", &fiber, &name, &name_len, &props);
+  char *payload;
+  mrb_int payload_len;
+  mrb_get_args(mrb, "oss", &fiber, &name, &name_len, &payload, &payload_len);
 
   vitalrouter_mrb_script *script = running_script_entries_get(mrb_obj_id(fiber));
   if (script == NULL) {
@@ -271,20 +271,7 @@ mrb_value mrb_vitalrouter_cmd(mrb_state *mrb, mrb_value self) {
   
   mrb_fiber_yield(mrb, 0, NULL);
 
-  // TODO: Reuse packer
-  msgpack_packer_t* pk = (msgpack_packer_t *)mrb_malloc(mrb, sizeof(msgpack_packer_t));
-  msgpack_packer_init(mrb, pk);
-  msgpack_packer_write_hash_value(mrb, pk, props);
-
-  size_t payload_len = msgpack_buffer_all_readable_size(PACKER_BUFFER_(pk));
-  char *payload = (char *)mrb_malloc(mrb, payload_len);
-  mrb_bool success = _msgpack_buffer_read_all2(mrb, PACKER_BUFFER_(pk), payload, payload_len);
-  if (!success) {
-    mrb_raise(mrb, E_RUNTIME_ERROR, "failed to serialize");
-  }
-
   script->on_command(script->id, (uint8_t *)name, name_len, (uint8_t *)payload, payload_len);
-  msgpack_packer_destroy(mrb, pk);
   return mrb_nil_value();
 }
 
