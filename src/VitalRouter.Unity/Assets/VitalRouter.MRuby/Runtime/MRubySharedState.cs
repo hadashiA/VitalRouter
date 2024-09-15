@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace VitalRouter.MRuby
 {
@@ -33,22 +34,51 @@ namespace VitalRouter.MRuby
             NativeMethods.MrbStateClear(context.DangerousGetPtr());
         }
 
-        public void SetInt(string key, int value)
+        public bool TryGet<T>(string key, out T value)
+        {
+            if (values.TryGetValue(key, out var valueObj) && valueObj is T v)
+            {
+                value = v;
+                return true;
+            }
+            value = default!;
+            return false;
+        }
+
+        public T Get<T>(string key)
+        {
+            if (TryGet<T>(key, out var value))
+            {
+                return value;
+            }
+            throw new KeyNotFoundException($"Key not found: {key}");
+        }
+
+        public T GetOrDefault<T>(string key)
+        {
+            if (TryGet<T>(key, out var value))
+            {
+                return value;
+            }
+            return default!;
+        }
+
+        public void Set(string key, int value)
         {
             Set(typeof(int), key, value);
         }
 
-        public void SetFloat(string key, float value)
+        public void Set(string key, float value)
         {
             Set(typeof(float), key, value);
         }
 
-        public void SetBool(string key, bool value)
+        public void Set(string key, bool value)
         {
             Set(typeof(bool), key, value);
         }
 
-        public void SetString(string key, string value)
+        public void Set(string key, string value)
         {
             Set(typeof(string), key, value);
         }

@@ -188,7 +188,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     {
         subscribers.Clear();
         asyncSubscribers.Clear();
-        interceptors.Clear();
     }
 
     public Router Filter(ICommandInterceptor interceptor)
@@ -208,7 +207,19 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
-    bool HasInterceptor()
+    public bool HasInterceptor<T>() where T : ICommandInterceptor
+    {
+        foreach (var interceptorOrNull in interceptors.AsSpan())
+        {
+            if (interceptorOrNull is T)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool HasInterceptor()
     {
         foreach (var interceptorOrNull in interceptors.AsSpan())
         {

@@ -28,21 +28,22 @@ namespace VitalRouter.Tests
             var router = new Router();
             var commandPreset = new TestCommandPreset();
             var ctx = MRubyContext.Create(router, commandPreset);
-            ctx.SharedState.SetBool("b", true);
-            ctx.SharedState.SetInt("i", 123);
-            ctx.SharedState.SetString("s", "hoge moge");
+            ctx.SharedState.Set("b", true);
+            ctx.SharedState.Set("i", 123);
+            ctx.SharedState.Set("s", "hoge moge");
 
             var script = ctx.CompileScript(
                 "cmd :state,\n" +
                 "  intValue: state[:i],\n" +
                 "  stringValue: state[:s],\n" +
-                "  boolValue: state[:b]\n" +
-                "");
+                "  boolValue: state[:b]\n");
 
             var stateCommand = default(StateCommand);
-            router.Subscribe<StateCommand>((cmd, _) =>
+            router.Subscribe<StateCommand>((cmd, ctx) =>
             {
                 stateCommand = cmd;
+                var b = ctx.MRubySharedState()!.GetOrDefault<bool>("b");
+                ctx.MRubySharedState()?.Set("b", !b);
             });
 
             await script.RunAsync();

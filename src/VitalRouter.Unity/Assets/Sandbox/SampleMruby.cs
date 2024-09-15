@@ -46,9 +46,9 @@ public class SampleMruby : MonoBehaviour
 
         var context = MRubyContext.Create(router, new MyCommands());
 
-        context.SharedState.SetString("a", "hoge mogeo");
-        context.SharedState.SetInt("i", 12345);
-        context.SharedState.SetBool("b", true);
+        context.SharedState.Set("a", "hoge mogeo");
+        context.SharedState.Set("i", 12345);
+        context.SharedState.Set("b", true);
 
         const string ruby = "3.times { |i| cmd :text, body: \"ほげほげ #{i}\" }\n" +
                             "\n";
