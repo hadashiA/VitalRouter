@@ -1,30 +1,32 @@
-MRuby::CrossBuild.new('ios-arm64') do |conf|
-  conf.gembox '../../../vitalrouter'
+IOS_VERSION_MIN = '12.0'
 
-  sdk = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/'
+MRuby::CrossBuild.new('ios-arm64') do |conf|
+  sdk = `xcrun --sdk iphoneos --show-sdk-path`.chomp
 
   conf.cc do |cc|
     cc.command = 'xcrun'
-    cc.flags = %W(-sdk iphoneos clang -arch arm64 -isysroot "#{sdk}" -g -O3 -Wall -Werror-implicit-function-declaration)
+    cc.flags = %W(-sdk iphoneos clang -arch arm64 -isysroot "#{sdk}" -mios-version-min=#{IOS_VERSION_MIN} -g -O3 -Wall -Werror-implicit-function-declaration)
   end
 
   conf.linker do |linker|
     linker.command = 'xcrun'
-    linker.flags = %W(-sdk iphoneos clang -arch arm64 -isysroot "#{sdk}")
+    linker.flags = %W(-sdk iphoneos clang -arch arm64 -isysroot "#{sdk}" -mios-version-min=#{IOS_VERSION_MIN})
   end
+
+  conf.gembox '../../../vitalrouter'
 end
 
 MRuby::CrossBuild.new('ios-x64') do |conf|
-  sdk = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/'
+  sdk = `xcrun --sdk iphonesimulator --show-sdk-path`.chomp
 
   conf.cc do |cc|
     cc.command = 'xcrun'
-    cc.flags = %W(-sdk iphonesimulator clang -arch x86_64 -isysroot "#{sdk}" -g -O3 -Wall -Werror-implicit-function-declaration)
+    cc.flags = %W(-sdk iphonesimulator clang -arch x86_64 -isysroot "#{sdk}" -mios-version-min=#{IOS_VERSION_MIN} -g -O3 -Wall -Werror-implicit-function-declaration)
   end
 
   conf.linker do |linker|
     linker.command = 'xcrun'
-    linker.flags = %W(-sdk iphonesimulator clang -arch x86_64 -isysroot "#{sdk}")
+    linker.flags = %W(-sdk iphonesimulator clang -arch x86_64 -isysroot "#{sdk} -mios-version-min=#{IOS_VERSION_MIN}")
   end
 
   conf.gembox '../../../vitalrouter'
