@@ -2,10 +2,14 @@ require 'fileutils'
 
 PLATFORMS = {
   'windows-x64' => 'dll',
-  'macOS-arm64' => 'dylib',
-  'macOS-x64' => 'dylib',
+  'macos-arm64' => 'dylib',
+  'macos-x64' => 'dylib',
   'ios-arm64' => 'a',
   'ios-x64' => 'a',
+  'tvos-arm64' => 'a',
+  'tvos-x64' => 'a',
+  'visionos-arm64' => 'a',
+  'visionos-x64' => 'a',
   'linux-x64' => 'so',
   'linux-arm64' => 'so',
   'android-x64' => 'so',
@@ -37,7 +41,7 @@ def copy_to_unity(build_dir)
   end
 
   if dylibs.any?
-    universal_dylib = File.join(unity_plugins_dir, 'macOS-universal', "VitalRouter.MRUby.Native.dylib")
+    universal_dylib = File.join(unity_plugins_dir, 'macos-universal', "VitalRouter.MRUby.Native.dylib")
     sh %Q{lipo -create #{dylibs.join(' ')} -output #{universal_dylib}}
     sh %Q{codesign --sign - --force #{universal_dylib}}
   end

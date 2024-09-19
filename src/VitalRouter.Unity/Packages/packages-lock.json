@@ -21,13 +21,6 @@
       "dependencies": {},
       "hash": "a011c51ed65c9abc3151a7a408bc70d408352933"
     },
-    "com.github.messagepack-csharp": {
-      "version": "https://github.com/MessagePack-CSharp/MessagePack-CSharp.git?path=src/MessagePack.UnityClient/Assets/Scripts/MessagePack#361fb4bf117243db41894c4d97cdd4a45ec63d90",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "361fb4bf117243db41894c4d97cdd4a45ec63d90"
-    },
     "com.unity.ext.nunit": {
       "version": "2.0.3",
       "depth": 1,

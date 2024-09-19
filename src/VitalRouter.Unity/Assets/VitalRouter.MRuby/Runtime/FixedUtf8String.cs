@@ -23,7 +23,7 @@ namespace VitalRouter.MRuby
         {
             if (length > MaxLength)
             {
-                throw new ArgumentException($"String is too long: {length}");
+                throw new ArgumentException($"String is too long. length: {length}");
             }
             var source = new ReadOnlySpan<byte>(bytes, length);
             fixed (byte* ptr = this.bytes)

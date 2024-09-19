@@ -40,7 +40,7 @@ module VitalRouter
       h[camelize(k.to_s)] = v
       h
     }
-    __cmd Fiber.current, name.to_s, MessagePack.pack(camelized_props)
+    __cmd Fiber.current, name.to_s, camelized_props
   end
 
   def log(message)
@@ -50,11 +50,11 @@ module VitalRouter
   def wait(duration)
     case duration
     when TimeDuration
-      __cmd Fiber.current, 'vitalrouter:wait_secs', MessagePack.pack(duration.secs)
+      __cmd Fiber.current, 'vitalrouter:wait_secs', duration.secs
     when FrameDuration
-      __cmd Fiber.current, 'vitalrouter:wait_frames', MessagePack.pack(duration.frames)
+      __cmd Fiber.current, 'vitalrouter:wait_frames', duration.frames
     else
-      __cmd Fiber.current, 'vitalrouter:wait_secs', MessagePack.pack(duration.to_f)
+      __cmd Fiber.current, 'vitalrouter:wait_secs', duration.to_f
     end
   end
 

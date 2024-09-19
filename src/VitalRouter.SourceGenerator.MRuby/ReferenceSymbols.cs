@@ -14,13 +14,19 @@ public class ReferenceSymbols
         {
             MRubyCommandAttribute = mRubyCommandAttribute,
             MRubyCommandPresetType = compilation.GetTypeByMetadataName("VitalRouter.MRuby.MRubyCommandPreset")!,
+            MRubyObjectAttribute = compilation.GetTypeByMetadataName("VitalRouter.MRuby.MRubyObjectAttribute")!,
+            MRubyMemberAttribute = compilation.GetTypeByMetadataName("VitalRouter.MRuby.MRubyMemberAttribute")!,
+            MRubyIgnoreAttribute = compilation.GetTypeByMetadataName("VitalRouter.MRuby.MRubyIgnoreAttribute")!,
+            MRubyConstructorAttribute = compilation.GetTypeByMetadataName("MessagePack.MRubyConstructorAttribute")!,
             CommandInterface = compilation.GetTypeByMetadataName("VitalRouter.ICommand")!,
-            MessagePackObjectAttribute = compilation.GetTypeByMetadataName("MessagePack.MessagePackObjectAttribute")!,
         };
     }
 
     public INamedTypeSymbol MRubyCommandAttribute { get; private set; } = default!;
     public INamedTypeSymbol MRubyCommandPresetType { get; private set; } = default!;
+    public INamedTypeSymbol MRubyObjectAttribute { get; private set; } = default!;
+    public INamedTypeSymbol MRubyMemberAttribute { get; private set; } = default!;
+    public INamedTypeSymbol MRubyIgnoreAttribute { get; private set; } = default!;
+    public INamedTypeSymbol MRubyConstructorAttribute { get; private set; } = default!;
     public INamedTypeSymbol CommandInterface { get; private set; } = default!;
-    public INamedTypeSymbol MessagePackObjectAttribute { get; private set; } = default!;
 }

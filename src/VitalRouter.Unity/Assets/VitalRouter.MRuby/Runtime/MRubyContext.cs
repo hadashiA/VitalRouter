@@ -54,7 +54,7 @@ namespace VitalRouter.MRuby
             EnsureNotDisposed();
             fixed (byte* ptr = rubySource)
             {
-                var source = new MrbSource
+                var source = new MrbNString
                 {
                     Bytes = ptr,
                     Length = rubySource.Length
@@ -75,7 +75,7 @@ namespace VitalRouter.MRuby
             EnsureNotDisposed();
             fixed (byte* ptr = rubySource)
             {
-                var source = new MrbSource
+                var source = new MrbNString
                 {
                     Bytes = ptr,
                     Length = rubySource.Length
