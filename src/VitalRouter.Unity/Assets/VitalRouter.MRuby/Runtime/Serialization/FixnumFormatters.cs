@@ -28,6 +28,20 @@ namespace VitalRouter.MRuby
         }
     }
 
+    public class CharFormatter : IMrbValueFormatter<char>
+    {
+        public static readonly CharFormatter Instance = new();
+
+        public char Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+        {
+            if (mrbValue.TT != MrbVtype.MRB_TT_INTEGER)
+            {
+                throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
+            }
+            return checked((char)mrbValue.Value.I);
+        }
+    }
+
     public class Int16Formatters : IMrbValueFormatter<short>
     {
         public static readonly Int16Formatters Instance = new();

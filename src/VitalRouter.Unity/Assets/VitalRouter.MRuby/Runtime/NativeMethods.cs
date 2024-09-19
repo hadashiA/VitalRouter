@@ -58,13 +58,13 @@ namespace VitalRouter.MRuby
         public uint Sym;
     }
 
+    // NOTE: Assuming MRUBY_BOXING_NO
     [StructLayout(LayoutKind.Sequential)]
     public struct MrbValue
     {
         public MrbValueUnion Value;
         public MrbVtype TT;
 
-        // Assuming MRUBY_BOXING_NO
         public bool IsNil => TT == MrbVtype.MRB_TT_FALSE && Value.I == 0;
 
         public unsafe string ToString(MRubyContext context)
@@ -80,6 +80,7 @@ namespace VitalRouter.MRuby
         }
     }
 
+    // NOTE: Assuming MRUBY_BOXING_NO
     // ReSharper disable InconsistentNaming
     public enum MrbVtype
     {

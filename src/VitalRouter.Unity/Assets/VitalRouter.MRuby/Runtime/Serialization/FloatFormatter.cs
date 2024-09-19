@@ -6,11 +6,12 @@ namespace VitalRouter.MRuby
 
         public float Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
         {
-            if (mrbValue.TT != MrbVtype.MRB_TT_FLOAT)
+            return mrbValue.TT switch
             {
-                throw new MRubySerializationException($"mrb_value is not a float: {mrbValue.TT}");
-            }
-            return (float)mrbValue.Value.F;
+                MrbVtype.MRB_TT_FLOAT => (float)mrbValue.Value.F,
+                MrbVtype.MRB_TT_INTEGER => mrbValue.Value.I,
+                _ => throw new MRubySerializationException($"mrb_value cannot deserialize as float: {mrbValue.TT}")
+            };
         }
     }
 
@@ -20,11 +21,27 @@ namespace VitalRouter.MRuby
 
         public double Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
         {
-            if (mrbValue.TT != MrbVtype.MRB_TT_FLOAT)
+            return mrbValue.TT switch
             {
-                throw new MRubySerializationException($"mrb_value is not a float: {mrbValue.TT}");
-            }
-            return mrbValue.Value.F;
+                MrbVtype.MRB_TT_FLOAT => (float)mrbValue.Value.F,
+                MrbVtype.MRB_TT_INTEGER => mrbValue.Value.I,
+                _ => throw new MRubySerializationException($"mrb_value cannot deserialize as double: {mrbValue.TT}")
+            };
+        }
+    }
+
+    public class DecimalFormatter : IMrbValueFormatter<decimal>
+    {
+        public static readonly DecimalFormatter Instance = new();
+
+        public decimal Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+        {
+            return mrbValue.TT switch
+            {
+                MrbVtype.MRB_TT_FLOAT => (decimal)mrbValue.Value.F,
+                MrbVtype.MRB_TT_INTEGER => mrbValue.Value.I,
+                _ => throw new MRubySerializationException($"mrb_value cannot deserialize as decimal: {mrbValue.TT}")
+            };
         }
     }
 }
