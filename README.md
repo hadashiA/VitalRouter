@@ -953,19 +953,27 @@ CommandPool<MyBoxedCommand>.Shard.Return(cmd);
 
 ## mruby scripting
 
-## mruby scripting
-
-The VitalRouter allows you to “command” events in the game.
-At this point, it is very powerful if the publishing of commands can be controlled by external data.
+It is very powerful if the publishing of commands can be controlled by external data.
 
 For example, when implementing a game scenario, most of the time we do not implement everything in C# scripts. It is common to express large amounts of text data, branching, flag management, etc. in a simple scripting language or data format.
 
 VitalRouter offers an optional package for this purpose before integrating [mruby](https://github.com/mruby/mruby).
 
-Ruby has very little syntax noise and is excellent at creating DSLs (Domain Specific Languages) that look like natural language. Its influence can still be seen in modern languages like Rust and Kotlin.
-mruby is a lightweight Ruby interpreter for embedded use, implemented by the creator of Ruby himself. It operates with a memory usage of about 100KB. Moreover, it is possible to custom-build `libmruby` as a single library by selecting only the necessary features.
-One of the most popular embedded scripting languages for games is Lua. mruby has more expressive power than Lua and is equal or superior in capability.
-An example of a game that uses mruby is **NieR:Automata**.
+[Ruby](https://ruby-lang.org) has very little syntax noise and is excellent at creating DSLs (Domain Specific Languages) that look like natural language. 
+Its influence can still be seen in modern languages (like Rust and Kotlin, etc).
+
+mruby is a lightweight Ruby interpreter for embedded use, implemented by the original author of Ruby himself. 
+- mruby operates with a memory usage of about 100KB. 
+- Moreover, it is possible to custom-build `libmruby` as a single library by selecting only the necessary features.
+
+Maybe, one of the most popular embedded scripting languages for games is Lua.
+Comparing lua and mruby, 
+- mruby can write DSLs that more closely resemble natural language. 
+- lua has smaller functions and smaller library size. But mruby would be small enough.
+
+> [!NOTE]
+> An example of a game that uses mruby is "NieR:Automata"
+> https://logmi.jp/tech/articles/330486
 
 For example, let's prepare the following Ruby script:
 
@@ -1209,7 +1217,6 @@ MRubyContext.GlobalLogHandler = message =>
 };
 ```
 
-
 ### Ruby API
 
 ```ruby
@@ -1232,6 +1239,55 @@ cmd :your_command_name, prop1: 123, prop2: "bra bra"
 
 > [!NOTE]
 >  "Non-blocking" means that after control is transferred to the Unity side, the Ruby script suspends until the C# await completes, without blocking the thread.
+
+### SharedContext
+
+Arbitrary variables can be set from the C# side to the mruby side.
+
+```cs
+var context = MRubyScript.CreateContext(...);
+
+context.SharedState.Set("int_value", 1234);
+context.SharedState.Set("bool_value", true);
+context.SharedState.Set("float_value", 678.9);
+context.SharedState.Set("string_value", "Hoge Hoge");
+```
+
+SharedState can also be referenced via PublishContext.
+
+```cs
+router.Subscribe((cmd, publishContext) =>
+{
+    // ...
+    publishContext.MRubySharedState().Set("x", 1);
+    // ...
+});
+
+router.SubscribeAwait(async (cmd, publishContext, cancellation) =>
+{
+    // ...
+    publishContext.MRubySharedState().Set("x", 1);
+    // ...
+});
+
+[Routes]
+class MyPresenter
+{
+    public async UniTask On(FooCommand cmd, PublishContext publishContext)
+    {
+        publishContext.MRubySharedState().Set("x", 1);
+    }
+}
+```
+
+Shared variables can be referenced from the ruby side as follows.
+
+```ruby
+state[:int_value]    #=> 1234
+state[:bool_value]   #=> true
+state[:float_value]  #=> 678.9
+state[:string_value] #=> "Hoge Hoge"
+```
 
 ### Supported platforms
 
