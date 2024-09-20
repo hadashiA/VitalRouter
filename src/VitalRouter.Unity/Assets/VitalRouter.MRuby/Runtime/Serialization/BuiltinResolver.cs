@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace VitalRouter.MRuby
 {
@@ -84,12 +83,12 @@ namespace VitalRouter.MRuby
             { typeof(ValueTuple<,,,>), typeof(ValueTupleFormatter<,,,>) },
             { typeof(Tuple<,,,,>), typeof(TupleFormatter<,,,,>) },
             { typeof(ValueTuple<,,,,>), typeof(ValueTupleFormatter<,,,,>) },
-            { typeof(Tuple<,,,,,>), typeof(TupleFormatter<,,,,,>) },
-            { typeof(ValueTuple<,,,,,>), typeof(ValueTupleFormatter<,,,,,>) },
-            { typeof(Tuple<,,,,,,>), typeof(TupleFormatter<,,,,,,>) },
-            { typeof(ValueTuple<,,,,,,>), typeof(ValueTupleFormatter<,,,,,,>) },
-            { typeof(Tuple<,,,,,,,>), typeof(TupleFormatter<,,,,,,,>) },
-            { typeof(ValueTuple<,,,,,,,>), typeof(ValueTupleFormatter<,,,,,,,>) },
+            // { typeof(Tuple<,,,,,>), typeof(TupleFormatter<,,,,,>) },
+            // { typeof(ValueTuple<,,,,,>), typeof(ValueTupleFormatter<,,,,,>) },
+            // { typeof(Tuple<,,,,,,>), typeof(TupleFormatter<,,,,,,>) },
+            // { typeof(ValueTuple<,,,,,,>), typeof(ValueTupleFormatter<,,,,,,>) },
+            // { typeof(Tuple<,,,,,,,>), typeof(TupleFormatter<,,,,,,,>) },
+            // { typeof(ValueTuple<,,,,,,,>), typeof(ValueTupleFormatter<,,,,,,,>) },
 
             { typeof(KeyValuePair<,>), typeof(KeyValuePairFormatter<,>) },
             // { typeof(Lazy<>), typeof(LazyFormatter<>) },
@@ -114,7 +113,7 @@ namespace VitalRouter.MRuby
             { typeof(ConcurrentBag<>), typeof(ConcurrentBagFormatter<>) },
             { typeof(Dictionary<,>), typeof(DictionaryFormatter<,>) },
             { typeof(SortedDictionary<,>), typeof(SortedDictionaryFormatter<,>) },
-            { typeof(SortedList<,>), typeof(SortedListFormatter<,>) },
+            // { typeof(SortedList<,>), typeof(SortedListFormatter<,>) },
             { typeof(ConcurrentDictionary<,>), typeof(ConcurrentDictionaryFormatter<,>) },
             { typeof(ReadOnlyCollection<>), typeof(ReadOnlyCollectionFormatter<>) },
 
@@ -126,8 +125,8 @@ namespace VitalRouter.MRuby
             { typeof(IDictionary<,>), typeof(InterfaceDictionaryFormatter<,>) },
             { typeof(IReadOnlyDictionary<,>), typeof(InterfaceReadOnlyDictionaryFormatter<,>) },
             { typeof(ISet<>), typeof(InterfaceSetFormatter<>) },
-            { typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>) },
-            { typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>) },
+            // { typeof(ILookup<,>), typeof(InterfaceLookupFormatter<,>) },
+            // { typeof(IGrouping<,>), typeof(InterfaceGroupingFormatter<,>) },
         };
 
         public IMrbValueFormatter<T>? GetFormatter<T>()

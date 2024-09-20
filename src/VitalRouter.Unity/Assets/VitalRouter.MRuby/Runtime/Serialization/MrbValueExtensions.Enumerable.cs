@@ -7,19 +7,13 @@ namespace VitalRouter.MRuby
     {
         public static int GetArrayLength(this MrbValue mrbValue)
         {
-            if (mrbValue.TT != MrbVtype.MRB_TT_ARRAY)
-            {
-                throw new MRubySerializationException($"mrb_value is not an Array: {mrbValue.TT}");
-            }
+            MRubySerializationException.ThrowIfTypeMismatch(mrbValue, MrbVtype.MRB_TT_ARRAY);
             return (int)NativeMethods.MrbArrayLen(mrbValue);
         }
 
         public static unsafe int GetHashLength(this MrbValue mrbValue, MRubyContext context)
         {
-            if (mrbValue.TT != MrbVtype.MRB_TT_HASH)
-            {
-                throw new MRubySerializationException($"mrb_value is not an Hash: {mrbValue.TT}");
-            }
+            MRubySerializationException.ThrowIfTypeMismatch(mrbValue, MrbVtype.MRB_TT_HASH);
             return (int)NativeMethods.MrbHashLen(context.DangerousGetPtr(), mrbValue);
         }
 
@@ -43,11 +37,7 @@ namespace VitalRouter.MRuby
 
         public ArrayEnumerator(MrbValue array)
         {
-            if (array.TT != MrbVtype.MRB_TT_ARRAY)
-            {
-                throw new MRubySerializationException($"The value is not an ARRAY. {array.TT}");
-            }
-
+            MRubySerializationException.ThrowIfTypeMismatch(array, MrbVtype.MRB_TT_ARRAY);
             this.array = array;
             index = -1;
             length = (int)NativeMethods.MrbArrayLen(array);

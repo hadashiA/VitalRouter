@@ -9,7 +9,7 @@ namespace VitalRouter.MRuby
     {
         public static readonly UnityResolver Instance = new();
 
-        public static readonly Dictionary<Type, IMrbValueFormatter> FormatterMap = new()
+        static readonly Dictionary<Type, IMrbValueFormatter> FormatterMap = new()
         {
             { typeof(Color), ColorFormatter.Instance },
             { typeof(Color32), Color32Formatter.Instance },
@@ -21,7 +21,6 @@ namespace VitalRouter.MRuby
             { typeof(Matrix4x4), Matrix4x4Formatter.Instance },
             { typeof(Quaternion), QuaternionFormatter.Instance },
 
-            { typeof(RefreshRate), RefreshRateFormatter.Instance },
             { typeof(Resolution), ResolutionFormatter.Instance },
 
             // { typeof(Hash128), Hash128Formatter.Instance },
@@ -34,7 +33,7 @@ namespace VitalRouter.MRuby
             { typeof(RectOffset), RectOffsetFormatter.Instance },
         };
 
-        public static readonly Dictionary<Type, Type> KnownGenericTypes = new()
+        static readonly Dictionary<Type, Type> KnownGenericTypes = new()
         {
             { typeof(NativeArray<>), typeof(NativeArrayFormatter<>) }
         };
