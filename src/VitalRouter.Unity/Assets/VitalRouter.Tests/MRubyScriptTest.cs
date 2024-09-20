@@ -1,3 +1,4 @@
+#if UNITY_2022_3_OR_NEWER
 using System.Threading.Tasks;
 using NUnit.Framework;
 using VitalRouter.MRuby;
@@ -54,3 +55,4 @@ namespace VitalRouter.Tests
         }
     }
 }
+#endif

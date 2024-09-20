@@ -1,3 +1,4 @@
+#if UNITY_2022_3_OR_NEWER
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -105,3 +106,4 @@ namespace VitalRouter.Tests
         }
     }
 }
+#endif
