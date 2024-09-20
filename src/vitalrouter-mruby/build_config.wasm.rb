@@ -2,6 +2,7 @@ MRuby::CrossBuild.new('wasm') do |conf|
   conf.toolchain
   conf.gembox '../../../vitalrouter'
 
+  conf.cc.defines << 'MRB_NO_BOXING'
   conf.cc.command = 'emcc'
   conf.linker.command = 'emcc'
   conf.archiver.command = 'emar'

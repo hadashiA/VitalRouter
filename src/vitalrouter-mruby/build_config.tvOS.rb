@@ -2,6 +2,7 @@ MRuby::CrossBuild.new('tvos-arm64') do |conf|
   sdk = `xcrun -sdk appletvos --show-sdk-path`.chomp
 
   conf.cc do |cc|
+    cc.defines << 'MRB_NO_BOXING'
     cc.command = 'xcrun'
     cc.flags = %W(-sdk appletvos clang -arch arm64 -isysroot "#{sdk}" -g -O3 -Wall -Werror-implicit-function-declaration)
   end
@@ -18,6 +19,7 @@ MRuby::CrossBuild.new('tvos-x64') do |conf|
   sdk = `xcrun -sdk appletvos --show-sdk-path`.chomp  
   
   conf.cc do |cc|
+    cc.defines << 'MRB_NO_BOXING'    
     cc.command = 'xcrun'
     cc.flags = %W(-sdk appletvsimulator clang -arch x86_64 -isysroot "#{sdk}" -g -O3 -Wall -Werror-implicit-function-declaration)
   end

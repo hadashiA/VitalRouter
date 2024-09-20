@@ -2,4 +2,5 @@
 MRuby::CrossBuild.new("windows") do |conf|
   conf.toolchain
   conf.gembox '../../../vitalrouter'
+  conf.cc.defines << 'MRB_NO_BOXING'
 end

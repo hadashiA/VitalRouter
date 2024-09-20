@@ -36,6 +36,12 @@ jobs:
       run: |
         MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.ios.rb rake
         
+    - name: Build mruby (visionOS)
+      working-directory: ${{ env.MRUBY_DIR }}
+      shell: bash
+      run: |
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.visionos.rb rake
+        
     - uses: actions/upload-artifact@v3
       id: upload-build
       with:
