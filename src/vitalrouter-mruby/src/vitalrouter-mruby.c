@@ -4,6 +4,8 @@
 #include <mruby/string.h>
 #include <mruby/data.h>
 #include <mruby/class.h>
+#include <mruby/array.h>
+#include <mruby/hash.h>
 #include <mruby/object.h>
 #include <mruby/variable.h>
 #include "vitalrouter-mruby.h"
@@ -25,7 +27,7 @@ static int32_t throw(vitalrouter_mrb_ctx *ctx, int32_t script_id) {
   if (ctx->mrb->exc) {
     if (ctx->on_error) {
       mrb_value exc_backtrace = mrb_get_backtrace(ctx->mrb);
-      mrb_value exc_inspection = mrb_funcall(ctx->mrb, mrb_obj_value(ctx->mrb->exc), "inspect", 0, NULL);
+      mrb_value exc_inspection = mrb_inspect(ctx->mrb, mrb_obj_value(ctx->mrb->exc));
       if (mrb_test(exc_backtrace)) {
         mrb_value exc_backtrace_lines = mrb_funcall(ctx->mrb, exc_backtrace, "join", 1, mrb_str_new_cstr(ctx->mrb, "\n"));
         mrb_funcall(ctx->mrb, exc_inspection, "<<", 1, exc_backtrace_lines);
@@ -136,19 +138,31 @@ extern void vitalrouter_mrb_state_clear(vitalrouter_mrb_ctx *ctx) {
   mrb_funcall(ctx->mrb, state, "clear", 0, NULL);
 }
 
-
-extern void vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_mrb_source source)
+extern mrb_value vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring source)
 {
   int ai = mrb_gc_arena_save(ctx->mrb);
 
-  mrb_load_nstring(ctx->mrb, (const char *)source.bytes, source.length);
-  throw(ctx, -1);
+  mrb_value result = mrb_load_nstring(ctx->mrb, (const char *)source.bytes, source.length);
+  if (throw(ctx, -1)) {
+    mrb_gc_arena_restore(ctx->mrb, ai);
+    return mrb_nil_value();
+  }
+
+  if (!mrb_immediate_p(result)) {
+    mrb_gc_register(ctx->mrb, result);
+  }
   mrb_gc_arena_restore(ctx->mrb, ai);
+  return result;
 }
 
 
+extern void vitalrouter_mrb_value_release(vitalrouter_mrb_ctx *ctx, mrb_value value)
+{
+  mrb_gc_unregister(ctx->mrb, value);
+}
+
 extern vitalrouter_mrb_script *vitalrouter_mrb_script_compile(vitalrouter_mrb_ctx *ctx,
-                                                              vitalrouter_mrb_source source)
+                                                              vitalrouter_nstring source)
 {
   int ai = mrb_gc_arena_save(ctx->mrb);
 
@@ -256,13 +270,44 @@ extern int32_t vitalrouter_mrb_script_resume(vitalrouter_mrb_ctx *ctx,
   }
 }
 
+// Deserialization helpers
+// It must be called inside an arena_save / arena_restore function.
+
+extern mrb_int vitalrouter_mrb_array_len(mrb_value array)
+{
+  return RARRAY_LEN(array);
+}
+
+extern mrb_int vitalrouter_mrb_hash_len(vitalrouter_mrb_ctx *ctx, mrb_value hash)
+{
+  return mrb_hash_size(ctx->mrb, hash);
+}
+
+extern mrb_value vitalrouter_mrb_hash_keys(vitalrouter_mrb_ctx *ctx, mrb_value hash)
+{
+  return mrb_hash_keys(ctx->mrb, hash);
+}
+
+extern mrb_value vitalrouter_mrb_hash_get(vitalrouter_mrb_ctx *ctx, mrb_value hash, mrb_value key)
+{
+  return mrb_hash_get(ctx->mrb, hash, key);
+}
+
+extern vitalrouter_nstring vitalrouter_mrb_to_string(vitalrouter_mrb_ctx *ctx, mrb_value v)
+{
+  mrb_value str = mrb_funcall(ctx->mrb, v, "to_s", 0);
+  mrb_ssize len = RSTRING_LEN(str);
+  char *ptr = RSTRING_PTR(str); // Is this safe from GC compaction..? 
+  vitalrouter_nstring result = { (uint8_t *)ptr, (int32_t)len };
+  return result;
+}
+
 mrb_value mrb_vitalrouter_cmd(mrb_state *mrb, mrb_value self) {
   mrb_value fiber;
   char *name;
   mrb_int name_len;
-  char *payload;
-  mrb_int payload_len;
-  mrb_get_args(mrb, "oss", &fiber, &name, &name_len, &payload, &payload_len);
+  mrb_value payload;
+  mrb_get_args(mrb, "oso", &fiber, &name, &name_len, &payload);
 
   vitalrouter_mrb_script *script = running_script_entries_get(mrb_obj_id(fiber));
   if (script == NULL) {
@@ -271,7 +316,8 @@ mrb_value mrb_vitalrouter_cmd(mrb_state *mrb, mrb_value self) {
   
   mrb_fiber_yield(mrb, 0, NULL);
 
-  script->on_command(script->id, (uint8_t *)name, name_len, (uint8_t *)payload, payload_len);
+  vitalrouter_nstring command_name = { (uint8_t *)name, (int32_t)name_len };
+  script->on_command(script->id, command_name, payload);
   return mrb_nil_value();
 }
 

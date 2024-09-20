@@ -1,19 +1,9 @@
 using Cysharp.Threading.Tasks;
+using Sandbox;
 using UnityEngine;
 using VContainer.Unity;
 using VitalRouter;
 
-public readonly struct CharacterMoveCommand : ICommand
-{
-}
-
-public readonly struct CharacterEnterCommand : ICommand
-{
-}
-
-public readonly struct CharacterExitCommand : ICommand
-{
-}
 
 public class LoggingInterceptor : ICommandInterceptor
 {

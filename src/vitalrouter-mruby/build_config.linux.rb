@@ -44,7 +44,6 @@ MRuby::CrossBuild.new("linux-arm64") do |conf|
     linker.flags = ['-Wl,--whole-archive']    
     linker.libraries = %w(m)
   end
-  
 
   # file extensions
   conf.exts do |exts|

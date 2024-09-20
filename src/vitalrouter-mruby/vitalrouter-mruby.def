@@ -15,3 +15,10 @@ EXPORTS
     vitalrouter_mrb_script_status
     vitalrouter_mrb_script_start
     vitalrouter_mrb_script_resume
+    vitalrouter_mrb_array_len
+    mrb_ary_entry
+    vitalrouter_mrb_hash_len
+    vitalrouter_mrb_hash_keys
+    vitalrouter_mrb_hash_get
+    vitalrouter_mrb_to_string
+    vitalrouter_mrb_value_release

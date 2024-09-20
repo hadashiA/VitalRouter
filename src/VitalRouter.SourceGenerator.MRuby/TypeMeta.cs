@@ -13,16 +13,14 @@ class MRubyCommandMeta(string key, INamedTypeSymbol type, SyntaxNode syntax)
     public INamedTypeSymbol CommandType => type;
     public SyntaxNode Syntax => syntax;
 
-    public bool IsMessagePackObjectStringKey(ReferenceSymbols referenceSymbols)
+    public bool IsMRubyObject(ReferenceSymbols referenceSymbols)
     {
-        var attr = CommandType.GetAttribute(referenceSymbols.MessagePackObjectAttribute);
-        if (attr is null) return false;
-
-        return (bool?)attr.ConstructorArguments[0].Value == true;
+        var attr = CommandType.GetAttribute(referenceSymbols.MRubyObjectAttribute);
+        return attr is not null;
     }
 }
 
-class TypeMeta
+class CommandPresetTypeMeta
 {
     public TypeDeclarationSyntax Syntax { get; }
     public INamedTypeSymbol Symbol { get; }
@@ -30,7 +28,7 @@ class TypeMeta
     public string TypeName { get; }
     public string FullTypeName { get; }
 
-    public TypeMeta(
+    public CommandPresetTypeMeta(
         TypeDeclarationSyntax syntax,
         INamedTypeSymbol symbol,
         ImmutableArray<AttributeData> attributes)

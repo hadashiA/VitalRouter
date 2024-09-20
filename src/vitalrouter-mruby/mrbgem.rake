@@ -19,7 +19,7 @@ MRuby.each_target do
 
   products << mruby_sharedlib
 
-  task shared_lib: mruby_sharedlib
+  file shared_lib: mruby_sharedlib
 
   task mruby_sharedlib => libmruby_static do |t|
     is_vc = primary_toolchain == 'visualcpp'

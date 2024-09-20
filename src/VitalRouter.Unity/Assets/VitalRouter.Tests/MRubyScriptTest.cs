@@ -1,13 +1,12 @@
 #if UNITY_2022_3_OR_NEWER
 using System.Threading.Tasks;
-using MessagePack;
 using NUnit.Framework;
 using VitalRouter.MRuby;
 
 namespace VitalRouter.Tests
 {
-    [MessagePackObject(keyAsPropertyName: true)]
-    class StateCommand : ICommand
+    [MRubyObject]
+    partial class StateCommand : ICommand
     {
         public bool BoolValue { get; set; }
         public int IntValue { get; set; }
@@ -15,9 +14,7 @@ namespace VitalRouter.Tests
     }
 
     [MRubyCommand("state", typeof(StateCommand))]
-    public partial class TestCommandPreset : MRubyCommandPreset
-    {
-    }
+    partial class TestCommandPreset : MRubyCommandPreset {}
 
     [TestFixture]
     public class MRubyScriptTest

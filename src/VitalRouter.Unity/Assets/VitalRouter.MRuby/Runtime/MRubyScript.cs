@@ -5,9 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AOT;
 using Cysharp.Threading.Tasks;
-using MessagePack;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace VitalRouter.MRuby
 {
@@ -37,11 +34,11 @@ namespace VitalRouter.MRuby
             public static readonly FixedUtf8String WaitFrames = new("vitalrouter:wait_frames");
         }
 
-        public static bool TryRun(MRubyScript script, FixedUtf8String commandName, NativeArray<byte> payload)
+        public static bool TryRun(MRubyScript script, FixedUtf8String commandName, MrbValue payload)
         {
             if (commandName.Equals(Names.Log))
             {
-                var message = System.Text.Encoding.UTF8.GetString(payload);
+                var message = MrbValueSerializer.Deserialize<string>(payload, script.Context);
                 MRubyContext.GlobalLogHandler.Invoke(message);
                 script.Resume();
                 return true;
@@ -49,7 +46,7 @@ namespace VitalRouter.MRuby
 
             if (commandName.Equals(Names.WaitSecs))
             {
-                var duration = MessagePackSerializer.Deserialize<double>(payload.AsMemory());
+                var duration = MrbValueSerializer.Deserialize<double>(payload, script.Context);
                 UniTask.Create(async () =>
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(duration));
@@ -60,7 +57,7 @@ namespace VitalRouter.MRuby
 
             if (commandName.Equals(Names.WaitFrames))
             {
-                var duration = MessagePackSerializer.Deserialize<int>(payload.AsMemory());
+                var duration = MrbValueSerializer.Deserialize<int>(payload, script.Context);
                 UniTask.Create(async () =>
                 {
                     await UniTask.DelayFrame(duration);
@@ -191,17 +188,13 @@ namespace VitalRouter.MRuby
         }
 
         [MonoPInvokeCallback(typeof(MrbCommandHandler))]
-        internal static unsafe void OnCommandCalled(int scriptId, byte* commandNamePtr, int commandNameLength, byte* payloadPtr, int payloadLength)
+        internal static unsafe void OnCommandCalled(int scriptId, byte* commandNamePtr, int commandNameLength, MrbValue payload)
         {
             if (Scripts.TryGetValue(scriptId, out var script))
             {
                 try
                 {
                     var commandName = new FixedUtf8String(commandNamePtr, commandNameLength);
-                    var payload = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(payloadPtr, payloadLength, Allocator.None);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref payload, AtomicSafetyHandle.GetTempMemoryHandle());
-#endif
                     if (SystemCommands.TryRun(script, commandName, payload))
                     {
                         return;

@@ -1,29 +1,14 @@
-using System;
 using System.Threading;
-using System.Threading.Tasks;
-using Unity.Collections;
+using Cysharp.Threading.Tasks;
 
 namespace VitalRouter.MRuby
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    public class MRubyCommandAttribute : Attribute
-    {
-        public string Key { get; }
-        public Type CommandType { get; }
-
-        public MRubyCommandAttribute(string key, Type commandType)
-        {
-            Key = key;
-            CommandType = commandType;
-        }
-    }
-
     public abstract class MRubyCommandPreset
     {
-        public abstract ValueTask CommandCallFromMrubyAsync(
+        public abstract UniTask CommandCallFromMrubyAsync(
             MRubyScript script,
             FixedUtf8String commandName,
-            NativeArray<byte> payload,
+            MrbValue payload,
             CancellationToken cancellation = default);
     }
 }
