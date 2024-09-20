@@ -138,16 +138,28 @@ extern void vitalrouter_mrb_state_clear(vitalrouter_mrb_ctx *ctx) {
   mrb_funcall(ctx->mrb, state, "clear", 0, NULL);
 }
 
-
-extern void vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring source)
+extern mrb_value vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring source)
 {
   int ai = mrb_gc_arena_save(ctx->mrb);
 
   mrb_value result = mrb_load_nstring(ctx->mrb, (const char *)source.bytes, source.length);
-  throw(ctx, -1);
+  if (throw(ctx, -1)) {
+    mrb_gc_arena_restore(ctx->mrb, ai);
+    return mrb_nil_value();
+  }
+
+  if (!mrb_immediate_p(result)) {
+    mrb_gc_register(ctx->mrb, result);
+  }
   mrb_gc_arena_restore(ctx->mrb, ai);
+  return result;
 }
 
+
+extern void vitalrouter_mrb_value_release(vitalrouter_mrb_ctx *ctx, mrb_value value)
+{
+  mrb_gc_unregister(ctx->mrb, value);
+}
 
 extern vitalrouter_mrb_script *vitalrouter_mrb_script_compile(vitalrouter_mrb_ctx *ctx,
                                                               vitalrouter_nstring source)

@@ -21,4 +21,4 @@ EXPORTS
     vitalrouter_mrb_hash_keys
     vitalrouter_mrb_hash_get
     vitalrouter_mrb_to_string
- 
+    vitalrouter_mrb_value_release

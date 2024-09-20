@@ -48,7 +48,8 @@ extern void vitalrouter_mrb_state_set_string(vitalrouter_mrb_ctx *ctx, char *key
 extern void vitalrouter_mrb_state_remove(vitalrouter_mrb_ctx *ctx, char *key);
 extern void vitalrouter_mrb_state_clear(vitalrouter_mrb_ctx *ctx);
 
-extern void vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring source);
+extern mrb_value vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring source);
+extern void vitalrouter_mrb_value_release(vitalrouter_mrb_ctx *ctx, mrb_value value);
 
 extern vitalrouter_mrb_script *vitalrouter_mrb_script_compile(vitalrouter_mrb_ctx *ctx,
                                                               vitalrouter_nstring source);

@@ -7,6 +7,27 @@ namespace VitalRouter.MRuby
     {
     }
 
+    public readonly struct MrbValueHandle : IDisposable
+    {
+        public readonly MrbValue RawValue;
+        readonly MRubyContext context;
+
+        public MrbValueHandle(MrbValue rawValue, MRubyContext context)
+        {
+            RawValue = rawValue;
+            this.context = context;
+        }
+
+        public unsafe void Dispose()
+        {
+            if (context.IsInvalid || context.IsClosed)
+            {
+                return;
+            }
+            NativeMethods.MrbValueRelease(context.DangerousGetPtr(), RawValue);
+        }
+    }
+
     public class MRubyContext : SafeHandle
     {
         public static unsafe MRubyContext Create(Router publisher, MRubyCommandPreset commandPreset)
@@ -43,15 +64,28 @@ namespace VitalRouter.MRuby
             SharedState = new MRubySharedState(this);
         }
 
-        public void Load(string rubySource)
+        public T? Evaluate<T>(string rubySource)
         {
             var bytes = System.Text.Encoding.UTF8.GetBytes(rubySource);
-            Load(bytes);
+            return Evaluate<T>(bytes);
         }
 
-        public unsafe void Load(ReadOnlySpan<byte> rubySource)
+        public T? Evaluate<T>(ReadOnlySpan<byte> rubySource)
+        {
+            using var result = EvaluateUnsafe(rubySource);
+            return MrbValueSerializer.Deserialize<T>(result.RawValue, this);
+        }
+
+        public MrbValueHandle EvaluateUnsafe(string rubySource)
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(rubySource);
+            return EvaluateUnsafe(bytes);
+        }
+
+        public unsafe MrbValueHandle EvaluateUnsafe(ReadOnlySpan<byte> rubySource)
         {
             EnsureNotDisposed();
+            MrbValue resultValue;
             fixed (byte* ptr = rubySource)
             {
                 var source = new MrbNString
@@ -59,8 +93,9 @@ namespace VitalRouter.MRuby
                     Bytes = ptr,
                     Length = rubySource.Length
                 };
-                NativeMethods.MrbLoad(DangerousGetPtr(), source);
+                resultValue = NativeMethods.MrbLoad(DangerousGetPtr(), source);
             }
+            return new MrbValueHandle(resultValue, this);
         }
 
         public MRubyScript CompileScript(string rubySource)

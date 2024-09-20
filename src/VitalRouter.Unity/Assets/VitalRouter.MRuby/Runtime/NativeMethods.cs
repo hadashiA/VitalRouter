@@ -152,7 +152,10 @@ namespace VitalRouter.MRuby
         public static extern void MrbStateClear(MrbContextCore* state);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_load", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void MrbLoad(MrbContextCore* state, MrbNString nString);
+        public static extern MrbValue MrbLoad(MrbContextCore* state, MrbNString nString);
+
+        [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_value_release", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern MrbValue MrbValueRelease(MrbContextCore* state, MrbValue value);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_script_compile", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern MrbScriptCore* ScriptCompile(MrbContextCore* state, MrbNString nString);

@@ -9,7 +9,7 @@ namespace VitalRouter.MRuby
         public T[]? Deserialize(MrbValue value, MRubyContext context, MrbValueSerializerOptions options)
         {
             if (value.IsNil) return null;
-            MRubySerializationException.ThrowIfTypeMismatch(value, MrbVtype.MRB_TT_ARRAY, "T[]");
+            MRubySerializationException.ThrowIfTypeMismatch(value, MrbVtype.MRB_TT_ARRAY, "T[]", context);
 
             var length = value.GetArrayLength();
             var result = new T[length];

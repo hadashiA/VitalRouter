@@ -23,6 +23,12 @@ namespace VitalRouter.MRuby
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class MRubyMemberAttribute : Attribute
     {
+        public string? Name { get; }
+
+        public MRubyMemberAttribute(string? name = null)
+        {
+            Name = name;
+        }
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
