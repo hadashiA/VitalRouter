@@ -7,6 +7,13 @@ using VitalRouter.MRuby;
 
 namespace Sandbox
 {
+    public enum CharacterType
+    {
+        A,
+        B,
+        C
+    }
+
     [MRubyObject]
     public partial struct CharacterSpeakCommand : ICommand
     {
@@ -18,13 +25,18 @@ namespace Sandbox
     public partial struct CharacterMoveCommand : ICommand
     {
         public string Id;
-        public int X;
-        public int Y;
+        public Vector3 To;
     }
 
     [MRubyObject]
     public readonly partial struct CharacterEnterCommand : ICommand
     {
+        public readonly CharacterType[] Types;
+
+        public CharacterEnterCommand(CharacterType[] types)
+        {
+            Types = types;
+        }
     }
 
     [MRubyObject]
@@ -52,7 +64,7 @@ namespace Sandbox
             });
             router.Subscribe<CharacterMoveCommand>((cmd, ctx) =>
             {
-                label.text += $"From mruby: {cmd.GetType().Name}: {cmd.X} {cmd.Y}\n";
+                UnityEngine.Debug.Log($"From mruby: {cmd.GetType().Name}: {cmd.To}\n");
             });
 
             var context = MRubyContext.Create(router, new MyCommands());
@@ -63,6 +75,7 @@ namespace Sandbox
 
             const string ruby = "wait 2.secs\n" +
                                 "log \"@@@@@\"\n" +
+                                "cmd :move, to: [1, 2, 3]\n" +
                                 "3.times { |i| cmd :speak, id: 'Bob', text: %Q{Hello ほげ ほげ #{i}} }\n" +
                                 "\n";
             var script = context.CompileScript(ruby);

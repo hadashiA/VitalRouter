@@ -346,10 +346,7 @@ partial {{typeDeclarationKeyword}} {{typeMeta.TypeName}}
         }
 
         stringBuilder.AppendLine($$"""
-            if (mrbValue.TT != MrbVtype.MRB_TT_HASH)
-            {
-                throw new MRubySerializationException($"Deserialization failed. mrb_value is not an Hash: {mrbValue.TT}");
-            }
+            MRubySerializationException.ThrowIfTypeMismatch(mrbValue, MrbVtype.MRB_TT_HASH, "{{typeMeta.TypeName}}");
 """);
         foreach (var memberMeta in typeMeta.MemberMetas)
         {
@@ -422,10 +419,11 @@ partial {{typeDeclarationKeyword}} {{typeMeta.TypeName}}
                 }
             }
             stringBuilder.AppendLine($$"""
-            };
+            }
 """);
         }
         stringBuilder.AppendLine($$"""
+            ;
         }
 """);
         return true;
