@@ -14,6 +14,7 @@ PLATFORMS = {
   'linux-arm64' => 'so',
   'android-x64' => 'so',
   'android-arm64' => 'so',
+  'wasm' => 'a',
 }
 
 def sh(cmd)
