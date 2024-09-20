@@ -7,6 +7,7 @@ namespace VitalRouter.MRuby
         public static readonly IMrbValueFormatterResolver[] DefaultResolvers =
         {
             BuiltinResolver.Instance,
+            UnityResolver.Instance,
             GeneratedResolver.Instance,
         };
 

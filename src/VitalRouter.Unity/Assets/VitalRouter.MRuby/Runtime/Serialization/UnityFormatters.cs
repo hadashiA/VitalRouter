@@ -1,3 +1,4 @@
+using Unity.Collections;
 using UnityEngine;
 
 namespace VitalRouter.MRuby
@@ -305,6 +306,26 @@ namespace VitalRouter.MRuby
             var t = formatter.Deserialize(tValue, context, options);
             var b = formatter.Deserialize(bValue, context, options);
             return new RectOffset(l, r, t, b);
+        }
+    }
+
+    class NativeArrayFormatter<T> : IMrbValueFormatter<NativeArray<T>> where T : struct
+    {
+        public NativeArray<T> Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+        {
+            MRubySerializationException.ThrowIfTypeMismatch(mrbValue, MrbVtype.MRB_TT_ARRAY, "NativeArray<>");
+
+            var formatter = options.Resolver.GetFormatterWithVerify<T>();
+            var length = mrbValue.GetArrayLength();
+            var result = new NativeArray<T>(length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            for (var i = 0; i < length; i++)
+            {
+                var elementValue = NativeMethods.MrbArrayEntry(mrbValue, i);
+                var element = formatter.Deserialize(elementValue, context, options);
+                result[i] = element;
+            }
+            return result;
+
         }
     }
 }
