@@ -44,14 +44,14 @@ public partial class ExamplePresenter
 }
 ```
 
-| Feature                                                   | Description                                                                                                                                           |
-|-----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Declarative routing                                       | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                     |
-| Async/non-Async handlers                                  | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                        |
-| With DI and without DI                                    | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                               |
-| Fast, less allocations                                    | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.   |
-| Async sequence controlling (Parallel, FIFO, Drop, Switch) | The behavior when async processes are executed in parallel can be specified in detail. See [Command ordering](#command-ordering) section for details. |                                                                                                                                                                                                               
-| Fan-out                                                   | Several FIFOs can be combined. See [Command ordering](#command-ordering) section for details.                                                                                 |
+| Feature                                                           | Description                                                                                                                                                                                                                  |
+|-------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Declarative routing                                               | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                                                                                            |
+| Async/non-Async handlers                                          | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                                                                                               |
+| With DI and without DI                                            | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                      |
+| Fast, less allocations                                            | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.                                                                          |
+| Async sequence controlling (Parallel, FIFO, Drop, Switch)         | The behavior when async processes are executed in parallel can be specified in detail. See [Command ordering](#command-ordering) section for details.                                                                        |                                                                                                                                                                                                               
+| Scripting with [mruby](https://github.com/mruby/mruby) (Optional) | You can write ruby scripts to publish messages to the C# async handlers. This is very useful for adding a layer to your game that allows scripted hot loading. See [VitalRouter.MRuby](#mruby-scripting) section for details. |
 
 ## Table of Contents
 
@@ -62,7 +62,8 @@ public partial class ExamplePresenter
 - [Command ordering](#command-ordering)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
-- [R3 integration (experimental)](#r3-integration)
+- [mruby scripting](#mruby-scripting)
+- [R3 integration](#r3-integration)
 - [Performance](#performance)
 - [Concept, Technical Explanation](#concept-technical-explanation)
 - [Lisence](#lisence)
@@ -949,6 +950,316 @@ Router.Default.Filter(CommandPooling.Instance);
 // Or, return to pool manually.
 CommandPool<MyBoxedCommand>.Shard.Return(cmd);
 ```
+
+## mruby scripting
+
+## mruby scripting
+
+The VitalRouter allows you to “command” events in the game.
+At this point, it is very powerful if the publishing of commands can be controlled by external data.
+
+For example, when implementing a game scenario, most of the time we do not implement everything in C# scripts. It is common to express large amounts of text data, branching, flag management, etc. in a simple scripting language or data format.
+
+VitalRouter offers an optional package for this purpose before integrating [mruby](https://github.com/mruby/mruby).
+
+Ruby has very little syntax noise and is excellent at creating DSLs (Domain Specific Languages) that look like natural language. Its influence can still be seen in modern languages like Rust and Kotlin.
+mruby is a lightweight Ruby interpreter for embedded use, implemented by the creator of Ruby himself. It operates with a memory usage of about 100KB. Moreover, it is possible to custom-build `libmruby` as a single library by selecting only the necessary features.
+One of the most popular embedded scripting languages for games is Lua. mruby has more expressive power than Lua and is equal or superior in capability.
+An example of a game that uses mruby is **NieR:Automata**.
+
+For example, let's prepare the following Ruby script:
+
+```ruby
+# Publish to C# handlers. (Non-blocking) Same as `await PublishAsync<CharacterMoveCommand>()`
+cmd :move, id: "Bob", to: [5, 5]
+
+# Send log to Unity side (default: UnityEngine.Debug.Log)
+log "mruby works"
+
+# You can use any ruby control-flow
+3.times do  
+  cmd :speak, id: "Bob", text: "Hello Hello Ossu Ossu"
+
+  # Non-blocking waiting. Same as `await UniTask.Delay(TimeSpan.FromSeconds(1))`
+  wait 1.sec
+end
+
+# You can set any variable you want from Unity.
+if state[:flag_1]
+  cmd :speak, id: "Bob", body: "Flag 1 is on!"
+end
+```
+
+Each time the `cmd` call is made, VitalRouter publishes an `ICommand`.
+The way to subscribe to this is the same as in the usual VitalRouter.
+
+```cs
+// Register the commands you will use in advance, like this.
+[MRubyCommand("move", typeof(CharacterMoveCommand))]
+[MRubyCommand("speak", typeof(CharacterSpeakCommand))]
+class MyCommandPreset : MRubyCommandPreset { }
+
+[Routes]
+class MRubyScriptPresenter
+{
+    public async UniTask On(ChracterMoveCommand cmd)
+    {
+        await CharacterActor.MoveAsync(cmd.Id, cmd.To);
+    }
+    
+    public async UniTask On(CharacterSpeakCommand cmd)
+    {
+        await MessageBalloon.PresentAndWaitAsync(cmd.Id, cmd.To);
+    }
+}
+```
+
+A notable feature is that while C# is executing async/await, the mruby side suspends and waits without blocking the main thread. 
+Internally, it leverages mruby's `Fiber`, which can be controlled externally to suspend and resume.
+
+This means that you can freely manipulate C# async handlers from mruby scripts.
+It should work effectively even in single-threaded environments like Unity WebGL.
+
+### Getting started VitalRouter.MRuby
+
+The mruby extension is a completely separate package. 
+To install it, please add the following URL from the Unity Package Manager.
+
+```
+https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter.MRuby#1.2.2
+```
+
+> [!NOTE]
+> Currently VitalRouter.MRuby is only support for Unity. 
+
+To execute mruby scripts, first create an `MRubyContext`.
+
+```
+var context = MRubyContext.Create(
+    Router.Default, // ... 1
+    new MyCommandPreset()); // ... 2
+```
+
+The first argument passes the VitalRouter's Router. Commands issued by mruby can be received via this Router.
+The second argument is a marker that represents the list of commands you want to issue from mruby. You create it as follows:
+
+```cs
+[MRubyCommand("move", typeof(CharacterMoveCommand))]   // < Your custom command name and type list here 
+[MRubyCommand("speak", typeof(CharacterSpeakCommand))]
+class MyCommandPreset : MRubyCommandPreset { }
+
+// Your custom command decralations
+[MRubyObject]
+partial struct CharacterMoveCommand : ICommand
+{
+    public string Id;
+    public Vector3 To;
+}
+
+[MRubyObject]
+partial struct CharacterSpeakCommand : ICommand
+{
+    public string Id;
+    public string Text;
+}
+```
+
+To execute a script with `MRubyContext`, do the following:
+
+```cs
+// Your ruby script source here
+var rubySource = "cmd :speak, id: 'Bob', text: 'Hello'"
+
+using MRubyScript script = context.CompileScript(rubySource);    
+await script.RunAsync();
+```
+
+In mruby source, the first argument of `cmd` is any name registered with [MRubyCommand("...")]. 
+The subsequent key/value list represents the member values of the command type (in this case, CharacterSpeakCommand).
+
+> [!TIP]
+> The Ruby cmd method waits until the await of the C# async handler completes but does not block the Unity main thread. 
+> It looks like a normal ruby method, but it's just like a Unity coroutine. 
+> VitalRouter.MRuby is fully integrated with C#'s async/await.
+
+### `[MRubyObject]`
+
+Types marked with `[MRubyObject]` can be deserialized from the mruby side to the C# side.
+
+- class, struct, and record are all supported.
+- A partial declaration is required.
+- Members that meet the following conditions are converted from mruby:
+  - public fields or properties, or fields or properties with the `[MRubyMember]` attribute.
+  - And have a setter (private is acceptable).
+
+```cs
+[MRubyObject]
+partial struct SerializeExample
+{
+    // this is serializable members
+    public string Id { get; private set; }
+    public string Foo { get; init; }
+    public Vector3 To;
+
+    [MRubyMember]
+    public int Z;
+    
+    // ignore members
+    [MRubyIgnore]
+    public float Foo; 
+}
+```
+
+The list of properties specified by mruby is assigned to the C# member names that match the key names.
+
+Note that the names on the ruby side are converted to CamelCase.
+- Example: ruby's `foo_bar` maps to C#'s `FooBar`.
+
+
+You can change the member name specified from Ruby by using `[MRubyMember("alias name")]`.
+
+```
+[MRubyObject]
+partial class Foo
+{
+    [MRubyMember("alias_y")]
+    public int Y;
+} 
+```
+
+Also, you can receive data from Ruby via any constructor by using the `[MRubyConstructor]` attribute.
+
+```
+[MRubyObject]
+partial class Foo
+{
+    public int X { ge; }
+
+    [MRubyConstructor]
+    public Foo(int x)
+    {
+        X = x;
+    }
+}
+```
+
+### Deserialization mruby <-> C#
+
+`[MRubyObject]` works by deserializing `mrb_value` directly to a C# type. 
+See the table below for the support status of mutually convertible types.
+
+| mruby                          | C#                                                                                                                                                                                                                                                                                                                                                                                      |
+|--------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Integer`                      | `int`, `uint`, `long`, `ulong`, `shot`, `ushot`, `byte`, `sbyte`, `char`                                                                                                                                                                                                                                                                                                                |
+| `Float`                        | `float`, `double`, `decimal`                                                                                                                                                                                                                                                                                                                                                            |
+| `Array`                        | `T`, `List<>`, `T[,]`, `T[,]`, `T[,,]`, <br />`Tuple<...>`, `ValueTuple<...>`, <br />, `Stack<>`, `Queue<>`, `LinkedList<>`, `HashSet<>`, `SortedSet<>`, <br />`Collection<>`, `BlockingCollection<>`, <br />`ConcurrentQueue<>`, `ConcurrentStack<>`, `ConcurrentBag<>`, <br />`IEnumerable<>`, `ICollection<>`, `IReadOnlyCollection<>`, <br />`IList<>`, `IReadOnlyList<>`, `ISet<>` |
+| `Hash`                         | `Dictionary<,>`, `SortedDictionary<,>`, `ConcurrentDictionary<,>`, <br />`IDictionary<,>`, `IReadOnlyDictionary<,>`                                                                                                                                                                                                                                                                     |
+| `String`                       | `string`                                                                                                                                                                                                                                                                                                                                                                                |
+| `[Float, Float]`               | `Vector2`, `Resolution`                                                                                                                                                                                                                                                                                                                                                                 |
+| `[Integer, Integer]`           | `Vector2Int`                                                                                                                                                                                                                                                                                                                                                                            |
+| `[Float, Float, Float]`        | `Vector3`                                                                                                                                                                                                                                                                                                                                                                               |
+| `[Int, Int, Int]`              | `Vector3Int`                                                                                                                                                                                                                                                                                                                                                                            |
+| `[Float, Float, Float, Float]` | `Vector4`, `Quaternion`, `Rect`, `Bounds`, `Color`                                                                                                                                                                                                                                                                                                                                      |
+| `[Int, Int, Int, Int]`         | `RectInt`, `BoundsInt`, `Color32`                                                                                                                                                                                                                                                                                                                                                       |
+| `nil`                          | `T?`, `Nullable<T>`                                                                                                                                                                                                                                                                                                                                                                     |
+
+### MRubyContext
+
+`MRubyContext` provides several APIs for executing mruby scripts.
+
+```cs
+using var context = MRubyContext.Create(Router.Default, new MyCommandPreset());
+
+// Evaluate arbitrary ruby script
+context.Load(
+    "def mymethod(v)\n" +
+    "  v * 100\n" +
+    "end\n");
+
+// Evaluates any ruby script and returns the deserialized result of the last value.
+var result = context.Evaluate<int>("mymethod(7)");
+// => 700
+
+// Execute scripts, including the async method including VitalRouter, such as command publishing.
+var script = context.CompileScript("3.times { |i| cmd :text, body: \"Hello Hello #{i}\" }");
+await script.RunAsync();
+
+// The completed script can be reused.
+await script.RunAsync();
+
+script.Dispose();
+```
+
+By default, syntax errors and runtime errors that occur in mruby scripts are reported via `UnityEngine.Debug.LogError`. 
+To customize this, do the following:
+
+```cs
+MRubyContext.GlobalErrorHandler = exception =>
+{
+    UnityEngine.Debug.LogError(exception);
+};
+```
+
+Also, if you want to handle logs sent from the mruby side, do as follows:
+
+```cs
+MRubyContext.GlobalLogHandler = message =>
+{
+    UnityEngine.Debug.Log(messae);
+};
+```
+
+
+### Ruby API
+
+```ruby
+# Wait for the number of seconds. (Non-blocking)
+# It is equivalent to `await UniTask.Delay(TimeSpan.FromSeconds(1))`)
+wait 1.0.sec
+wait 2.5.secs
+
+# Wait for the number of fames. (Non-blocking)
+# It is equivalent to `await UniTask.DelayFrame(1)`) 
+wait 1.frame
+wait 2.frames 
+
+# Send logs to the Unity side. Default implementation is `UnityEngine.Debug.Log`
+log "Log to Unity !"
+
+# Publish VitalRouter command
+cmd :your_command_name, prop1: 123, prop2: "bra bra"  
+```
+
+> [!NOTE]
+>  "Non-blocking" means that after control is transferred to the Unity side, the Ruby script suspends until the C# await completes, without blocking the thread.
+
+### Supported platforms
+
+VitalRouter.MRuby embeds custom `libmruby` as a Unity native plugin.
+It will not work on platforms for which native binaries are not provided.  
+Please refer to the following table for current support status.
+
+| Platform    | CPU Arch                | Build              | Tested the actual device                 |
+|:------------|-------------------------|--------------------|------------------------------------------|
+| Windows     | x64                     | :white_check_mark: | :white_check_mark:                       |
+|             | arm64                   |                    |                                          |
+| Windows UWP | ?                       | ?                  |                                          |
+| macOS       | x64                     | :white_check_mark: | :white_check_mark:                       |
+|             | arm64 (apple silicon)   | :white_check_mark: | :white_check_mark:                       |
+|             | Universal (x64 + arm64) | :white_check_mark: | :white_check_mark:                       |
+| Linux       | x64                     | :white_check_mark: | Tested only the headless Editor (ubuntu) |
+|             | arm64                   | :white_check_mark: |                                          |
+| iOS         | arm64                   | :white_check_mark: | (planed)                                 |
+|             | x64 (Simulator)         | :white_check_mark: | :white_check_mark:                       |
+| Android     | arm64                   | :white_check_mark: | :white_check_mark:                       |
+|             | x64                     | :white_check_mark: |                                      |
+| WebGL       | wasm32                  | :white_check_mark: | :white_check_mark:                       |
+| visionOS    | arm64                   | (planed)           |                                          |
+|             | x64 (Simulator)         | (planed)           |                                          |
+
+- "Confirmation" means that the author has checked the operation on one or more types of devices. If you have any problems in your environment, please let us know by submitting an issue.
+- Build is done in mruby's [build_config.rb](https://github.com/hadashiA/VitalRouter/tree/main/src/vitalrouter-mruby). If you want to add more environments to support, pull requests are welcome.
+
 
 ## R3 integration
 

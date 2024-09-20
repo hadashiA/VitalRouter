@@ -1,4 +1,4 @@
-#if UNITY_2022_3_OR_NEWER
+#if UNITY_2022_2_OR_NEWER
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -68,6 +68,9 @@ namespace VitalRouter.Tests
             Assert.That(context.Evaluate<double>("1.23"), Is.EqualTo(1.23).Within(0.001));
             Assert.That(context.Evaluate<bool>("true"), Is.True);
             Assert.That(context.Evaluate<bool>("false"), Is.False);
+
+            context.Load("def unchi = 1 + 1");
+            Assert.That(context.Evaluate<int>("unchi"), Is.EqualTo(2));
         }
 
         [Test]

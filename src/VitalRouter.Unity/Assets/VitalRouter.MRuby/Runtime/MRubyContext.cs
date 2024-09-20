@@ -59,9 +59,20 @@ namespace VitalRouter.MRuby
 
         internal unsafe MrbContextCore* DangerousGetPtr() => (MrbContextCore*)DangerousGetHandle();
 
-        internal unsafe MRubyContext(MrbContextCore* state) : base((IntPtr)state, true)
+        unsafe MRubyContext(MrbContextCore* state) : base((IntPtr)state, true)
         {
             SharedState = new MRubySharedState(this);
+        }
+
+        public void Load(string rubySource)
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(rubySource);
+            Load(bytes);
+        }
+
+        public void Load(ReadOnlySpan<byte> rubySource)
+        {
+            EvaluateUnsafe(rubySource).Dispose();
         }
 
         public T? Evaluate<T>(string rubySource)
