@@ -1310,8 +1310,8 @@ Please refer to the following table for current support status.
 | Android     | arm64                   | :white_check_mark: | :white_check_mark:                       |
 |             | x64                     | :white_check_mark: |                                      |
 | WebGL       | wasm32                  | :white_check_mark: | :white_check_mark:                       |
-| visionOS    | arm64                   | (planed)           |                                          |
-|             | x64 (Simulator)         | (planed)           |                                          |
+| visionOS    | arm64                   | :white_check_mark: |                                          |
+|             | x64 (Simulator)         | :white_check_mark: |                                          |
 
 - "Confirmation" means that the author has checked the operation on one or more types of devices. If you have any problems in your environment, please let us know by submitting an issue.
 - Build is done in mruby's [build_config.rb](https://github.com/hadashiA/VitalRouter/tree/main/src/vitalrouter-mruby). If you want to add more environments to support, pull requests are welcome.
