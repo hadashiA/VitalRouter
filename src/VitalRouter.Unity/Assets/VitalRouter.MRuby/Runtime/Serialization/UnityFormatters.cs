@@ -223,4 +223,88 @@ namespace VitalRouter.MRuby
             return new Bounds(center, size);
         }
     }
+
+    class BoundsIntFormatter : IMrbValueFormatter<BoundsInt>
+    {
+        public static readonly BoundsIntFormatter Instance = new();
+
+        public BoundsInt Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+        {
+            MRubySerializationException.ThrowIfNotEnoughArrayLength(mrbValue, 2, "BoundsInt");
+
+            var centerValue = NativeMethods.MrbArrayEntry(mrbValue, 0);
+            var sizeValue = NativeMethods.MrbArrayEntry(mrbValue, 1);
+
+            var formatter = options.Resolver.GetFormatterWithVerify<Vector3Int>();
+            var center = formatter.Deserialize(centerValue, context, options);
+            var size = formatter.Deserialize(sizeValue, context, options);
+            return new BoundsInt(center, size);
+        }
+    }
+
+    class RectFormatter : IMrbValueFormatter<Rect>
+    {
+        public static readonly RectFormatter Instance = new();
+
+        public Rect Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+        {
+            MRubySerializationException.ThrowIfNotEnoughArrayLength(mrbValue, 4, "Rect");
+
+            var xValue = NativeMethods.MrbArrayEntry(mrbValue, 0);
+            var yValue = NativeMethods.MrbArrayEntry(mrbValue, 1);
+            var wValue = NativeMethods.MrbArrayEntry(mrbValue, 2);
+            var hValue = NativeMethods.MrbArrayEntry(mrbValue, 3);
+
+            var formatter = options.Resolver.GetFormatterWithVerify<float>();
+            var x = formatter.Deserialize(xValue, context, options);
+            var y = formatter.Deserialize(yValue, context, options);
+            var w = formatter.Deserialize(wValue, context, options);
+            var h = formatter.Deserialize(hValue, context, options);
+            return new Rect(x, y, w, h);
+        }
+    }
+
+    class RectIntFormatter : IMrbValueFormatter<RectInt>
+    {
+        public static readonly RectIntFormatter Instance = new();
+
+        public RectInt Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+        {
+            MRubySerializationException.ThrowIfNotEnoughArrayLength(mrbValue, 4, "RectInt");
+
+            var xValue = NativeMethods.MrbArrayEntry(mrbValue, 0);
+            var yValue = NativeMethods.MrbArrayEntry(mrbValue, 1);
+            var wValue = NativeMethods.MrbArrayEntry(mrbValue, 2);
+            var hValue = NativeMethods.MrbArrayEntry(mrbValue, 3);
+
+            var formatter = options.Resolver.GetFormatterWithVerify<int>();
+            var x = formatter.Deserialize(xValue, context, options);
+            var y = formatter.Deserialize(yValue, context, options);
+            var w = formatter.Deserialize(wValue, context, options);
+            var h = formatter.Deserialize(hValue, context, options);
+            return new RectInt(x, y, w, h);
+        }
+    }
+
+    class RectOffsetFormatter : IMrbValueFormatter<RectOffset>
+    {
+        public static readonly RectOffsetFormatter Instance = new();
+
+        public RectOffset Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+        {
+            MRubySerializationException.ThrowIfNotEnoughArrayLength(mrbValue, 4, "RectOffset");
+
+            var lValue = NativeMethods.MrbArrayEntry(mrbValue, 0);
+            var rValue = NativeMethods.MrbArrayEntry(mrbValue, 1);
+            var tValue = NativeMethods.MrbArrayEntry(mrbValue, 2);
+            var bValue = NativeMethods.MrbArrayEntry(mrbValue, 3);
+
+            var formatter = options.Resolver.GetFormatterWithVerify<int>();
+            var l = formatter.Deserialize(lValue, context, options);
+            var r = formatter.Deserialize(rValue, context, options);
+            var t = formatter.Deserialize(tValue, context, options);
+            var b = formatter.Deserialize(bValue, context, options);
+            return new RectOffset(l, r, t, b);
+        }
+    }
 }

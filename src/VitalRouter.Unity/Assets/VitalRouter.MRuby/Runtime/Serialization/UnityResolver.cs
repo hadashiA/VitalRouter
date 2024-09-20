@@ -27,7 +27,7 @@ namespace VitalRouter.MRuby
 
             { typeof(Bounds), BoundsFormatter.Instance },
             { typeof(BoundsInt), BoundsIntFormatter.Instance },
-            { typeof(Plane), PlaneFormatter.Instance },
+            // { typeof(Plane), PlaneFormatter.Instance },
             { typeof(Rect), RectFormatter.Instance },
             { typeof(RectInt), RectIntFormatter.Instance },
             { typeof(RectOffset), RectOffsetFormatter.Instance },
