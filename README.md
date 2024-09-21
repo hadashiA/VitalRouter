@@ -960,7 +960,7 @@ For example, when implementing a game scenario, most of the time we do not imple
 
 VitalRouter offers an optional package for this purpose before integrating [mruby](https://github.com/mruby/mruby).
 
-[Ruby](https://ruby-lang.org) has very little syntax noise and is excellent at creating DSLs (Domain Specific Languages) that look like natural language. 
+Ruby has very little syntax noise and is excellent at creating DSLs (Domain Specific Languages) that look like natural language. 
 Its influence can still be seen in modern languages (like Rust and Kotlin, etc).
 
 mruby is a lightweight Ruby interpreter for embedded use, implemented by the original author of Ruby himself. 
