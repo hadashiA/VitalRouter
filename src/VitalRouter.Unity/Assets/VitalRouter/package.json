@@ -1,7 +1,7 @@
 {
   "name": "jp.hadashikick.vitalrouter",
   "displayName": "VitalRouter",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "unity": "2022.2",
   "description": "The source-generator powered zero-allocation in-memory message passing library for Unity and .NET.",
   "keywords": ["pubsub", "event", "mvc", "framework"],
