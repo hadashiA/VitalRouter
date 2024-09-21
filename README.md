@@ -953,7 +953,8 @@ CommandPool<MyBoxedCommand>.Shard.Return(cmd);
 
 ## mruby scripting
 
-It is very powerful if the publishing of commands can be controlled by external data.
+With VitalRouter, you can use commands to describe events in the game.
+At this time, it is very powerful if the publishing of commands can be controlled by external data.
 
 For example, when implementing a game scenario, most of the time we do not implement everything in C# scripts. It is common to express large amounts of text data, branching, flag management, etc. in a simple scripting language or data format.
 
@@ -1010,11 +1011,13 @@ class MyCommandPreset : MRubyCommandPreset { }
 [Routes]
 class MRubyScriptPresenter
 {
+    // mruby's `cmd :move` calls this async handler
     public async UniTask On(ChracterMoveCommand cmd)
     {
         await CharacterActor.MoveAsync(cmd.Id, cmd.To);
     }
-    
+
+    // mruby's `cmd :speak` calls this async handler
     public async UniTask On(CharacterSpeakCommand cmd)
     {
         await MessageBalloon.PresentAndWaitAsync(cmd.Id, cmd.To);
