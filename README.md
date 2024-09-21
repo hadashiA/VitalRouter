@@ -964,13 +964,15 @@ Ruby has very little syntax noise and is excellent at creating DSLs (Domain Spec
 Its influence can still be seen in modern languages (like Rust and Kotlin, etc).
 
 mruby is a lightweight Ruby interpreter for embedded use, implemented by the original author of Ruby himself. 
-- mruby operates with a memory usage of about 100KB. 
-- Moreover, it is possible to custom-build `libmruby` as a single library by selecting only the necessary features.
 
 Maybe, one of the most popular embedded scripting languages for games is Lua.
 Comparing lua and mruby, 
 - mruby can write DSLs that more closely resemble natural language. 
 - lua has smaller functions and smaller library size. But mruby would be small enough.
+    - The size of mruby minimum shared library less than 700KB.
+    - mruby operates with a memory usage of about 100KB. 
+    - Moreover, it is possible to custom-build `libmruby` as a single library by selecting only the necessary features.
+ 
 
 > [!NOTE]
 > An example of a game that uses mruby is "NieR:Automata"
