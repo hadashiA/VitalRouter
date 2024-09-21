@@ -14,23 +14,12 @@ namespace Sandbox
         C
     }
 
-    static class CharacterActor
+    [MRubyObject]
+    public partial struct CharacterSpeakCommand : ICommand
     {
-        public static async UniTask MoveAsync(string id, Vector3 position)
-        {
-        }
+        public string Id;
+        public string Text;
     }
-
-    static class MessageBalloon
-    {
-        public static async UniTask PresentAndWaitAsync(string id, string message)
-        {
-        }
-    }
-
-    // ReSharper disable all UnassignedField.Global
-    // ReSharper disable all NotAccessedField.Global
-    // ReSharper disable all UnusedMember.Global
 
     [MRubyObject]
     public partial struct CharacterMoveCommand : ICommand
@@ -40,33 +29,24 @@ namespace Sandbox
     }
 
     [MRubyObject]
-    public partial struct CharacterSpeakCommand : ICommand
+    public readonly partial struct CharacterEnterCommand : ICommand
     {
-        public string Id;
-        public string Text;
+        public readonly CharacterType[] Types;
+
+        public CharacterEnterCommand(CharacterType[] types)
+        {
+            Types = types;
+        }
+    }
+
+    [MRubyObject]
+    public readonly partial struct CharacterExitCommand : ICommand
+    {
     }
 
     [MRubyCommand("speak", typeof(CharacterSpeakCommand))]
     [MRubyCommand("move", typeof(CharacterMoveCommand))]
     public partial class MyCommands : MRubyCommandPreset {}
-
-
-    [Routes]
-    class MRubyPresenter
-    {
-        // mruby's `cmd :move` calls this async handler.
-        public async UniTask On(CharacterMoveCommand cmd)
-        {
-            await CharacterActor.MoveAsync(cmd.Id, cmd.To);
-        }
-
-        // mruby's `cmd :speak` calls this async handler.
-        public async UniTask On(CharacterSpeakCommand cmd)
-        {
-            await MessageBalloon.PresentAndWaitAsync(cmd.Id, cmd.Text);
-        }
-    }
-
 
     public class SampleMruby : MonoBehaviour
     {
@@ -75,8 +55,6 @@ namespace Sandbox
 
         async UniTaskVoid Start()
         {
-
-
             var router = Router.Default;
             router.Subscribe<CharacterSpeakCommand>(async (cmd, ctx) =>
             {
@@ -91,12 +69,8 @@ namespace Sandbox
 
             var context = MRubyContext.Create(router, new MyCommands());
 
-
-            // You can set any shared state
-            context.SharedState.Set("flag_1", true);
-
-
             context.SharedState.Set("a", "hoge mogeo");
+            context.SharedState.Set("i", 12345);
             context.SharedState.Set("b", true);
 
             const string ruby = "wait 2.secs\n" +
