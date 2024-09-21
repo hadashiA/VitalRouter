@@ -48,21 +48,22 @@ namespace VitalRouter.MRuby
 
             if (commandName.Equals(Names.WaitSecs))
             {
-                throw new NotSupportedException($"{Names.WaitSecs} is only supported with UniTask. Prelase install UniTask");
-#if VITALROUTER_UNITASK_INTEGRATION
                 var duration = MrbValueSerializer.Deserialize<double>(payload, script.Context);
+#if VITALROUTER_UNITASK_INTEGRATION
                 UniTask.Create(async () =>
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(duration));
                     script.Resume();
                 });
-                return true;
+#else
+                MRubyContext.GlobalErrorHandler.Invoke(new NotSupportedException(
+                    $"{Names.WaitSecs} is only supported with UniTask. Please install UniTask"));
 #endif
+                return true;
             }
 
             if (commandName.Equals(Names.WaitFrames))
             {
-                throw new NotSupportedException($"{Names.WaitFrames} is only supported with UniTask. Prelase install UniTask");
 #if VITALROUTER_UNITASK_INTEGRATION
                 var duration = MrbValueSerializer.Deserialize<int>(payload, script.Context);
                 UniTask.Create(async () =>
@@ -70,8 +71,11 @@ namespace VitalRouter.MRuby
                     await UniTask.DelayFrame(duration);
                     script.Resume();
                 });
-                return true;
+#else
+                MRubyContext.GlobalErrorHandler.Invoke(new NotSupportedException(
+                    $"{Names.WaitFrames} is only supported with UniTask. Please install UniTask"));
 #endif
+                return true;
             }
             return false;
         }
