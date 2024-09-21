@@ -188,18 +188,18 @@ namespace VitalRouter.MRuby
         }
 
         [MonoPInvokeCallback(typeof(MrbCommandHandler))]
-        internal static unsafe void OnCommandCalled(int scriptId, byte* commandNamePtr, int commandNameLength, MrbValue payload)
+        internal static unsafe void OnCommandCalled(int scriptId, MrbNString commandName, MrbValue payload)
         {
             if (Scripts.TryGetValue(scriptId, out var script))
             {
                 try
                 {
-                    var commandName = new FixedUtf8String(commandNamePtr, commandNameLength);
-                    if (SystemCommands.TryRun(script, commandName, payload))
+                    var fixedCommandName = new FixedUtf8String(commandName.Bytes, commandName.Length);
+                    if (SystemCommands.TryRun(script, fixedCommandName, payload))
                     {
                         return;
                     }
-                    _ = script.Context.CommandPreset.CommandCallFromMrubyAsync(script, commandName, payload);
+                    _ = script.Context.CommandPreset.CommandCallFromMrubyAsync(script, fixedCommandName, payload);
                 }
                 catch (Exception ex)
                 {
