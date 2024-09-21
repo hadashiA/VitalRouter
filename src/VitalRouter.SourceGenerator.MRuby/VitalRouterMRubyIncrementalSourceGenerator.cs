@@ -359,35 +359,27 @@ partial {{typeDeclarationKeyword}} {{typeMeta.TypeName}}
             foreach (var entry in mrbValue.AsHashEnumerable(context))
             {
                 var key = options.Resolver.GetFormatterWithVerify<global::VitalRouter.MRuby.FixedUtf8String>().Deserialize(entry.Key, context, options);
-                switch (key.Length)
-                {
 """);
 
         var membersByNameLength = typeMeta.MemberMetas.GroupBy(x => x.KeyNameUtf8Bytes.Length);
 
         foreach (var group in membersByNameLength)
         {
-            stringBuilder.AppendLine($$"""
-                    case {{group.Key}}:
-""");
             var branching = "if";
             foreach (var memberMeta in group)
             {
                 stringBuilder.AppendLine($$"""
-                        {{branching}} (key.AsSpan().SequenceEqual({{memberMeta.Name}}KeyUtf8))
-                        {
-                            __{{memberMeta.Name}}__ = options.Resolver.GetFormatterWithVerify<{{memberMeta.FullTypeName}}>()
-                                .Deserialize(entry.Value, context, options);
-                        }
+                {{branching}} (key.EquivalentIgnoreCaseTo({{memberMeta.Name}}KeyUtf8))
+                {
+                    __{{memberMeta.Name}}__ = options.Resolver.GetFormatterWithVerify<{{memberMeta.FullTypeName}}>()
+                        .Deserialize(entry.Value, context, options);
+                    continue;
+                }
 """);
-                    branching = "else if";
+                branching = "else if";
             }
-            stringBuilder.AppendLine($$"""
-                    break;
-""");
         }
         stringBuilder.AppendLine($$"""
-                }
             }
 """);
 

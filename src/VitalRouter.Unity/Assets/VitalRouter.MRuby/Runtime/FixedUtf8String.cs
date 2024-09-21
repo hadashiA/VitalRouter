@@ -50,6 +50,29 @@ namespace VitalRouter.MRuby
             Length = written;
         }
 
+        public bool EquivalentIgnoreCaseTo(ReadOnlySpan<byte> other)
+        {
+            var span = AsSpan();
+            if (span.SequenceEqual(other))
+            {
+                return true;
+            }
+
+            // Test to underscore
+            Span<byte> otherUnderscore = stackalloc byte[other.Length * 2];
+            int written;
+            while (!NamingConventionMutator.SnakeCase.TryMutate(other, otherUnderscore, out written))
+            {
+                // ReSharper disable once StackAllocInsideLoop
+                otherUnderscore = stackalloc byte[otherUnderscore.Length * 2];
+            }
+            if (span.SequenceEqual(otherUnderscore[..written]))
+            {
+                return true;
+            }
+            return false;
+        }
+
         public override string ToString() => Encoding.UTF8.GetString(AsSpan());
 
         public bool Equals(FixedUtf8String other)

@@ -1,4 +1,6 @@
 require 'fileutils'
+require 'rake'
+
 
 PLATFORMS = {
   'windows-x64' => 'dll',
@@ -6,8 +8,8 @@ PLATFORMS = {
   'macos-x64' => 'dylib',
   'ios-arm64' => 'a',
   'ios-x64' => 'a',
-  'tvos-arm64' => 'a',
-  'tvos-x64' => 'a',
+  # 'tvos-arm64' => 'a',
+  # 'tvos-x64' => 'a',
   'visionos-arm64' => 'a',
   'visionos-x64' => 'a',
   'linux-x64' => 'so',
@@ -16,11 +18,6 @@ PLATFORMS = {
   'android-arm64' => 'so',
   'wasm' => 'a',
 }
-
-def sh(cmd)
-  puts cmd
-  `#{cmd}`
-end
 
 def copy_to_unity(build_dir)
   build_dir = File.expand_path(build_dir)

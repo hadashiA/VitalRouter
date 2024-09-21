@@ -52,5 +52,8 @@ MRuby.each_target do
     flags += flags_after_libraries
 
     linker.run mruby_sharedlib, [], [], [], flags
+
+    # tools = File.exapnd_path('../tools.rb', __FILE__)
+    # sh "ruby #{tools} copy_to_uity #{build_dir}"
   end
 end

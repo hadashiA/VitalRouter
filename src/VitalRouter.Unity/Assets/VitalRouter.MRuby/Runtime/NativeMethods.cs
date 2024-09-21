@@ -12,11 +12,7 @@ namespace VitalRouter.MRuby
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    unsafe delegate void MrbCommandHandler(
-        int scriptId,
-        byte *commandName,
-        int commandNameLength,
-        MrbValue payload);
+    delegate void MrbCommandHandler(int scriptId, MrbNString commandName, MrbValue payload);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     unsafe delegate void MrbErrorHandler(int scriptId, byte* commandName);

@@ -4,7 +4,7 @@ MRuby::CrossBuild.new("linux-x64") do |conf|
   conf.gembox '../../../vitalrouter'
 
   conf.compilers.each do |cc|
-    cc.defines = << 'MRB_NO_BOXING'
+    cc.defines << 'MRB_NO_BOXING'
     cc.flags << '-fPIC'
   end
 
@@ -33,7 +33,7 @@ MRuby::CrossBuild.new("linux-arm64") do |conf|
   conf.archiver.command = 'aarch64-linux-gnu-ar'
 
   conf.compilers.each do |cc|
-    cc.defines = << 'MRB_NO_BOXING'    
+    cc.defines << 'MRB_NO_BOXING'    
     cc.flags << '-fPIC'
   end
 
