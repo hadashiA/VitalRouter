@@ -1042,7 +1042,7 @@ https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/V
 
 To execute mruby scripts, first create an `MRubyContext`.
 
-```
+```cs
 var context = MRubyContext.Create(
     Router.Default, // ... 1
     new MyCommandPreset()); // ... 2
