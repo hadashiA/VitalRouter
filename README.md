@@ -1053,8 +1053,8 @@ var context = MRubyContext.Create(
     new MyCommandPreset()); // ... 2
 ```
 
-The first argument passes the VitalRouter's Router. Commands issued by mruby can be received via this Router.
-The second argument is a marker that represents the list of commands you want to issue from mruby. You create it as follows:
+1. The first argument passes the VitalRouter's Router. Commands issued by mruby can be received via this Router.
+2. The second argument is a marker that represents the list of commands you want to issue from mruby. You create it as follows:
 
 ```cs
 [MRubyCommand("move", typeof(CharacterMoveCommand))]   // < Your custom command name and type list here 
