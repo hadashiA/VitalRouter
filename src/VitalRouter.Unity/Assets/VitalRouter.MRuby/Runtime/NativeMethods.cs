@@ -15,7 +15,11 @@ namespace VitalRouter.MRuby
     delegate void MrbCommandHandler(int scriptId, MrbNString commandName, MrbValue payload);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    unsafe delegate void MrbErrorHandler(int scriptId, byte* commandName);
+    unsafe delegate void MrbErrorHandler(int scriptId, byte* message);
+
+    // typedef void* (*mrb_allocf) (struct mrb_state *mrb, void *ptr, size_t size, void *ud);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    unsafe delegate void MrbAllocF(void *mrb, void *ptr, nint size, void *ud);
 
     [StructLayout(LayoutKind.Sequential)]
     struct MrbContextCore

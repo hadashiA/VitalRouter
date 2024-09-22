@@ -1,5 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
+using AOT;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace VitalRouter.MRuby
 {
@@ -25,6 +27,20 @@ namespace VitalRouter.MRuby
                 return;
             }
             NativeMethods.MrbValueRelease(context.DangerousGetPtr(), RawValue);
+        }
+    }
+
+    static class Allocator
+    {
+        [MonoPInvokeCallback(typeof(MrbAllocF))]
+        internal static unsafe void Alloc(void* mrb, void* ptr, nuint size, void* ud)
+        {
+            UnsafeUtility.Free(ptr, global::Unity.Collections.Allocator.Persistent);
+            if (size > 0)
+            {
+                var newPtr = UnsafeUtility.Malloc((long)size, sizeof(byte), global::Unity.Collections.Allocator.Persistent);
+                ptr = newPtr;
+            }
         }
     }
 
