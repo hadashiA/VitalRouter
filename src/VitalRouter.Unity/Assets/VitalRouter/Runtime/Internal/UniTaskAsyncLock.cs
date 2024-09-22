@@ -1,3 +1,4 @@
+#if VITALROUTER_UNITASK_INTEGRATION
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -152,3 +153,4 @@ class UniTaskAsyncLock : IDisposable
     }
 }
 }
+#endif

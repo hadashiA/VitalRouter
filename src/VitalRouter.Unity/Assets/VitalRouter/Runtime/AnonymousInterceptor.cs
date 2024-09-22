@@ -1,5 +1,5 @@
 using System;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
@@ -8,7 +8,7 @@ public static class CommandBusAnonymousExtensions
 {
     public static void Filter<T>(
         this Router router,
-        Func<T, PublishContext, PublishContinuation<T>, UniTask> callback)
+        Func<T, PublishContext, PublishContinuation<T>, ValueTask> callback)
         where T : ICommand
     {
         router.Filter(new AnonymousInterceptor<T>(callback));
@@ -17,14 +17,14 @@ public static class CommandBusAnonymousExtensions
 
 class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
 {
-    readonly Func<T, PublishContext, PublishContinuation<T>, UniTask> callback;
+    readonly Func<T, PublishContext, PublishContinuation<T>, ValueTask> callback;
 
-    public AnonymousInterceptor(Func<T, PublishContext, PublishContinuation<T>, UniTask> callback)
+    public AnonymousInterceptor(Func<T, PublishContext, PublishContinuation<T>, ValueTask> callback)
     {
         this.callback = callback;
     }
 
-    public UniTask InvokeAsync<TReceive>(
+    public ValueTask InvokeAsync<TReceive>(
         TReceive command,
         PublishContext context,
         PublishContinuation<TReceive> next)

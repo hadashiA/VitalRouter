@@ -1,5 +1,5 @@
 using System;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
@@ -15,7 +15,7 @@ public static class SubscribableAnonymousExtensions
     [Obsolete("Use SubscribeAwait instead")]
     public static Subscription Subscribe<T>(
         this ICommandSubscribable subscribable,
-        Func<T, PublishContext, UniTask> callback)
+        Func<T, PublishContext, ValueTask> callback)
         where T : ICommand
     {
         return subscribable.Subscribe(new AsyncAnonymousSubscriber<T>(callback));
@@ -23,7 +23,7 @@ public static class SubscribableAnonymousExtensions
 
     public static Subscription SubscribeAwait<T>(
         this ICommandSubscribable subscribable,
-        Func<T, PublishContext, UniTask> callback,
+        Func<T, PublishContext, ValueTask> callback,
         CommandOrdering? ordering = null)
         where T : ICommand
     {
@@ -33,10 +33,10 @@ public static class SubscribableAnonymousExtensions
 
 class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
 {
-    Func<T, PublishContext, UniTask> callback;
+    Func<T, PublishContext, ValueTask> callback;
     readonly ICommandInterceptor? commandOrdering;
 
-    public AsyncAnonymousSubscriber(Func<T, PublishContext, UniTask> callback, CommandOrdering? ordering = null)
+    public AsyncAnonymousSubscriber(Func<T, PublishContext, ValueTask> callback, CommandOrdering? ordering = null)
     {
         this.callback = callback;
         commandOrdering = ordering switch
@@ -48,7 +48,7 @@ class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
         };
     }
 
-    public UniTask ReceiveAsync<TReceive>(TReceive command, PublishContext context) where TReceive : ICommand
+    public ValueTask ReceiveAsync<TReceive>(TReceive command, PublishContext context) where TReceive : ICommand
     {
         if (typeof(TReceive) == typeof(T))
         {
@@ -68,7 +68,7 @@ class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
             var commandCasted = UnsafeHelper.As<TReceive, T>(ref command);
             return callback(commandCasted, context);
         }
-        return UniTask.CompletedTask;
+        return default;
     }
 }
 

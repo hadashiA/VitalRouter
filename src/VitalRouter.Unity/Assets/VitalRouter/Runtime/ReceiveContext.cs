@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace VitalRouter
 {
 public class ReceiveContext<T> where T : ICommand
 {
-    public static async UniTask InvokeAsync(T command, ICommandInterceptor[] interceptorStack, PublishContext context)
+    public static async ValueTask InvokeAsync(T command, ICommandInterceptor[] interceptorStack, PublishContext context)
     {
         var invoker = Rent(interceptorStack);
         try
@@ -46,13 +46,13 @@ public class ReceiveContext<T> where T : ICommand
         continuation = InvokeRecursiveAsync;
     }
 
-    public UniTask InvokeRecursiveAsync(T command, PublishContext context)
+    public ValueTask InvokeRecursiveAsync(T command, PublishContext context)
     {
         if (MoveNextInterceptor(out var interceptor))
         {
             return interceptor.InvokeAsync(command, context, continuation);
         }
-        return UniTask.CompletedTask;
+        return default;
     }
 
     public void Return()

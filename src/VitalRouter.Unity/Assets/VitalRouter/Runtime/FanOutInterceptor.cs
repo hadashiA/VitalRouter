@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
@@ -9,15 +7,14 @@ namespace VitalRouter
 public class FanOutInterceptor : ICommandInterceptor
 {
     readonly List<ICommandPublisher> subsequents = new();
-    readonly ReusableWhenAllSource whenAllSource = new();
-    readonly ExpandBuffer<UniTask> executingTasks = new(4);
+    readonly ExpandBuffer<ValueTask> executingTasks = new(4);
 
     public void Add(ICommandPublisher publisher)
     {
         subsequents.Add(publisher);
     }
 
-    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
+    public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
         await next(command, context);
@@ -28,7 +25,7 @@ public class FanOutInterceptor : ICommandInterceptor
                 executingTasks.Add(x.PublishAsync(command, context.CancellationToken, context.CallerMemberName, context.CallerFilePath, context.CallerLineNumber));
             }
 
-            await ReusableWhenAllSource.WhenAllAsync(executingTasks);
+            await WhenAllUtility.WhenAll(executingTasks);
         }
         finally
         {

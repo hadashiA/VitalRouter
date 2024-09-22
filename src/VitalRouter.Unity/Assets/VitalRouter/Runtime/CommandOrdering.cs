@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
-using VitalRouter.Internal;
+using System.Threading.Tasks;
 
 namespace VitalRouter
 {
@@ -54,9 +53,13 @@ public partial class Router
 
 public class SequentialOrdering : ICommandInterceptor, IDisposable
 {
+#if VITALROUTER_UNITASK_INTEGRATION
     readonly UniTaskAsyncLock publishLock = new();
+#else
+    readonly SemaphoreSlim publishLock = new(1, 1);
+#endif
 
-    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
+    public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
         await publishLock.WaitAsync();
@@ -80,7 +83,7 @@ public class DropOrdering : ICommandInterceptor
 {
     int executingCount;
 
-    public async UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
+    public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
         if (Interlocked.CompareExchange(ref executingCount, 1, 0) == 0)
         {
@@ -101,7 +104,7 @@ public class SwitchOrdering : ICommandInterceptor
     CancellationTokenSource? previousCancellationSource;
     readonly CancellationToken[] tokensBuffer = new CancellationToken[2];
 
-    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
+    public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
         previousCancellationSource?.Cancel();
         previousCancellationSource?.Dispose();

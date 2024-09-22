@@ -1,3 +1,4 @@
+#if VITTALROUTER_UNITASK_INTEGRATION
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -114,3 +115,4 @@ class UniTaskAsyncLockTest
     }
 }
 }
+#endif
