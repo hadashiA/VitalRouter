@@ -17,62 +17,6 @@ class UniTaskAsyncLock : IDisposable
     int countOfWaitersPulsedToWake;
     bool disposed;
 
-    public void Wait()
-    {
-        CheckDispose();
-        var waitSuccessful = false;
-        var lockTaken = false;
-
-        try
-        {
-            // Perf: first spin wait for the count to be positive.
-            if (currentResourceCount == 0)
-            {
-                // Monitor.Enter followed by Monitor.Wait is much more expensive than waiting on an event as it involves another
-                // spin, contention, etc. The usual number of spin iterations that would otherwise be used here is increased to
-                // lessen that extra expense of doing a proper wait.
-                // var spinCount = SpinWait.SpinCountforSpinBeforeWait * 4;
-                var spinCount = 35 * 4;
-                SpinWait spinner = default;
-                while (spinner.Count < spinCount)
-                {
-                    spinner.SpinOnce();
-                    if (currentResourceCount != 0)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            // Fallback to monitor
-            Monitor.Enter(syncRoot, ref lockTaken);
-            waitCount++;
-
-            // Wait
-            if (currentResourceCount == 0)
-            {
-                waitSuccessful = Monitor.Wait(syncRoot, Timeout.Infinite);
-            }
-
-            // // acquired
-            // Debug.Assert(!waitSuccessful || currentResourceCount > 0,
-            //     "If the wait was successful, there should be count available.");
-            if (currentResourceCount > 0)
-            {
-                currentResourceCount--;
-            }
-        }
-        finally
-        {
-            // Release the lock
-            if (lockTaken)
-            {
-                waitCount--;
-                Monitor.Exit(syncRoot);
-            }
-        }
-    }
-
     public UniTask WaitAsync()
     {
         CheckDispose();
