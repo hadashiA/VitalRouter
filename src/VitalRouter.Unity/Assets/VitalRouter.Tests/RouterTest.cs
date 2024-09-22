@@ -44,7 +44,7 @@ class TestSignalSubscriber : IAsyncCommandSubscriber, IDisposable
             return;
         }
 
-        await Task.Yield().ConfigureAwait(false);
+        await Task.Delay(TimeSpan.Zero).ConfigureAwait(false);
         Signal.WaitOne();
 
         if (context.CancellationToken.IsCancellationRequested)

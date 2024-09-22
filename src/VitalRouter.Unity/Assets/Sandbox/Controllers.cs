@@ -1,13 +1,12 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Sandbox;
 using UnityEngine;
-using VContainer.Unity;
 using VitalRouter;
-
 
 public class LoggingInterceptor : ICommandInterceptor
 {
-    public async UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next) where T : ICommand
+    public async ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next) where T : ICommand
     {
         var path = ctx.CallerFilePath.Replace(Application.dataPath, "Assets");
         UnityEngine.Debug.Log($"publish {ctx.CallerMemberName} at (<a href=\"{path}\" line=\"{ctx.CallerLineNumber}\">{path}:{ctx.CallerLineNumber}</a>) {command.GetType()}");
@@ -17,7 +16,7 @@ public class LoggingInterceptor : ICommandInterceptor
 
 public class AInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(T command, PublishContext cancellation, PublishContinuation<T> next)
+    public ValueTask InvokeAsync<T>(T command, PublishContext cancellation, PublishContinuation<T> next)
         where T : ICommand
     {
         return next(command, cancellation);
@@ -26,7 +25,7 @@ public class AInterceptor : ICommandInterceptor
 
 public class BInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
+    public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
         return next(command, context);

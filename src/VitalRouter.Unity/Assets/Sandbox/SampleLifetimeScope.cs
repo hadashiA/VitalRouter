@@ -20,7 +20,7 @@ public class SampleEntryPoint : IAsyncStartable
     public async UniTask StartAsync(CancellationToken cancellation)
     {
         Profiler.BeginSample("Publish!");
-        router.PublishAsync(new CharacterEnterCommand(), cancellation).Forget();
+        _ = router.PublishAsync(new CharacterEnterCommand(), cancellation);
         Profiler.EndSample();
     }
 }

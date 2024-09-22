@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace VitalRouter.MRuby
 {
@@ -30,7 +30,7 @@ namespace VitalRouter.MRuby
             this.mrubyContext = mrubyContext;
         }
 
-        public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
+        public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
         {
             context.Extensions[MRubyContextKey] = mrubyContext;
             return next(command, context);
