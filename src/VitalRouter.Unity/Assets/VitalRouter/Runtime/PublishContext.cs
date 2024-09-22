@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
@@ -108,12 +108,12 @@ public class PublishContext<T> : PublishContext where T : ICommand
         continuation = InvokeRecursiveAsync;
     }
 
-    public UniTask PublishAsync(T command)
+    public ValueTask PublishAsync(T command)
     {
         return InvokeRecursiveAsync(command, this);
     }
 
-    UniTask InvokeRecursiveAsync(T command, PublishContext context)
+    ValueTask InvokeRecursiveAsync(T command, PublishContext context)
     {
         if (MoveNextInterceptor(out var interceptor))
         {

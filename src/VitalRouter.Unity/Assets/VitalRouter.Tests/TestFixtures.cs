@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace VitalRouter.Tests
 {
@@ -8,7 +8,7 @@ class AInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
+    public ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
@@ -20,7 +20,7 @@ class BInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
+    public ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
@@ -32,7 +32,7 @@ class CInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
+    public ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
@@ -44,7 +44,7 @@ class DInterceptor : ICommandInterceptor
 {
     public readonly Queue<ICommand> Receives = new();
 
-    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
+    public ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         Receives.Enqueue(command);
@@ -54,7 +54,7 @@ class DInterceptor : ICommandInterceptor
 
 class ThrowInterceptor : ICommandInterceptor
 {
-    public UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
+    public ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         throw new TestException();
@@ -65,7 +65,7 @@ class ErrorHandlingInterceptor : ICommandInterceptor
 {
     public Exception? Exception { get; private set; }
 
-    public async UniTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
+    public async ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next)
         where T : ICommand
     {
         try

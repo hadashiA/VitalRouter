@@ -192,7 +192,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using VitalRouter;
 using VitalRouter.Internal;
 
@@ -431,7 +431,7 @@ partial class {{typeMeta.TypeName}}
     {
         static class MethodTable<T> where T : ICommand
         {
-            public static Func<{{typeMeta.FullTypeName}}, T, PublishContext, UniTask>? Value;
+            public static Func<{{typeMeta.FullTypeName}}, T, PublishContext, ValueTask>? Value;
             public static Func<VitalRouterGeneratedAsyncSubscriber, ICommandInterceptor[]>? InterceptorFinder;
         }
         
@@ -518,7 +518,7 @@ partial class {{typeMeta.TypeName}}
         builder.AppendLine($$"""
         }
         
-        public UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
+        public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
             if (MethodTable<T>.Value is { } method)
             {
@@ -529,7 +529,7 @@ partial class {{typeMeta.TypeName}}
                 var interceptorStack = finder.Invoke(this);
                 return ReceiveContext<T>.InvokeAsync(command, interceptorStack, context);
             }
-            return UniTask.CompletedTask;
+            return default;
         }
     }
 """);
@@ -552,7 +552,7 @@ partial class {{typeMeta.TypeName}}
     {
         static class MethodTable<T> where T : ICommand
         {
-            public static Func<{{typeMeta.TypeName}}, T, PublishContext, UniTask>? Value;
+            public static Func<{{typeMeta.TypeName}}, T, PublishContext, ValueTask>? Value;
         }
         
         static VitalRouterGeneratedAsyncSubscriberCore()
@@ -575,9 +575,9 @@ partial class {{typeMeta.TypeName}}
             this.source = source;
         }
     
-        public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> _) where T : ICommand
+        public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> _) where T : ICommand
         {
-            return MethodTable<T>.Value?.Invoke(source, command, context) ?? UniTask.CompletedTask;
+            return MethodTable<T>.Value?.Invoke(source, command, context) ?? default;
         }
     }
 """);
@@ -590,36 +590,36 @@ partial class {{typeMeta.TypeName}}
         {
             if (method.TakePublishContext)
             {
-                if (method.IsUniTask())
+                if (method.IsValueTask())
                 {
-                    return $"static (source, command, context) => source.{method.Symbol.Name}(command, context)";
+                    return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command, context)";
                 }
                 return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context)";
             }
             if (method.TakeCancellationToken)
             {
-                if (method.IsUniTask())
+                if (method.IsValueTask() || method.IsUniTask())
                 {
-                    return $"static (source, command, context) => source.{method.Symbol.Name}(command, context.CancellationToken)";
+                    return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command, context.CancellationToken)";
                 }
                 return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context.CancellationToken)";
             }
-            if (method.IsUniTask())
+            if (method.IsValueTask() || method.IsUniTask())
             {
-                return $"static (source, command, context) => source.{method.Symbol.Name}(command)";
+                return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command)";
             }
             return $"static async (source, command, context) => await source.{method.Symbol.Name}(command)";
         }
 
         if (method.TakePublishContext)
         {
-            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context); return UniTask.CompletedTask; }}";
+            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context); return default; }}";
         }
 
         if (method.TakeCancellationToken)
         {
-            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context.CancellationToken); return UniTask.CompletedTask; }}";
+            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context.CancellationToken); return default; }}";
         }
-        return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command); return UniTask.CompletedTask; }}";
+        return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command); return default; }}";
     }
 }

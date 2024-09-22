@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
@@ -200,7 +199,7 @@ partial class SimpleAsyncPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
 
-    public UniTask On(CommandA cmd)
+    public ValueTask On(CommandA cmd)
     {
         Receives.Enqueue(cmd);
         return default;
@@ -225,7 +224,7 @@ partial class SimpleAsyncWithCancellationTokenPresenter
     public Queue<ICommand> Receives { get; } = new();
     public CancellationToken CancellationToken { get; private set; }
 
-    public UniTask On(CommandA cmd, CancellationToken cancellation)
+    public ValueTask On(CommandA cmd, CancellationToken cancellation)
     {
         Receives.Enqueue(cmd);
         CancellationToken = cancellation;
@@ -243,7 +242,7 @@ partial class SimpleCombinedPresenter
         Receives.Enqueue(cmd);
     }
 
-    public UniTask On(CommandB cmd)
+    public ValueTask On(CommandB cmd)
     {
         Receives.Enqueue(cmd);
         return default;
@@ -256,7 +255,7 @@ partial class DefaultInterceptorPresenter
 {
     public Queue<ICommand> Receives { get; } = new();
 
-    public UniTask On(CommandA cmd)
+    public ValueTask On(CommandA cmd)
     {
         Receives.Enqueue(cmd);
         return default;
@@ -274,7 +273,7 @@ partial class PerMethodInterceptorPresenter
     public Queue<ICommand> Receives { get; } = new();
 
     [Filter(typeof(AInterceptor))]
-    public UniTask On(CommandA cmd)
+    public ValueTask On(CommandA cmd)
     {
         Receives.Enqueue(cmd);
         return default;
@@ -286,7 +285,7 @@ partial class PerMethodInterceptorPresenter
         Receives.Enqueue(cmd);
     }
 
-    public UniTask On(CommandC cmd)
+    public ValueTask On(CommandC cmd)
     {
         Receives.Enqueue(cmd);
         return default;
@@ -311,7 +310,7 @@ partial class ComplexInterceptorPresenter
 
     [Filter(typeof(CInterceptor))]
     [Filter(typeof(DInterceptor))]
-    public UniTask On(CommandA cmd)
+    public ValueTask On(CommandA cmd)
     {
         Receives.Enqueue(cmd);
         return default;
@@ -328,7 +327,7 @@ partial class ComplexInterceptorPresenter
         Receives.Enqueue(cmd);
     }
 
-    public UniTask On(CommandC cmd)
+    public ValueTask On(CommandC cmd)
     {
         Receives.Enqueue(cmd);
         return default;
@@ -339,7 +338,7 @@ partial class ComplexInterceptorPresenter
 [Filter(typeof(ErrorHandlingInterceptor))]
 partial class ErrorHandlingInterceptorPresenter
 {
-    public UniTask On(CommandA cmd)
+    public ValueTask On(CommandA cmd)
     {
         throw new TestException();
     }
@@ -350,7 +349,7 @@ partial class ErrorHandlingInterceptorPresenter
 [Filter(typeof(ThrowInterceptor))]
 partial class ErrorHandlingInterceptorPresenter2
 {
-    public UniTask On(CommandA cmd)
+    public ValueTask On(CommandA cmd)
     {
         return default;
     }
@@ -359,7 +358,7 @@ partial class ErrorHandlingInterceptorPresenter2
 [Routes]
 partial class TaskPresenter
 {
-    Func<DefaultInterceptorPresenter, int, PublishContext, UniTask>? Value;
+    Func<DefaultInterceptorPresenter, int, PublishContext, ValueTask>? Value;
     public Queue<ICommand> Receives { get; } = new();
 
     public Task On(CommandA cmd)

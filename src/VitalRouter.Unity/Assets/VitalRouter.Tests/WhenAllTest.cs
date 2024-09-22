@@ -1,4 +1,4 @@
-#if UNITY_2021_3_OR_NEWER
+#if VITALROUTER_UNITASK_INTEGRAION
 using System;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
@@ -13,8 +13,6 @@ public class WhenAllTest
     [Test]
     public async Task WaitAll()
     {
-        var promise = new ReusableWhenAllSource();
-
         var resutl1 = false;
         var result2 = false;
         var task1 = UniTask.RunOnThreadPool(() =>
@@ -26,8 +24,7 @@ public class WhenAllTest
             result2 = true;
         });
 
-        promise.Reset(new[] { task1, task2 });
-        await promise.Task;
+        await WhenAllUtility.WhenAll(task1, task2);
 
         Assert.That(resutl1, Is.True);
         Assert.That(result2, Is.True);

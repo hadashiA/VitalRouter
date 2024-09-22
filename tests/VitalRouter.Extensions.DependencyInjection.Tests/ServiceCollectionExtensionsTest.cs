@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -117,7 +116,7 @@ class TestInterceptor1 : ICommandInterceptor
 {
     public int Calls { get; private set; }
 
-    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
+    public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
         Calls++;
         return next(command, context);
@@ -128,7 +127,7 @@ class TestInterceptor2(DependencyA dependency) : ICommandInterceptor
 {
     public int Calls { get; private set; }
 
-    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
+    public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
         Calls++;
         return next(command, context);
@@ -139,7 +138,7 @@ class TestInterceptor3(DependencyB dependency) : ICommandInterceptor
 {
     public int Calls { get; private set; }
 
-    public UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
+    public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
         Calls++;
         return next(command, context);

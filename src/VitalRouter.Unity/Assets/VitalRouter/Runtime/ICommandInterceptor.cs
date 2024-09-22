@@ -1,20 +1,20 @@
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
 {
-public delegate UniTask PublishContinuation<in T>(T cmd, PublishContext ctx) where T : ICommand;
+public delegate ValueTask PublishContinuation<in T>(T cmd, PublishContext ctx) where T : ICommand;
 
 public interface ICommandInterceptor
 {
-    UniTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
+    ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand;
 }
 
 public abstract class TypedCommandInterceptro<T> : ICommandInterceptor
     where T : ICommand
 {
-    public UniTask InvokeAsync<TReceive>(TReceive command, PublishContext context, PublishContinuation<TReceive> next)
+    public ValueTask InvokeAsync<TReceive>(TReceive command, PublishContext context, PublishContinuation<TReceive> next)
         where TReceive : ICommand
     {
         if (typeof(TReceive) == typeof(T))
@@ -26,7 +26,7 @@ public abstract class TypedCommandInterceptro<T> : ICommandInterceptor
         return next(command, context);
     }
 
-    public abstract UniTask InvokeAsync(
+    public abstract ValueTask InvokeAsync(
         T command,
         PublishContext context,
         PublishContinuation<T> next);

@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
 {
 public interface ICommandPublisher
 {
-    UniTask PublishAsync<T>(
+    ValueTask PublishAsync<T>(
         T command,
         CancellationToken cancellation = default,
         [CallerMemberName] string? callerMemberName = null,
@@ -34,7 +34,7 @@ public interface ICommandSubscriber
 
 public interface IAsyncCommandSubscriber
 {
-    UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand;
+    ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand;
 }
 
 public static class CommandPublisherExtensions
@@ -42,7 +42,7 @@ public static class CommandPublisherExtensions
     static readonly Dictionary<Type, MethodInfo> PublishMethods = new();
     static MethodInfo? publishMethodOpenGeneric;
 
-    public static UniTask PublishAsync(
+    public static ValueTask PublishAsync(
         this ICommandPublisher publisher,
         Type commandType,
         object command,
@@ -73,7 +73,7 @@ public static class CommandPublisherExtensions
         args[4] = callerLineNumber;
         var result = publishMethod.Invoke(publisher, args);
         CappedArrayPool<object?>.Shared8Limit.Return(args);
-        return (UniTask)result;
+        return (ValueTask)result;
     }
 
     public static void Enqueue<T>(
@@ -85,7 +85,7 @@ public static class CommandPublisherExtensions
         [CallerLineNumber] int callerLineNumber = 0)
         where T : ICommand
     {
-        publisher.PublishAsync(command, cancellation, callerMemberName, callerFilePath, callerLineNumber).Forget();
+        publisher.PublishAsync(command, cancellation, callerMemberName, callerFilePath, callerLineNumber);
     }
 
     public static void Enqueue(
@@ -97,7 +97,7 @@ public static class CommandPublisherExtensions
         [CallerFilePath] string? callerFilePath = null,
         [CallerLineNumber] int callerLineNumber = 0)
     {
-        publisher.PublishAsync(commandType, command, cancellation, callerMemberName, callerFilePath, callerLineNumber).Forget();
+        publisher.PublishAsync(commandType, command, cancellation, callerMemberName, callerFilePath, callerLineNumber);
     }
 }
 
@@ -126,7 +126,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         Filter(ordering);
     }
 
-    public async UniTask PublishAsync<T>(
+    public async ValueTask PublishAsync<T>(
         T command,
         CancellationToken cancellation = default,
         [CallerMemberName] string? callerMemberName = null,
@@ -242,14 +242,14 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     class PublishCore : IAsyncCommandSubscriber
     {
         readonly Router source;
-        readonly ExpandBuffer<UniTask> executingTasks = new(8);
+        readonly ExpandBuffer<ValueTask> executingTasks = new(8);
 
         public PublishCore(Router source)
         {
             this.source = source;
         }
 
-        public UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
+        public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
             try
             {
@@ -269,10 +269,10 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
                 if (executingTasks.Count > 0)
                 {
-                    return ReusableWhenAllSource.WhenAllAsync(executingTasks);
+                    return WhenAllUtility.WhenAll(executingTasks);
                 }
 
-                return UniTask.CompletedTask;
+                return default;
             }
             finally
             {

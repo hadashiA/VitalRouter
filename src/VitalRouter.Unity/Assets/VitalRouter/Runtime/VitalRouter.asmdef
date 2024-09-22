@@ -23,6 +23,11 @@
             "name": "com.cysharp.r3",
             "expression": "",
             "define": "VITALROUTER_R3_INTEGRATION"
+        },
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "",
+            "define": "VITALROUTER_UNITASK_INTEGRATION"
         }
     ],
     "noEngineReferences": false
