@@ -44,13 +44,13 @@ public partial class ExamplePresenter
 }
 ```
 
-| Feature                                                           | Description                                                                                                                                                                                                                  |
-|-------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Declarative routing                                               | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                                                                                            |
-| Async/non-Async handlers                                          | Integrate with async/await (with UniTask), and providing optimized fast pass for non-async way                                                                                                                               |
-| With DI and without DI                                            | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                      |
-| Fast, less allocations                                            | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.                                                                          |
-| Async sequence controlling (Parallel, FIFO, Drop, Switch)         | The behavior when async processes are executed in parallel can be specified in detail. See [Command ordering](#command-ordering) section for details.                                                                        |                                                                                                                                                                                                               
+| Feature                                                           | Description                                                                                                                                                                                                                 |
+|-------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Declarative routing                                               | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                                                                                           |
+| Async/non-Async handlers                                          | Integrate with async/await, and providing optimized fast pass for non-async way                                                                                                                                             |
+| With DI and without DI                                            | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                     |
+| Fast, less allocations                                            | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.                                                                         |
+| Async sequence controlling (Parallel, FIFO, Drop, Switch)         | The behavior when async processes are executed in parallel can be specified in detail. See [Command ordering](#command-ordering) section for details.                                                                       |                                                                                                                                                                                                               
 | Scripting with [mruby](https://github.com/mruby/mruby) (Optional) | You can write ruby scripts to publish messages to the C# async handlers. This is very useful for adding a layer to your game that allows scripted hot loading. See [VitalRouter.MRuby](#mruby-scripting) section for details. |
 
 ## Table of Contents
@@ -85,9 +85,8 @@ Prerequirements:
 
 - Unity 2022.2+
   - This limitation is due to the use of the Incremental Source Generator.
-- Install [UniTask](https://github.com/Cysharp/UniTask)
-  - Currently, VitalRouter uses UniTask instead of `UnityEngine.Awaitable`. UniTask is a fully featured and fast awaitable implementation.
-  - In a future, if `UnityEngine.Awaitable` is enhanced in a future version of Unity, it may be migrated.
+- (optional )Install [UniTask](https://github.com/Cysharp/UniTask) >= 2.5.5
+  - If UniTask is installed in your project, the `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
 - (optional) Install [VContainer](https://github.com/hadashiA/VContainer) >= 1.15.1 
   -  For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
 
@@ -467,7 +466,7 @@ router.SubscribeAwait(new AsyncSubscriber());
 
 class AsyncSubscriber : IAsyncCommandSubscriber
 {
-    pubilc UniTask Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
+    pubilc ValueTask Receive<T>(T cmd, PublishContext ctx) where T : ICommand { /* ... */ }
 }
 
 // Add interceptor via lambda expresion
@@ -517,10 +516,10 @@ Example 1:  Some kind of processing is interspersed before and after the command
 ```cs
 class Logging : ICommandInterceptor
 {
-    public async UniTask InvokeAsync<T>(  
+    public async ValueTask InvokeAsync<T>(  
         T command,  
         CancellationToken cancellation,  
-        Func<T, CancellationToken, UniTask> next)  
+        Func<T, CancellationToken, ValueTask> next)  
         where T : ICommand  
     {  
         UnityEngine.Debug.Log($"Start {typeof(T)}");	
@@ -536,10 +535,10 @@ Example 2:  try/catch all subscribers exceptions.
 ```cs
 class ExceptionHandling : ICommandInterceptor
 {
-    public async UniTask InvokeAsync<T>(  
+    public async ValueTask InvokeAsync<T>(  
         T command,  
         CancellationToken cancellation,  
-        Func<T, CancellationToken, UniTask> next)  
+        Func<T, CancellationToken, ValueTask> next)  
         where T : ICommand  
     {  
         try
@@ -560,10 +559,10 @@ Example 3:  Filtering command.
 ```cs
 class MyFilter : ICommandInterceptor
 {
-    public async UniTask InvokeAsync<T>(  
+    public async ValueTask InvokeAsync<T>(  
         T command,  
         CancellationToken cancellation,  
-        Func<T, CancellationToken, UniTask> next)  
+        Func<T, CancellationToken, ValueTask> next)  
         where T : ICommand  
     {  
         if (command is FooCommand { X: > 100 } cmd) 
