@@ -590,9 +590,9 @@ partial class {{typeMeta.TypeName}}
         {
             if (method.TakePublishContext)
             {
-                if (method.IsValueTask() || method.IsUniTask())
+                if (method.IsValueTask())
                 {
-                    return $"static (source, command, context) => source.{method.Symbol.Name}(command, context)";
+                    return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command, context)";
                 }
                 return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context)";
             }
@@ -600,13 +600,13 @@ partial class {{typeMeta.TypeName}}
             {
                 if (method.IsValueTask() || method.IsUniTask())
                 {
-                    return $"static (source, command, context) => source.{method.Symbol.Name}(command, context.CancellationToken)";
+                    return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command, context.CancellationToken)";
                 }
                 return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context.CancellationToken)";
             }
             if (method.IsValueTask() || method.IsUniTask())
             {
-                return $"static (source, command, context) => source.{method.Symbol.Name}(command)";
+                return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command)";
             }
             return $"static async (source, command, context) => await source.{method.Symbol.Name}(command)";
         }
