@@ -1223,6 +1223,11 @@ MRubyContext.GlobalLogHandler = message =>
 
 ### Ruby API
 
+The mruby embedded with VitalRouter contains only a portion of the standard library to reduce size.
+Please check the [vitalrouter.gembox](https://github.com/hadashiA/VitalRouter/blob/main/src/vitalrouter-mruby/vitalrouter.gembox) to see which mrbgem is enabled.
+
+In addition to the standard mrbgem, the following extension APIs are provided for Unity integration.
+
 ```ruby
 # Wait for the number of seconds. (Non-blocking)
 # It is equivalent to `await UniTask.Delay(TimeSpan.FromSeconds(1))`)
