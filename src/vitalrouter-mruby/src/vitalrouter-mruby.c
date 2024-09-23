@@ -158,7 +158,7 @@ extern mrb_value vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstr
 
 extern void vitalrouter_mrb_value_release(vitalrouter_mrb_ctx *ctx, mrb_value value)
 {
-  mrb_gc_unregister(ctx->mrb, value);
+  // mrb_gc_unregister(ctx->mrb, value);
 }
 
 extern vitalrouter_mrb_script *vitalrouter_mrb_script_compile(vitalrouter_mrb_ctx *ctx,
