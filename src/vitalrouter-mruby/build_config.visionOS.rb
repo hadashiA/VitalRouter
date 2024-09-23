@@ -6,7 +6,7 @@ MRuby::CrossBuild.new('visionos-arm64') do |conf|
   conf.cc do |cc|
     cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)    
     cc.command = 'xcrun'
-    cc.flags = %W(-sdk xros clang -arch arm64 -isysroot "#{sdk}" -g -O3 -Wall -Werror-implicit-function-declaration)
+    cc.flags = %W(-sdk xros clang -arch arm64 -isysroot "#{sdk}" -g -Os -Wall -Werror-implicit-function-declaration)
   end
 
   conf.linker do |linker|
@@ -21,7 +21,7 @@ MRuby::CrossBuild.new('visionos-x64') do |conf|
   conf.cc do |cc|
     cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)        
     cc.command = 'xcrun'
-    cc.flags = %W(-sdk xrsimulator clang -arch x86_64 -isysroot "#{sdk}" -g -O3 -Wall -Werror-implicit-function-declaration)
+    cc.flags = %W(-sdk xrsimulator clang -arch x86_64 -isysroot "#{sdk}" -g -Os -Wall -Werror-implicit-function-declaration)
   end
 
   conf.linker do |linker|

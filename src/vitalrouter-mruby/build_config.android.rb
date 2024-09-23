@@ -4,11 +4,13 @@ MRuby::CrossBuild.new('android-arm64') do |conf|
   conf.gembox '../../../vitalrouter'
   
   conf.cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)
+  conf.cc.flags << '-Os'
 end
 
 MRuby::CrossBuild.new('android-x64') do |conf|
   toolchain :android, arch: 'x86_64'
   conf.gembox '../../../vitalrouter'
 
-  conf.cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)  
+  conf.cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)
+  conf.cc.flags << '-Os'
 end

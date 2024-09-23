@@ -6,6 +6,7 @@ MRuby::CrossBuild.new("macos-arm64") do |conf|
 
   conf.cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)
   conf.cc.flags << '-arch arm64'
+  conf.cc.flags << '-Os'
   conf.linker.flags << '-arch arm64'
 end
 

@@ -6,6 +6,7 @@ MRuby::CrossBuild.new("linux-x64") do |conf|
   conf.compilers.each do |cc|
     cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)    
     cc.flags << '-fPIC'
+    cc.flags << '-Os'
   end
 
   conf.archiver do |archiver|
@@ -35,6 +36,7 @@ MRuby::CrossBuild.new("linux-arm64") do |conf|
   conf.compilers.each do |cc|
     cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)
     cc.flags << '-fPIC'
+    cc.flags << '-Os'
   end
 
   conf.archiver do |archiver|
