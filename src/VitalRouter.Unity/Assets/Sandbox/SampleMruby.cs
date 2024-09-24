@@ -70,8 +70,12 @@ namespace Sandbox
         async UniTask Start()
         {
             using var context = MRubyContext.Create(Router.Default, new MyCommands());
+
+            context.Load("def hoge(x) = x * 100");
+            var h = context.Evaluate<int>("hoge(7)");
+
             using var script = context.CompileScript(
-                "3.times { |i| cmd :text, body: \"Hello #{i}\" }\n");
+                $"loop {{ cmd :text, body: \"Hello #{{state[:counter].to_i}} calculated: {h}\" }}\n");
 
             MapTo(Router.Default);
 
