@@ -67,6 +67,17 @@ namespace Sandbox
 
         int counter;
 
+        async UniTask Start()
+        {
+            using var context = MRubyContext.Create(Router.Default, new MyCommands());
+            using var script = context.CompileScript(
+                "3.times { |i| cmd :text, body: \"Hello #{i}\" }\n");
+
+            MapTo(Router.Default);
+
+            await script.RunAsync();
+        }
+
         public async UniTask On(TextCommand cmd, PublishContext ctx)
         {
             ctx.MRubySharedState()!.Set("counter", ++counter);

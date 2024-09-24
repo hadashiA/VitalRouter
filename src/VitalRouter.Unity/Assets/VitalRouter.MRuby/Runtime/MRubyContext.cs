@@ -24,7 +24,11 @@ namespace VitalRouter.MRuby
             {
                 return;
             }
-            NativeMethods.MrbValueRelease(context.DangerousGetPtr(), RawValue);
+
+            // This temporary variable is essential.
+            // In a Windows environment, when passing a value to the Native side, it must be a stack variable or the value will be incorrect.
+            var v = RawValue;
+            NativeMethods.MrbValueRelease(context.DangerousGetPtr(), v);
         }
     }
 
