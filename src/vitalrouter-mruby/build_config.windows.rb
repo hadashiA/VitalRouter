@@ -3,4 +3,5 @@ MRuby::CrossBuild.new("windows") do |conf|
   conf.toolchain
   conf.gembox '../../../vitalrouter'
   cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)
+  cc.flags << '-Os'
 end

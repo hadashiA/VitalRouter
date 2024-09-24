@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using VitalRouter;
 using VitalRouter.MRuby;
 
@@ -44,48 +45,51 @@ namespace Sandbox
     {
     }
 
-    [MRubyCommand("speak", typeof(CharacterSpeakCommand))]
-    [MRubyCommand("move", typeof(CharacterMoveCommand))]
+    // ReSharper disable all Unity.IncorrectMethodSignature
+
+    [MRubyObject]
+    public partial struct TextCommand : ICommand
+    {
+        public string Body;
+    }
+
+    [MRubyCommand("text", typeof(TextCommand))]
     public partial class MyCommands : MRubyCommandPreset {}
 
-    public class SampleMruby : MonoBehaviour
+    [Routes]
+    public partial class SampleMruby : MonoBehaviour
     {
         [SerializeField]
         TextMeshProUGUI label = default!;
 
-        async UniTaskVoid Start()
+        [SerializeField]
+        Button button = default!;
+
+        int counter;
+
+        async UniTask Start()
         {
-            var router = Router.Default;
-            router.Subscribe<CharacterSpeakCommand>(async (cmd, ctx) =>
-            {
-                Debug.Log($"{cmd.GetType().Name}: {cmd.Text}");
-                label.text += $"From mruby: {cmd.GetType().Name}: {cmd.Text}\n";
-                await UniTask.Delay(TimeSpan.FromSeconds(1));
-            });
-            router.Subscribe<CharacterMoveCommand>((cmd, ctx) =>
-            {
-                UnityEngine.Debug.Log($"From mruby: {cmd.GetType().Name}: {cmd.To}\n");
-            });
+            using var context = MRubyContext.Create(Router.Default, new MyCommands());
 
-            var context = MRubyContext.Create(router, new MyCommands());
+            context.Load("def hoge(x) = x * 100");
+            var h = context.Evaluate<int>("hoge(7)");
 
-            context.SharedState.Set("a", "hoge mogeo");
-            context.SharedState.Set("i", 12345);
-            context.SharedState.Set("b", true);
+            using var script = context.CompileScript(
+                $"loop {{ cmd :text, body: \"Hello #{{state[:counter].to_i}} calculated: {h}\" }}\n");
 
-            const string ruby = "wait 2.secs\n" +
-                                "log \"@@@@@\"\n" +
-                                "cmd :move, to: [1, 2, 3]\n" +
-                                "3.times { |i| cmd :speak, id: 'Bob', text: %Q{Hello ほげ ほげ #{i}} }\n" +
-                                "\n";
-            var script = context.CompileScript(ruby);
+            MapTo(Router.Default);
 
-            while (true)
-            {
-                label.text = "";
-                await script.RunAsync();
-                await UniTask.Delay(TimeSpan.FromSeconds(5));
-            }
+            await script.RunAsync();
+        }
+
+        public async UniTask On(TextCommand cmd, PublishContext ctx)
+        {
+            ctx.MRubySharedState()!.Set("counter", ++counter);
+
+            label.text = cmd.Body;
+
+            await button.OnClickAsync();
         }
     }
 }
+

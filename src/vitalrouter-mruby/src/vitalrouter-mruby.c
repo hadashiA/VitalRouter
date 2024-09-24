@@ -142,7 +142,7 @@ extern mrb_value vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstr
 {
   int ai = mrb_gc_arena_save(ctx->mrb);
 
-  mrb_value result = mrb_load_nstring(ctx->mrb, (const char *)source.bytes, source.length);
+  mrb_value result = mrb_load_nstring(ctx->mrb, (const char *)source.bytes, (size_t)source.length);
   if (throw(ctx, -1)) {
     mrb_gc_arena_restore(ctx->mrb, ai);
     return mrb_nil_value();

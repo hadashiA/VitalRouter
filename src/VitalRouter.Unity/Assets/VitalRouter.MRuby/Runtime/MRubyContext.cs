@@ -24,6 +24,7 @@ namespace VitalRouter.MRuby
             {
                 return;
             }
+
             NativeMethods.MrbValueRelease(context.DangerousGetPtr(), RawValue);
         }
     }
