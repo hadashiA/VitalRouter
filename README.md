@@ -1130,7 +1130,7 @@ Note that the names on the ruby side are converted to CamelCase.
 
 You can change the member name specified from Ruby by using `[MRubyMember("alias name")]`.
 
-```
+```cs
 [MRubyObject]
 partial class Foo
 {
@@ -1141,7 +1141,7 @@ partial class Foo
 
 Also, you can receive data from Ruby via any constructor by using the `[MRubyConstructor]` attribute.
 
-```
+```cs
 [MRubyObject]
 partial class Foo
 {
