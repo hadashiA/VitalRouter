@@ -157,7 +157,7 @@ public class R3ExtensionsTest
             this.frameProvider = frameProvider;
         }
 
-        public UniTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
+        public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
             Queue.Enqueue(command);
             tcs = new UniTaskCompletionSource();

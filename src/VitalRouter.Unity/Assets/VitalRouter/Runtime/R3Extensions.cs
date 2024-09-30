@@ -1,8 +1,9 @@
 #if VITALROUTER_R3_INTEGRATION
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using R3;
 using VitalRouter.Internal;
 
@@ -13,10 +14,10 @@ public static class R3Extensions
     public static IDisposable SubscribeToPublish<T>(this Observable<T> source, ICommandPublisher publisher)
         where T : ICommand
     {
-        return source.Subscribe(publisher, (x, p) => p.PublishAsync(x).Forget());
+        return source.Subscribe(publisher, (x, p) => p.PublishAsync(x));
     }
 
-    public static UniTask ForEachPublishAndForgetAsync<T>(this Observable<T> source, ICommandPublisher publisher, CancellationToken cancellation = default)
+    public static Task ForEachPublishAndForgetAsync<T>(this Observable<T> source, ICommandPublisher publisher, CancellationToken cancellation = default)
         where T : ICommand
     {
         var observer = new ForEachPublishAndForgetObserver<T>(publisher, cancellation);
@@ -24,7 +25,7 @@ public static class R3Extensions
         return observer.Task;
     }
 
-    public static UniTask ForEachPublishAndAwaitAsync<T>(this Observable<T> source, ICommandPublisher publisher, CancellationToken cancellation = default)
+    public static Task ForEachPublishAndAwaitAsync<T>(this Observable<T> source, ICommandPublisher publisher, CancellationToken cancellation = default)
         where T : ICommand
     {
         var observer = new ForEachPublishAndAwaitObserver<T>(publisher, cancellation);
@@ -65,13 +66,13 @@ sealed class CommandSubscriberObservable<T> : Observable<T>, ICommandSubscriber 
 
 sealed class ForEachPublishAndForgetObserver<T> : Observer<T> where T : ICommand
 {
-    public UniTask Task => outerCompletionSource.Task;
+    public Task Task => outerCompletionSource.Task;
 
     readonly ICommandPublisher publisher;
-    readonly UniTaskCompletionSource outerCompletionSource = new();
+    readonly TaskCompletionSource<bool> outerCompletionSource = new();
 
-    CancellationTokenRegistration tokenRegistration;
-    CancellationToken cancellationToken;
+    readonly CancellationTokenRegistration tokenRegistration;
+    readonly CancellationToken cancellationToken;
 
     bool isStopped;
 
@@ -93,7 +94,7 @@ sealed class ForEachPublishAndForgetObserver<T> : Observer<T> where T : ICommand
 
     protected override void OnNextCore(T value)
     {
-        publisher.PublishAsync(value, cancellationToken).Forget();
+        _ = publisher.PublishAsync(value, cancellationToken);
     }
 
     protected override void OnErrorResumeCore(Exception error)
@@ -125,7 +126,7 @@ sealed class ForEachPublishAndForgetObserver<T> : Observer<T> where T : ICommand
         {
             try
             {
-                outerCompletionSource.TrySetResult();
+                outerCompletionSource.TrySetResult(true);
             }
             finally
             {
@@ -143,16 +144,16 @@ sealed class ForEachPublishAndForgetObserver<T> : Observer<T> where T : ICommand
 
 sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
 {
-    public UniTask Task => outerCompletionSource.Task;
+    public Task Task => outerCompletionSource.Task;
 
     readonly ICommandPublisher publisher;
-    readonly UniTaskCompletionSource outerCompletionSource = new();
+    readonly TaskCompletionSource<bool> outerCompletionSource = new();
     readonly Queue<T> commandQueue = new();
-    readonly Action<object> continuation;
+    readonly Action continuation;
 
-    UniTask.Awaiter currentAwaiter;
-    CancellationTokenRegistration tokenRegistration;
-    CancellationToken cancellationToken;
+    ValueTaskAwaiter currentAwaiter;
+    readonly CancellationTokenRegistration tokenRegistration;
+    readonly CancellationToken cancellationToken;
 
     bool isStopped;
 
@@ -171,7 +172,7 @@ sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
             }, this, useSynchronizationContext: false);
         }
 
-        continuation = static x => ((ForEachPublishAndAwaitObserver<T>)x).Continue();
+        continuation = Continue;
     }
 
     protected override void OnNextCore(T value)
@@ -187,7 +188,7 @@ sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
                 }
                 else
                 {
-                    currentAwaiter.SourceOnCompleted(continuation, this);
+                    currentAwaiter.UnsafeOnCompleted(continuation);
                 }
             }
             else
@@ -231,7 +232,7 @@ sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
                 {
                     try
                     {
-                        outerCompletionSource.TrySetResult();
+                        outerCompletionSource.TrySetResult(true);
                     }
                     finally
                     {
@@ -273,7 +274,7 @@ sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
                 }
                 else
                 {
-                    currentAwaiter.SourceOnCompleted(continuation, this);
+                    currentAwaiter.UnsafeOnCompleted(continuation);
                 }
             }
             else
@@ -282,7 +283,7 @@ sealed class ForEachPublishAndAwaitObserver<T> : Observer<T> where T : ICommand
                 {
                     try
                     {
-                        outerCompletionSource.TrySetResult();
+                        outerCompletionSource.TrySetResult(true);
                     }
                     finally
                     {
