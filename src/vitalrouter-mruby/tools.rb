@@ -1,7 +1,6 @@
 require 'fileutils'
 require 'rake'
 
-
 PLATFORMS = {
   'windows-x64' => 'dll',
   'macos-arm64' => 'dylib',
@@ -18,6 +17,13 @@ PLATFORMS = {
   'android-arm64' => 'so',
   'wasm' => 'a',
 }
+
+def build(platform)
+  mruby_root = File.expand_path('../ext/mruby', __FILE__)
+  
+  sh "cd #{mruby_root}"
+  sh "MRUBY_CONFIG=#{config}"
+end
 
 def copy_to_unity(build_dir)
   build_dir = File.expand_path(build_dir)
@@ -46,6 +52,8 @@ def copy_to_unity(build_dir)
 end
 
 case ARGV[0]
+when 'build'
+  build(ARGV[1])
 when 'copy_to_unity'
   copy_to_unity(ARGV[1])
 else

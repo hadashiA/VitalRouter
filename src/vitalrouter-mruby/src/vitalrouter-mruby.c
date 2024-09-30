@@ -295,10 +295,12 @@ extern mrb_value vitalrouter_mrb_hash_get(vitalrouter_mrb_ctx *ctx, mrb_value ha
 
 extern vitalrouter_nstring vitalrouter_mrb_to_string(vitalrouter_mrb_ctx *ctx, mrb_value v)
 {
+  int ai = mrb_gc_arena_save();
   mrb_value str = mrb_funcall(ctx->mrb, v, "to_s", 0);
   mrb_ssize len = RSTRING_LEN(str);
   char *ptr = RSTRING_PTR(str); // Is this safe from GC compaction..? 
   vitalrouter_nstring result = { (uint8_t *)ptr, (int32_t)len };
+  mrb_gc_arena_restore(ai);
   return result;
 }
 
