@@ -40,7 +40,7 @@ namespace VitalRouter.MRuby
     [StructLayout(LayoutKind.Explicit)]
     public struct MrbValueUnion
     {
-        // Assuming MRB_NO_FLOAT is off, MARB_USE_FLOAT is off.
+        // Assuming MRB_NO_FLOAT is off, MRB_USE_FLOAT is off.
         [FieldOffset(0)]
         public double F;
 

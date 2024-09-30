@@ -62,6 +62,7 @@ namespace VitalRouter.MRuby
 
             // well known collections
 
+            { typeof(byte[]), ByteArrayFormatter.Instance },
             // { typeof(Memory<byte>), ByteMemoryFormatter.Instance },
             // { typeof(ReadOnlyMemory<byte>), ByteReadOnlyMemoryFormatter.Instance },
             // { typeof(ReadOnlySequence<byte>), ByteReadOnlySequenceFormatter.Instance },

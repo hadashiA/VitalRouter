@@ -76,16 +76,16 @@ namespace VitalRouter.MRuby
             EvaluateUnsafe(rubySource).Dispose();
         }
 
-        public T? Evaluate<T>(string rubySource)
+        public T? Evaluate<T>(string rubySource, MrbValueSerializerOptions options = null)
         {
             var bytes = System.Text.Encoding.UTF8.GetBytes(rubySource);
             return Evaluate<T>(bytes);
         }
 
-        public T? Evaluate<T>(ReadOnlySpan<byte> rubySource)
+        public T? Evaluate<T>(ReadOnlySpan<byte> rubySource, MrbValueSerializerOptions options = null)
         {
             using var result = EvaluateUnsafe(rubySource);
-            return MrbValueSerializer.Deserialize<T>(result.RawValue, this);
+            return MrbValueSerializer.Deserialize<T>(result.RawValue, this, options);
         }
 
         public MrbValueHandle EvaluateUnsafe(string rubySource)
