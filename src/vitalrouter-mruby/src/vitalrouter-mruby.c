@@ -142,15 +142,17 @@ extern mrb_value vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstr
 {
   int ai = mrb_gc_arena_save(ctx->mrb);
 
-  mrb_value result = mrb_load_nstring(ctx->mrb, (const char *)source.bytes, (size_t)source.length);
+  mrb_ccontext *compiler_ctx = mrb_ccontext_new(ctx->mrb);
+  compiler_ctx->capture_errors = TRUE;
+  mrb_value result = mrb_load_nstring_cxt(ctx->mrb, (const char *)source.bytes, (size_t)source.length, compiler_ctx);  
   if (throw(ctx, -1)) {
+    mrb_ccontext_free(ctx->mrb, compiler_ctx);
     mrb_gc_arena_restore(ctx->mrb, ai);
     return mrb_nil_value();
   }
 
-  if (!mrb_immediate_p(result)) {
-    mrb_gc_register(ctx->mrb, result);
-  }
+  mrb_ccontext_free(ctx->mrb, compiler_ctx);
+  mrb_gc_register(ctx->mrb, result);
   mrb_gc_arena_restore(ctx->mrb, ai);
   return result;
 }
@@ -168,8 +170,9 @@ extern vitalrouter_mrb_script *vitalrouter_mrb_script_compile(vitalrouter_mrb_ct
 
   mrb_ccontext *compiler_ctx = mrb_ccontext_new(ctx->mrb);
   compiler_ctx->no_exec = TRUE;
+  compiler_ctx->capture_errors = TRUE;
 
-  mrb_value proc = mrb_load_nstring_cxt(ctx->mrb, (const char *)source.bytes, (size_t)source.length, compiler_ctx);
+  mrb_value proc = mrb_load_nstring_cxt(ctx->mrb, (const char *)source.bytes, (size_t)source.length, compiler_ctx);  
   if (throw(ctx, -1)) {
     return NULL;
   }
@@ -293,9 +296,17 @@ extern mrb_value vitalrouter_mrb_hash_get(vitalrouter_mrb_ctx *ctx, mrb_value ha
   return mrb_hash_get(ctx->mrb, hash, key);
 }
 
+// TODO: if to_s is newly allocated, risk of being GC'd
 extern vitalrouter_nstring vitalrouter_mrb_to_string(vitalrouter_mrb_ctx *ctx, mrb_value v)
 {
-  mrb_value str = mrb_funcall(ctx->mrb, v, "to_s", 0);
+  mrb_value str;
+  if (mrb_string_p(v)) {
+    str = v;
+  } else {
+    int ai = mrb_gc_arena_save(ctx->mrb);
+    str = mrb_funcall(ctx->mrb, v, "to_s", 0);
+    mrb_gc_arena_restore(ctx->mrb, ai);
+  }
   mrb_ssize len = RSTRING_LEN(str);
   char *ptr = RSTRING_PTR(str); // Is this safe from GC compaction..? 
   vitalrouter_nstring result = { (uint8_t *)ptr, (int32_t)len };
