@@ -93,7 +93,7 @@ Prerequirements:
 Then, add git URL from Package Manager:
 
 ```
-https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#1.4.1
+https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#1.4.2
 ```
 
 ## Getting Started
