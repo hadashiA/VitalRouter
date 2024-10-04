@@ -32,7 +32,10 @@ namespace VitalRouter.MRuby
 
         public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
         {
-            context.Extensions[MRubyContextKey] = mrubyContext;
+            if (mrubyContext is { IsInvalid: false, IsClosed: false })
+            {
+                context.Extensions[MRubyContextKey] = mrubyContext;
+            }
             return next(command, context);
         }
     }
