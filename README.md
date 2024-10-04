@@ -1298,6 +1298,15 @@ state[:float_value]  #=> 678.9
 state[:string_value] #=> "Hoge Hoge"
 ```
 
+### Memory Usage in Ruby
+
+VitalRouter.MRuby specifies Unity's `UnsafeUtility.Malloc` for mruby's memory allocator.
+
+Therefore, mruby's memory usage can be checked from MemoryProfiler, etc.
+
+<img width="910" alt="スクリーンショット 2024-10-04 16 54 23" src="https://github.com/user-attachments/assets/4e29dff0-f2c4-4bef-ae89-d5a7858a3bc3">
+
+
 ### Supported platforms
 
 VitalRouter.MRuby embeds custom `libmruby` as a Unity native plugin.
