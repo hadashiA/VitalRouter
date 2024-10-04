@@ -10,7 +10,7 @@
 #include <mruby/variable.h>
 #include "vitalrouter-mruby.h"
 
-#define SCRIPT_RUNNING_LIMIT 16
+#define SCRIPT_RUNNING_LIMIT 64
 #define fiber_ptr(o) ((struct RFiber*)mrb_ptr(o))
 
 typedef struct {
@@ -18,6 +18,7 @@ typedef struct {
   vitalrouter_mrb_script *script;
 } running_script_entry;
 
+static mrb_allocf vitalrouter_mrb_allocf;
 static int last_script_id = 0;
 static running_script_entry running_script_entries[SCRIPT_RUNNING_LIMIT];
 
@@ -80,9 +81,19 @@ static void shared_state_set(mrb_state *mrb, char *key, mrb_value value) {
   mrb_funcall(mrb, state, "[]=", 2, sym, value);
 }
 
+extern void vitalrouter_mrb_allocf_set(mrb_allocf allocf)
+{
+  vitalrouter_mrb_allocf = allocf;
+}
+
 extern vitalrouter_mrb_ctx *vitalrouter_mrb_ctx_new()
 {
-  mrb_state *mrb = mrb_open();
+  mrb_state *mrb;
+  if (vitalrouter_mrb_allocf) {
+    mrb = mrb_open_allocf(vitalrouter_mrb_allocf, NULL);
+  } else {
+    mrb = mrb_open();
+  }
   if (mrb == NULL) {
     return NULL;
   }

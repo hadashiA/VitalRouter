@@ -35,6 +35,7 @@ typedef struct {
   vitalrouter_mrb_error_cb on_error;
 } vitalrouter_mrb_ctx;
 
+extern void vitalrouter_mrb_allocf_set(mrb_allocf allocf);
 extern vitalrouter_mrb_ctx *vitalrouter_mrb_ctx_new();
 extern void vitalrouter_mrb_ctx_dispose(vitalrouter_mrb_ctx *ctx);
 

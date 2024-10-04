@@ -14,8 +14,11 @@ namespace VitalRouter.MRuby
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     delegate void MrbCommandHandler(int scriptId, MrbNString commandName, MrbValue payload);
 
+    unsafe delegate void MrbErrorHandler(int scriptId, byte* message);
+
+    // typedef void* (*mrb_allocf) (struct mrb_state *mrb, void *ptr, size_t size, void *ud);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    unsafe delegate void MrbErrorHandler(int scriptId, byte* commandName);
+    unsafe delegate void* MrbAllocF(void *mrb, void *ptr, nuint size, void *ud);
 
     [StructLayout(LayoutKind.Sequential)]
     struct MrbContextCore
@@ -120,6 +123,9 @@ namespace VitalRouter.MRuby
 #else
         const string __DllName = "VitalRouter.MRuby.Native";
 #endif
+        [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_allocf_set", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void MrbAllocfSet(MrbAllocF allocF);
+
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_ctx_new", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern MrbContextCore* MrbContextNew();
 

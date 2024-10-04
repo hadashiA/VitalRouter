@@ -22,3 +22,4 @@ EXPORTS
     vitalrouter_mrb_hash_get
     vitalrouter_mrb_to_string
     vitalrouter_mrb_value_release
+    vitalrouter_mrb_allocf_set

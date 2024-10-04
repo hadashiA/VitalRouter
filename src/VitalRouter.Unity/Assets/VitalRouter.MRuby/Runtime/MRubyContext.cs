@@ -1,5 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
+using AOT;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace VitalRouter.MRuby
 {
@@ -29,10 +32,60 @@ namespace VitalRouter.MRuby
         }
     }
 
+    static class MRubyAllocator
+    {
+        const Allocator DefaultAllocator = Allocator.Persistent;
+        static readonly long HeaderSize = UnsafeUtility.SizeOf<Header>();
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct Header
+        {
+            public ulong Size;
+        }
+
+        [MonoPInvokeCallback(typeof(MrbAllocF))]
+        internal static unsafe void* AllocPersistent(void* mrb, void* ptr, nuint size, void* ud)
+        {
+            // free
+            if (size == 0 && ptr != null)
+            {
+                UnsafeUtility.Free((byte*)ptr - HeaderSize, DefaultAllocator);
+                return null;
+            }
+
+            // malloc
+            if (ptr == null)
+            {
+                var newPtr = UnsafeUtility.Malloc((long)size + HeaderSize, sizeof(byte), DefaultAllocator);
+                ((Header*)newPtr)->Size = size;
+                return (byte*)newPtr + HeaderSize;
+            }
+            else
+            {
+                // realloc
+                var currentHeader = *(Header*)((byte*)ptr - HeaderSize);
+                if (currentHeader.Size >= size)
+                {
+                    return ptr;
+                }
+
+                var newPtr = UnsafeUtility.Malloc((long)size + HeaderSize, sizeof(byte), DefaultAllocator);
+                ((Header*)newPtr)->Size = size;
+
+                var dst = (byte*)newPtr + HeaderSize;
+                UnsafeUtility.MemCpy(dst, ptr, (long)currentHeader.Size);
+                UnsafeUtility.Free((byte*)ptr - HeaderSize, DefaultAllocator);
+                return dst;
+            }
+        }
+    }
+
     public class MRubyContext : SafeHandle
     {
-        public static unsafe MRubyContext Create(Router publisher, MRubyCommandPreset commandPreset)
+        public static unsafe MRubyContext Create(Router publisher, MRubyCommandPreset commandPreset, Allocator allocator = Allocator.Persistent)
         {
+            NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
+
             var ptr = NativeMethods.MrbContextNew();
             NativeMethods.MrbCallbacksSet(ptr, MRubyScript.OnCommandCalled, MRubyScript.OnError);
 
