@@ -44,6 +44,15 @@ public partial class ExamplePresenter
 }
 ```
 
+
+Another, easier way is to register a lambda expression directly as a handler.
+
+```cs
+router.Subscribe<FooCommand>(cmd => { /* ... */ })
+router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
+```
+
+
 | Feature                                                           | Description                                                                                                                                                                                                                 |
 |-------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Declarative routing                                               | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                                                                                           |
@@ -194,13 +203,6 @@ void On(FooCommand cmd) { /* .. */ }
 
 > [!NOTE] 
 > There are no restrictions by Interface but it will generate source code that will be resolved at compile time, so you will be able to follow the code well enough.
-
-Another, easier way is to register a lambda expression directly as a handler.
-
-```cs
-router.Subscribe<FooCommand>(cmd => { /* ... */ })
-router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ })
-```
 
 Now, when and how does the routing defined here call? There are several ways to make it enable this.
 
