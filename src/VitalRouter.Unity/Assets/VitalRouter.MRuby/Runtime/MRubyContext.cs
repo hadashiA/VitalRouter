@@ -32,7 +32,7 @@ namespace VitalRouter.MRuby
         }
     }
 
-    static class MRubyAllocator
+    static unsafe class MRubyAllocator
     {
         const Allocator DefaultAllocator = Allocator.Persistent;
         static readonly long HeaderSize = UnsafeUtility.SizeOf<Header>();
@@ -40,27 +40,20 @@ namespace VitalRouter.MRuby
         [StructLayout(LayoutKind.Sequential)]
         struct Header
         {
-            public ulong Size;
+            public uint Size;
         }
 
         [MonoPInvokeCallback(typeof(MrbAllocF))]
-        internal static unsafe void* AllocPersistent(void* mrb, void* ptr, nuint size, void* ud)
+        internal static void* AllocPersistent(void* mrb, void* ptr, nuint size, void* ud)
         {
-            // free
             if (size == 0 && ptr != null)
             {
-                UnsafeUtility.Free((byte*)ptr - HeaderSize, DefaultAllocator);
+                Free(ptr);
                 return null;
             }
 
-            // malloc
-            if (ptr == null)
-            {
-                var newPtr = UnsafeUtility.Malloc((long)size + HeaderSize, sizeof(byte), DefaultAllocator);
-                ((Header*)newPtr)->Size = size;
-                return (byte*)newPtr + HeaderSize;
-            }
-            else
+            var newPtr = Malloc((uint)size);
+            if (ptr != null)
             {
                 // realloc
                 var currentHeader = *(Header*)((byte*)ptr - HeaderSize);
@@ -69,14 +62,22 @@ namespace VitalRouter.MRuby
                     return ptr;
                 }
 
-                var newPtr = UnsafeUtility.Malloc((long)size + HeaderSize, sizeof(byte), DefaultAllocator);
-                ((Header*)newPtr)->Size = size;
-
-                var dst = (byte*)newPtr + HeaderSize;
-                UnsafeUtility.MemCpy(dst, ptr, (long)currentHeader.Size);
-                UnsafeUtility.Free((byte*)ptr - HeaderSize, DefaultAllocator);
-                return dst;
+                UnsafeUtility.MemCpy(newPtr, ptr, currentHeader.Size);
+                Free(ptr);
             }
+            return newPtr;
+        }
+
+        static void Free(void* ptr)
+        {
+            UnsafeUtility.Free((byte*)ptr - HeaderSize, DefaultAllocator);
+        }
+
+        static void* Malloc(uint size)
+        {
+            var allocated = UnsafeUtility.Malloc(size + HeaderSize, sizeof(byte), DefaultAllocator);
+            ((Header*)allocated)->Size = size;
+            return (byte*)allocated + HeaderSize;
         }
     }
 

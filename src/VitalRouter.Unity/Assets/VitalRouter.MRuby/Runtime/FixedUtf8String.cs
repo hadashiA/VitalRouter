@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace VitalRouter.MRuby
 {
@@ -10,25 +11,15 @@ namespace VitalRouter.MRuby
         public readonly int Length;
         fixed byte bytes[MaxLength];
 
-        // this.bytes is not GC target, it is located as a value on this struct
-        public ReadOnlySpan<byte> AsSpan()
-        {
-            fixed (byte* ptr = bytes)
-            {
-                return new ReadOnlySpan<byte>(ptr, Length);
-            }
-        }
-
         public FixedUtf8String(byte* bytes, int length)
         {
             if (length > MaxLength)
             {
                 throw new ArgumentException($"String is too long. length: {length}");
             }
-            var source = new ReadOnlySpan<byte>(bytes, length);
             fixed (byte* ptr = this.bytes)
             {
-                source.CopyTo(new Span<byte>(ptr, length));
+                UnsafeUtility.MemCpy(ptr, bytes, length);
             }
             Length = length;
         }
@@ -52,32 +43,48 @@ namespace VitalRouter.MRuby
 
         public bool EquivalentIgnoreCaseTo(ReadOnlySpan<byte> other)
         {
-            var span = AsSpan();
-            if (span.SequenceEqual(other))
+            fixed (byte* ptr = bytes)
             {
-                return true;
-            }
+                var span = new ReadOnlySpan<byte>(ptr, Length);
+                if (span.SequenceEqual(other))
+                {
+                    return true;
+                }
 
-            // Test to underscore
-            Span<byte> otherUnderscore = stackalloc byte[other.Length * 2];
-            int written;
-            while (!NamingConventionMutator.SnakeCase.TryMutate(other, otherUnderscore, out written))
-            {
-                // ReSharper disable once StackAllocInsideLoop
-                otherUnderscore = stackalloc byte[otherUnderscore.Length * 2];
-            }
-            if (span.SequenceEqual(otherUnderscore[..written]))
-            {
-                return true;
+                // Test to underscore
+                Span<byte> otherUnderscore = stackalloc byte[other.Length * 2];
+                int written;
+                while (!NamingConventionMutator.SnakeCase.TryMutate(other, otherUnderscore, out written))
+                {
+                    // ReSharper disable once StackAllocInsideLoop
+                    otherUnderscore = stackalloc byte[otherUnderscore.Length * 2];
+                }
+                if (span.SequenceEqual(otherUnderscore[..written]))
+                {
+                    return true;
+                }
             }
             return false;
         }
 
-        public override string ToString() => Encoding.UTF8.GetString(AsSpan());
+        public override string ToString()
+        {
+            fixed (byte* ptr = bytes)
+            {
+                return Encoding.UTF8.GetString(ptr, Length);
+            }
+        }
 
         public bool Equals(FixedUtf8String other)
         {
-            return AsSpan().SequenceEqual(other.AsSpan());
+            if (Length != other.Length) return false;
+
+            fixed (byte* ptr = bytes)
+            {
+                var span = new ReadOnlySpan<byte>(ptr, Length);
+                var otherSpan = new ReadOnlySpan<byte>(other.bytes, other.Length);
+                return span.SequenceEqual(otherSpan);
+            }
         }
 
         public override bool Equals(object? other)
