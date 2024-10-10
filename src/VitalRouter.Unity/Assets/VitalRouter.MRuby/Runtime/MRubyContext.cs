@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using AOT;
 using Unity.Collections;
@@ -56,28 +57,39 @@ namespace VitalRouter.MRuby
             if (ptr != null)
             {
                 // realloc
-                var currentHeader = *(Header*)((byte*)ptr - HeaderSize);
-                if (currentHeader.Size >= size)
-                {
-                    return ptr;
-                }
+                ReadHeader(ptr, out var currentSize);
+                if (currentSize >= size) return ptr;
 
-                UnsafeUtility.MemCpy(newPtr, ptr, currentHeader.Size);
+                UnsafeUtility.MemCpy(newPtr, ptr, currentSize);
                 Free(ptr);
             }
             return newPtr;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void Free(void* ptr)
         {
             UnsafeUtility.Free((byte*)ptr - HeaderSize, DefaultAllocator);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void* Malloc(uint size)
         {
             var allocated = UnsafeUtility.Malloc(size + HeaderSize, sizeof(byte), DefaultAllocator);
-            ((Header*)allocated)->Size = size;
+            WriteHeader(allocated, size);
             return (byte*)allocated + HeaderSize;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void ReadHeader(void* ptr, out uint size)
+        {
+            size = ((Header*)((byte*)ptr - HeaderSize))->Size;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void WriteHeader(void* ptr, uint size)
+        {
+            ((Header*)ptr)->Size = size;
         }
     }
 
@@ -166,7 +178,6 @@ namespace VitalRouter.MRuby
 
         public MRubyScript CompileScript(string rubySource)
         {
-            EnsureNotDisposed();
             var bytes = System.Text.Encoding.UTF8.GetBytes(rubySource);
             return CompileScript(bytes);
         }
