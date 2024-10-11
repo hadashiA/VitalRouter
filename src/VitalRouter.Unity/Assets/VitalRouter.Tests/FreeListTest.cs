@@ -59,5 +59,17 @@ public class FreeListTest
         var span = freeList.AsSpan();
         Assert.That(span.Length, Is.EqualTo(0));
     }
+
+    [Test]
+    public void ClearSingleElement()
+    {
+        var freeList = new FreeList<string>(1);
+        freeList.Add("a");
+
+        freeList.Clear();
+
+        var span = freeList.AsSpan();
+        Assert.That(span.Length, Is.EqualTo(0));
+    }
 }
 }
