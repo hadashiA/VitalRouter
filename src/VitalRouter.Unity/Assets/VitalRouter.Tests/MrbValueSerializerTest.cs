@@ -1,4 +1,5 @@
 #if UNITY_2022_2_OR_NEWER
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -85,6 +86,23 @@ namespace VitalRouter.Tests
         {
             using var context = MRubyContext.Create(Router.Default, new DummyCommandPreset());
             Assert.That(context.Evaluate<Vector2>("[123, 456]"), Is.EqualTo(new Vector2(123, 456)));
+        }
+
+        [Test]
+        public void Deserialize_Tuple()
+        {
+            using var context = MRubyContext.Create(Router.Default, new DummyCommandPreset());
+            Assert.That(context.Evaluate<Tuple<int>>("[1]"), Is.EqualTo(new Tuple<int>(1)));
+            Assert.That(context.Evaluate<Tuple<int, string>>("[1, 'a']"), Is.EqualTo(new Tuple<int, string>(1, "a")));
+            Assert.That(context.Evaluate<Tuple<int, string, int>>("[1, 'a', 2]"), Is.EqualTo(new Tuple<int, string, int>(1, "a", 2)));
+            Assert.That(context.Evaluate<Tuple<int, string, int, string>>("[1, 'a', 2, 'b']"), Is.EqualTo(new Tuple<int, string, int, string>(1, "a", 2, "b")));
+            Assert.That(context.Evaluate<Tuple<int, string, int, string, int>>("[1, 'a', 2, 'b', 3]"), Is.EqualTo(new Tuple<int, string, int, string, int>(1, "a", 2, "b", 3)));
+
+            Assert.That(context.Evaluate<ValueTuple<int>>("[1]"), Is.EqualTo(new ValueTuple<int>(1)));
+            Assert.That(context.Evaluate<ValueTuple<int, string>>("[1, 'a']"), Is.EqualTo((1, "a")));
+            Assert.That(context.Evaluate<ValueTuple<int, string, int>>("[1, 'a', 2]"), Is.EqualTo((1, "a", 2)));
+            Assert.That(context.Evaluate<ValueTuple<int, string, int, string>>("[1, 'a', 2, 'b']"), Is.EqualTo((1, "a", 2, "b")));
+            Assert.That(context.Evaluate<ValueTuple<int, string, int, string, int>>("[1, 'a', 2, 'b', 3]"), Is.EqualTo((1, "a", 2, "b", 3)));
         }
 
         [Test]

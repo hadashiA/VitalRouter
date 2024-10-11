@@ -50,6 +50,7 @@ namespace Sandbox
     [MRubyObject]
     public partial struct TextCommand : ICommand
     {
+        public string Id;
         public string Body;
     }
 
@@ -74,8 +75,29 @@ namespace Sandbox
             context.Load("def hoge(x) = x * 100");
             var h = context.Evaluate<int>("hoge(7)");
 
+            context.Load("class CharacterContext\n" +
+                         "  def initialize(id)\n" +
+                         "    @id = id\n" +
+                         "  end\n" +
+                         "  \n" +
+                         "  def text(body)\n" +
+                         "log(body)\n" +
+                         "    cmd :text, id: @id, body:\n" +
+                         "  end\n" +
+                         "end\n" +
+                         "\n" +
+                         "def with(id, &block)\n" +
+                         "  CharacterContext.new(id).instance_eval(&block)\n" +
+                         "end\n");
+
             using var script = context.CompileScript(
-                $"loop {{ cmd :text, body: \"Hello #{{state[:counter].to_i}} calculated: {h}\" }}\n");
+                "loop do\n" +
+                "  log(state[:counter].to_s)\n" +
+                "  c = state[:counter].to_i\n" +
+                "  with(:Bob) do\n" +
+                $"    text \"Hello #{{c}} calculated: {h}\"\n" +
+                "  end\n" +
+                "end\n");
 
             MapTo(Router.Default);
 
