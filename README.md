@@ -1372,7 +1372,9 @@ The steps to build VitalRouter.MRuby.Native.dll are as follows:
   
 If you want to build VitalRouter.MRuby.Native for a new platform, you should need to create a new build_config file, referring to the existing build_config.*.rb files.
 
-refs: https://github.com/mruby/mruby/blob/master/doc/guides/compile.md
+refs: 
+- https://github.com/mruby/mruby/blob/master/doc/guides/compile.md
+- https://github.com/mruby/mruby/tree/master/build_config
 
 ## R3 integration
 
