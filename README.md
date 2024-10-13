@@ -1348,6 +1348,31 @@ Please refer to the following table for current support status.
 - "Confirmation" means that the author has checked the operation on one or more types of devices. If you have any problems in your environment, please let us know by submitting an issue.
 - Build is done in mruby's [build_config.rb](https://github.com/hadashiA/VitalRouter/tree/main/src/vitalrouter-mruby). If you want to add more environments to support, pull requests are welcome.
 
+### How to build VitalRouter.MRuby.Native.(dll|a|so|dylib) ?
+
+VitalRouter.MRuby.Native is simply renamed libmruby. 
+(It is named for easy identification on crash logs and stack traces.)
+
+The code for the native part of VitalRouter.MRuby is provided as an mruby mrbgem, which is output by the mruby build system into a single libmruby binary.
+
+The steps to build VitalRouter.MRuby.Native.dll are as follows: 
+
+1. Clone this repository.
+2. Follow the mruby build system and perform the following.
+  - ```bash
+    $ cd VitalRouter/src/vitalrouter-mruby/ext/mruby
+    $ ``MRUBY_CONFIG=/path/to/build_config.rb rake`
+    ```
+  - The MRUBY_CONFIG file should be prepared for each target platform.
+      - For existing files, they are located in the [./src/vitalrouter-mruby](https://github.com/hadashiA/VitalRouter/tree/main/src/vitalrouter-mruby ) directory
+  - The mruby rake outputs a static library, but Unity does not support static libraries on some platforms. For this reason, VitalRouter performs conversion to a shared library in an additional task. This is called automatically.
+      - https://github.com/hadashiA/VitalRouter/blob/main/src/vitalrouter-mruby/mrbgem.rake#L24
+3. Copy the libmruby binary in the ./build/lib directory to unity assets.
+  - ./src/VitalRouter.Unity/Assets/VitalRouter.MRuby/Runtime/Plugins/
+  
+If you want to build VitalRouter.MRuby.Native for a new platform, you should need to create a new build_config file, referring to the existing build_config.*.rb files.
+
+refs: https://github.com/mruby/mruby/blob/master/doc/guides/compile.md
 
 ## R3 integration
 
