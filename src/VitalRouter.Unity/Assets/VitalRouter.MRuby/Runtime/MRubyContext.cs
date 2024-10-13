@@ -216,7 +216,7 @@ namespace VitalRouter.MRuby
 
         void EnsureNotDisposed()
         {
-            if (IsClosed && IsInvalid)
+            if (IsClosed || IsInvalid)
             {
                 throw new ObjectDisposedException("MRubyContext is already disposed.");
             }
