@@ -975,10 +975,6 @@ Comparing lua and mruby,
     - Moreover, it is possible to custom-build `libmruby` as a single library by selecting only the necessary features.
  
 
-> [!NOTE]
-> An example of a game that uses mruby is "NieR:Automata"
-> https://logmi.jp/tech/articles/330486
-
 For example, let's prepare the following Ruby script:
 
 ```ruby
@@ -1004,29 +1000,6 @@ end
 
 Each time the `cmd` call is made, VitalRouter publishes an `ICommand`.
 The way to subscribe to this is the same as in the usual VitalRouter.
-
-```cs
-// Register the commands you will use in advance, like this.
-[MRubyCommand("move", typeof(CharacterMoveCommand))]
-[MRubyCommand("speak", typeof(CharacterSpeakCommand))]
-class MyCommandPreset : MRubyCommandPreset { }
-
-[Routes]
-class MRubyScriptPresenter
-{
-    // mruby's `cmd :move` calls this async handler
-    public async UniTask On(ChracterMoveCommand cmd)
-    {
-        await CharacterActor.MoveAsync(cmd.Id, cmd.To);
-    }
-
-    // mruby's `cmd :speak` calls this async handler
-    public async UniTask On(CharacterSpeakCommand cmd)
-    {
-        await MessageBalloon.PresentAndWaitAsync(cmd.Id, cmd.To);
-    }
-}
-```
 
 A notable feature is that while C# is executing async/await, the mruby side suspends and waits without blocking the main thread. 
 Internally, it leverages mruby's `Fiber`, which can be controlled externally to suspend and resume.
@@ -1060,7 +1033,7 @@ var context = MRubyContext.Create(
 ```cs
 [MRubyCommand("move", typeof(CharacterMoveCommand))]   // < Your custom command name and type list here 
 [MRubyCommand("speak", typeof(CharacterSpeakCommand))]
-class MyCommandPreset : MRubyCommandPreset { }
+partial class MyCommandPreset : MRubyCommandPreset { }
 
 // Your custom command decralations
 [MRubyObject]
@@ -1213,7 +1186,9 @@ For example, you can easily write `cmd` to your liking by adding method and clas
  
  # It can be written like this
  move "Bob", [5, 5]
- 
+```
+
+```ruby 
  # Making full use of class definitions and instance_eval...
  class CharacterContext
    def initialize(id)
@@ -1232,8 +1207,7 @@ For example, you can easily write `cmd` to your liking by adding method and clas
  # It can be written like this.
  with(:Bob) do
    move [5, 5]
- end
- 
+ end 
 ```
 
 By default, syntax errors and runtime errors that occur in mruby scripts are reported via `UnityEngine.Debug.LogError`. 
