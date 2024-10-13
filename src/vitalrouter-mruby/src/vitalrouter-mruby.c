@@ -136,14 +136,16 @@ extern void vitalrouter_mrb_state_set_string(vitalrouter_mrb_ctx *ctx, char *key
   shared_state_set(ctx->mrb, key, mrb_str_new_cstr(ctx->mrb, value));
 }
 
-extern void vitalrouter_mrb_state_remove(vitalrouter_mrb_ctx *ctx,char *key) {
+extern void vitalrouter_mrb_state_remove(vitalrouter_mrb_ctx *ctx,char *key)
+{
   mrb_value self = mrb_obj_value(ctx->mrb->top_self);
   mrb_value state = mrb_funcall(ctx->mrb, self, "state", 0);
   mrb_value sym = mrb_symbol_value(mrb_intern_cstr(ctx->mrb, key));
   mrb_funcall(ctx->mrb, state, "delete", 1, sym);
 }
 
-extern void vitalrouter_mrb_state_clear(vitalrouter_mrb_ctx *ctx) {
+extern void vitalrouter_mrb_state_clear(vitalrouter_mrb_ctx *ctx)
+{
   mrb_value self = mrb_obj_value(ctx->mrb->top_self);
   mrb_value state = mrb_funcall(ctx->mrb, self, "state", 0);
   mrb_funcall(ctx->mrb, state, "clear", 0, NULL);

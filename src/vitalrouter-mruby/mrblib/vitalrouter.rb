@@ -13,6 +13,14 @@ module VitalRouter
     def []=(key, val)
       (@variables ||= {})[key] = val
     end
+
+    def delete(key)
+      @variables&.delete(key)
+    end
+
+    def clear
+      @variables&.clear
+    end
   end
 
   class TimeDuration

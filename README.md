@@ -1305,6 +1305,11 @@ state[:int_value]    #=> 1234
 state[:bool_value]   #=> true
 state[:float_value]  #=> 678.9
 state[:string_value] #=> "Hoge Hoge"
+
+# A somewhat fuzzy matcher, the `is?` method, is available for shared states.
+state[:a] #=> 'buz'
+state[:a].is?('buz') #=> true
+state[:a].is?(:buz)  #=> true
 ```
 
 ### Memory Usage in Ruby

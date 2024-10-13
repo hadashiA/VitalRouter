@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace VitalRouter.MRuby
 {
-    public class MRubySharedState
+    public unsafe class MRubySharedState
     {
         readonly MRubyContext context;
         readonly ConcurrentDictionary<string, object> values = new();
@@ -14,10 +14,12 @@ namespace VitalRouter.MRuby
             this.context = context;
         }
 
-        public unsafe void Remove(string key)
+        public IEnumerable<string> Keys() => values.Keys;
+
+        public void Remove(string key)
         {
             var keyMaxBytes = System.Text.Encoding.UTF8.GetMaxByteCount(key.Length + 1);
-            Span<byte> keyUtf8 = keyMaxBytes > 255
+            var keyUtf8 = keyMaxBytes > 255
                 ? new byte[keyMaxBytes]
                 : stackalloc byte[keyMaxBytes];
             var keyBytesWritten = System.Text.Encoding.UTF8.GetBytes(key, keyUtf8);
@@ -27,11 +29,13 @@ namespace VitalRouter.MRuby
             {
                 NativeMethods.MrbStateRemove(context.DangerousGetPtr(), keyPtr);
             }
+            values.TryRemove(key, out _);
         }
 
-        public unsafe void Clear()
+        public void Clear()
         {
             NativeMethods.MrbStateClear(context.DangerousGetPtr());
+            values.Clear();
         }
 
         public bool TryGet<T>(string key, out T value)
@@ -83,10 +87,10 @@ namespace VitalRouter.MRuby
             Set(typeof(string), key, value);
         }
 
-        unsafe void Set(Type type, string key, object boxedValue)
+        void Set(Type type, string key, object boxedValue)
         {
             var keyMaxBytes = System.Text.Encoding.UTF8.GetMaxByteCount(key.Length + 1);
-            Span<byte> keyUtf8 = keyMaxBytes > 255
+            var keyUtf8 = keyMaxBytes > 255
                 ? new byte[keyMaxBytes]
                 : stackalloc byte[keyMaxBytes];
             var keyBytesWritten = System.Text.Encoding.UTF8.GetBytes(key, keyUtf8);
@@ -110,7 +114,7 @@ namespace VitalRouter.MRuby
                     {
                         var value = (string)boxedValue;
                         var valueMaxBytes = System.Text.Encoding.UTF8.GetMaxByteCount(value.Length + 1);
-                        Span<byte> valueUtf8 = valueMaxBytes > 255
+                        var valueUtf8 = valueMaxBytes > 255
                             ? new byte[valueMaxBytes]
                             : stackalloc byte[valueMaxBytes];
                         var valueBytesWritten = System.Text.Encoding.UTF8.GetBytes(value, valueUtf8);
