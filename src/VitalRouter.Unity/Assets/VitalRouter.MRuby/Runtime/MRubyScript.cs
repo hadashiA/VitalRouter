@@ -89,6 +89,7 @@ namespace VitalRouter.MRuby
         internal static readonly Dictionary<int, MRubyScript> Scripts = new();
 
         TaskCompletionSource<bool>? completionSource;
+        CancellationToken cancellationToken;
 
         public unsafe MRubyScriptStatus Status
         {
@@ -146,6 +147,8 @@ namespace VitalRouter.MRuby
             }
 
             completionSource = new TaskCompletionSource<bool>();
+            cancellationToken = cancellation;
+
             if (cancellation.IsCancellationRequested)
             {
                 completionSource.TrySetCanceled(cancellation);
@@ -178,7 +181,18 @@ namespace VitalRouter.MRuby
         {
             EnsureNotDisposed();
 
+            if (cancellationToken.IsCancellationRequested)
+            {
+                completionSource?.TrySetCanceled(cancellationToken);
+            }
+
             var result = (NativeMethodResult)NativeMethods.MrbScriptResume(DangerousGetStatePtr(), DangerousGetPtr());
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                completionSource?.TrySetCanceled(cancellationToken);
+            }
+
             switch (result)
             {
                 case NativeMethodResult.Error:
@@ -241,9 +255,17 @@ namespace VitalRouter.MRuby
 
         void EnsureNotDisposed()
         {
-            if (IsClosed && IsInvalid)
+            if (IsClosed || IsInvalid)
             {
-                throw new ObjectDisposedException("MRubyScript is already disposed.");
+                var ex = new ObjectDisposedException("MRubyScript is already disposed.");
+                if (completionSource is { } x )
+                {
+                    x.TrySetException(ex);
+                }
+                else
+                {
+                    throw ex;
+                }
             }
         }
     }
