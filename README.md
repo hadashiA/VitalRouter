@@ -998,6 +998,40 @@ if state[:flag_1]
 end
 ```
 
+Ruby is good at creating DSLs. 
+For example, you can easily write `cmd` to your liking by adding method and class definitions.
+
+```ruby
+ # When the method is defined...
+ def move(id, to) = cmd :move, id:, to:
+ 
+ # It can be written like this
+ move "Bob", [5, 5]
+```
+
+```ruby 
+ # Making full use of class definitions and instance_eval...
+ class CharacterContext
+   def initialize(id)
+     @id = id
+   end
+   
+   def move(to)
+     cmd :move, id: @id, to: to
+   end
+ end
+ 
+ def with(id, &block)
+   CharacterContext.new(id).instance_eval(block)
+ end
+ 
+ # It can be written like this.
+ with(:Bob) do
+   move [5, 5]
+ end 
+```
+
+
 Each time the `cmd` call is made, VitalRouter publishes an `ICommand`.
 The way to subscribe to this is the same as in the usual VitalRouter.
 
@@ -1175,39 +1209,6 @@ await script.RunAsync();
 await script.RunAsync();
 
 script.Dispose();
-```
-
-Ruby is good at creating DSLs. 
-For example, you can easily write `cmd` to your liking by adding method and class definitions via `MRubyContext.Load`.
-
-```ruby
- # When the method is defined...
- def move(id, to) = cmd :move, id:, to:
- 
- # It can be written like this
- move "Bob", [5, 5]
-```
-
-```ruby 
- # Making full use of class definitions and instance_eval...
- class CharacterContext
-   def initialize(id)
-     @id = id
-   end
-   
-   def move(to)
-     cmd :move, id: @id, to: to
-   end
- end
- 
- def with(id, &block)
-   CharacterContext.new(id).instance_eval(block)
- end
- 
- # It can be written like this.
- with(:Bob) do
-   move [5, 5]
- end 
 ```
 
 By default, syntax errors and runtime errors that occur in mruby scripts are reported via `UnityEngine.Debug.LogError`. 
