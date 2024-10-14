@@ -138,7 +138,7 @@ namespace VitalRouter.MRuby
 
         public ICommandPublisher Publisher => Router;
 
-        public MRubyCommandPreset CommandPreset { get; set; } = default!;
+        public MRubyCommandPreset? CommandPreset { get; set; }
 
         public override bool IsInvalid => handle == IntPtr.Zero;
         Router? router;

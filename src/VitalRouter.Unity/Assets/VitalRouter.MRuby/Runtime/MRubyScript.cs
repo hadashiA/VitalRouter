@@ -225,7 +225,7 @@ namespace VitalRouter.MRuby
                     {
                         return;
                     }
-                    _ = script.Context.CommandPreset.CommandCallFromMrubyAsync(script, fixedCommandName, payload);
+                    _ = script.Context.CommandPreset?.CommandCallFromMrubyAsync(script, fixedCommandName, payload);
                 }
                 catch (Exception ex)
                 {
