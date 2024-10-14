@@ -196,6 +196,18 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         return this;
     }
 
+    public void RemoveFilter(Func<ICommandInterceptor, bool> predicate)
+    {
+        var span = interceptors.AsSpan();
+        for (var i = span.Length - 1; i >= 0; i--)
+        {
+            if (interceptors[i] is { } x && predicate(x))
+            {
+                interceptors.RemoveAt(i);
+            }
+        }
+    }
+
     public void Dispose()
     {
         if (!disposed)

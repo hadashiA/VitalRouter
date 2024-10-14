@@ -95,20 +95,21 @@ namespace VitalRouter.MRuby
 
     public class MRubyContext : SafeHandle
     {
-        public static unsafe MRubyContext Create(Router publisher, MRubyCommandPreset commandPreset, Allocator allocator = Allocator.Persistent)
+        public static unsafe MRubyContext Create()
         {
             NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
 
             var ptr = NativeMethods.MrbContextNew();
             NativeMethods.MrbCallbacksSet(ptr, MRubyScript.OnCommandCalled, MRubyScript.OnError);
 
-            var context = new MRubyContext(ptr)
-            {
-                Publisher = publisher,
-                CommandPreset = commandPreset,
-            };
+            return new MRubyContext(ptr);
+        }
 
-            publisher.Filter(new MRubyContextInterceptor(context));
+        public static MRubyContext Create(Router router, MRubyCommandPreset commandPreset)
+        {
+            var context = Create();
+            context.Router = router;
+            context.CommandPreset = commandPreset;
             return context;
         }
 
@@ -116,10 +117,31 @@ namespace VitalRouter.MRuby
         public static Action<string> GlobalLogHandler { get; set; } = UnityEngine.Debug.Log;
 
         public MRubySharedState SharedState { get; }
-        public ICommandPublisher Publisher { get; set; } = default!;
+
+        public Router Router
+        {
+            get
+            {
+                if (router == null)
+                {
+                    Router = Router.Default;
+                }
+                return router!;
+            }
+            set
+            {
+                router?.RemoveFilter(x =>
+                    x is MRubyContextInterceptor interceptor && interceptor.MrubyContext == this);
+                router = value.Filter(new MRubyContextInterceptor(this));
+            }
+        }
+
+        public ICommandPublisher Publisher => Router;
+
         public MRubyCommandPreset CommandPreset { get; set; } = default!;
 
         public override bool IsInvalid => handle == IntPtr.Zero;
+        Router? router;
 
 #pragma warning disable CS8500
 #pragma warning disable CS8981
@@ -129,6 +151,7 @@ namespace VitalRouter.MRuby
         unsafe MRubyContext(MrbContextCore* state) : base((IntPtr)state, true)
         {
             SharedState = new MRubySharedState(this);
+            Router = Router.Default;
         }
 
         public void Load(string rubySource)

@@ -23,18 +23,18 @@ namespace VitalRouter.MRuby
     public class MRubyContextInterceptor : ICommandInterceptor
     {
         public const string MRubyContextKey = "VitalRouter.MRubyContext";
-        readonly MRubyContext mrubyContext;
+        internal readonly MRubyContext MrubyContext;
 
         public MRubyContextInterceptor(MRubyContext mrubyContext)
         {
-            this.mrubyContext = mrubyContext;
+            MrubyContext = mrubyContext;
         }
 
         public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
         {
-            if (mrubyContext is { IsInvalid: false, IsClosed: false })
+            if (MrubyContext is { IsInvalid: false, IsClosed: false })
             {
-                context.Extensions[MRubyContextKey] = mrubyContext;
+                context.Extensions[MRubyContextKey] = MrubyContext;
             }
             return next(command, context);
         }
