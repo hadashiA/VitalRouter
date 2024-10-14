@@ -346,10 +346,6 @@ public class GameLifetimeScope : LifetimeScope
 
 ```
 
-> [!NOTE]
-> This is a simple demonstration.
-> If your codebase is huge, just have the View component notify its own events on the outside, rather than Publish directly. And maybe only the class responsible for the control flow should Publish.
-
 #### Setup with DI in Microsoft.Extensions.DependencyInjection
 
 ```cs
