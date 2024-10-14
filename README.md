@@ -955,15 +955,13 @@ At this time, it is very powerful if the publishing of commands can be controlle
 
 For example, when implementing a game scenario, most of the time we do not implement everything in C# scripts. It is common to express large amounts of text data, branching, flag management, etc. in a simple scripting language or data format.
 
-VitalRouter offers an optional package for this purpose before integrating [mruby](https://github.com/mruby/mruby).
+VitalRouter offers an optional package for this purpose before integrating [mruby](https://github.com/mruby/mruby). ([blog](https://medium.com/@hadashiA/vitalrouter-mruby-generic-ruby-scripting-framework-for-unity-d1b2234a5c33) / [blog (Japanease)](https://scrapbox.io/hadashiA/VitalRouter.MRuby_-_Unity%E5%90%91%E3%81%91%E6%B1%8E%E7%94%A8Ruby%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%97%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0%E3%83%95%E3%83%AC%E3%83%BC%E3%83%A0%E3%83%AF%E3%83%BC%E3%82%AF) )
 
 Ruby has very little syntax noise and is excellent at creating DSLs (Domain Specific Languages) that look like natural language. 
 Its influence can still be seen in modern languages (like Rust and Kotlin, etc).
 
 mruby is a lightweight Ruby interpreter for embedded use, implemented by the original author of Ruby himself. 
 
-Maybe, one of the most popular embedded scripting languages for games is Lua.
-Comparing lua and mruby, 
 - mruby can write DSLs that more closely resemble natural language. 
 - lua has smaller functions and smaller library size. But mruby would be small enough.
     - The size of mruby minimum shared library less than 700KB.
