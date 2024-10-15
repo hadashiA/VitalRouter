@@ -71,8 +71,9 @@ router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ 
 - [Command ordering](#command-ordering)
 - [DI scope](#di-scope)
 - [Command pooling](#command-pooling)
-- [mruby scripting](#mruby-scripting)
-- [R3 integration](#r3-integration)
+- Extensions
+  - [mruby scripting](#mruby-scripting)
+  - [R3 integration](#r3-integration)
 - [Performance](#performance)
 - [Concept, Technical Explanation](#concept-technical-explanation)
 - [Lisence](#lisence)
@@ -94,9 +95,9 @@ Prerequirements:
 
 - Unity 2022.2+
   - This limitation is due to the use of the Incremental Source Generator.
-- (optional )Install [UniTask](https://github.com/Cysharp/UniTask) >= 2.5.5
+- **(Optional)** Install [UniTask](https://github.com/Cysharp/UniTask) >= 2.5.5
   - If UniTask is installed in your project, the `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
-- (optional) Install [VContainer](https://github.com/hadashiA/VContainer) >= 1.15.1 
+- **(Optional)** Install [VContainer](https://github.com/hadashiA/VContainer) >= 1.15.1 
   -  For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
 
 Then, add git URL from Package Manager:
@@ -1050,13 +1051,13 @@ https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/V
 To execute mruby scripts, first create an `MRubyContext`.
 
 ```cs
-var context = MRubyContext.Create(
-    Router.Default, // ... 1
-    new MyCommandPreset()); // ... 2
+var context = MRubyContext.Create();
+context.Router = Router.Default;                // ... 1
+context.CommandPreset = new MyCommandPreset()); // ... 2
 ```
 
-1. The first argument passes the VitalRouter's Router. Commands issued by mruby can be received via this Router.
-2. The second argument is a marker that represents the list of commands you want to issue from mruby. You create it as follows:
+1. Set the `Router` for VitalRouter. Commands published from mruby are passed to the Router specified here. (Default: Router.Default)
+2. The `CommandPreset` is a marker that represents the list of commands you want to publish from mruby. You create it as follows:
 
 ```cs
 [MRubyCommand("move", typeof(CharacterMoveCommand))]   // < Your custom command name and type list here 
