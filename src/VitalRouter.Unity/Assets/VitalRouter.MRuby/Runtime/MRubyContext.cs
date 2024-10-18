@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using AOT;
 using Unity.Collections;
@@ -95,6 +96,12 @@ namespace VitalRouter.MRuby
 
     public class MRubyContext : SafeHandle
     {
+        [ThreadStatic]
+        static Exception? lastScriptError;
+
+        [ThreadStatic]
+        static bool captureScriptErrors;
+
         public static unsafe MRubyContext Create()
         {
             NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
@@ -113,8 +120,20 @@ namespace VitalRouter.MRuby
             return context;
         }
 
-        public static Action<Exception> GlobalErrorHandler { get; set; } = UnityEngine.Debug.LogError;
+        public static Action<Exception> GlobalErrorHandler { get; set; } = OnScriptError;
         public static Action<string> GlobalLogHandler { get; set; } = UnityEngine.Debug.Log;
+
+        static void OnScriptError(Exception ex)
+        {
+            if (captureScriptErrors)
+            {
+                lastScriptError = ex;
+            }
+            else
+            {
+                UnityEngine.Debug.LogError(ex);
+            }
+        }
 
         public MRubySharedState SharedState { get; }
 
@@ -194,7 +213,21 @@ namespace VitalRouter.MRuby
                     Bytes = ptr,
                     Length = rubySource.Length
                 };
-                resultValue = NativeMethods.MrbLoad(DangerousGetPtr(), source);
+                try
+                {
+                    lastScriptError = null;
+                    captureScriptErrors = true;
+                    resultValue = NativeMethods.MrbLoad(DangerousGetPtr(), source);
+                    if (lastScriptError != null)
+                    {
+                        throw lastScriptError;
+                    }
+                }
+                finally
+                {
+                    captureScriptErrors = false;
+                    lastScriptError = null;
+                }
             }
             return new MrbValueHandle(resultValue, this);
         }
@@ -215,15 +248,26 @@ namespace VitalRouter.MRuby
                     Bytes = ptr,
                     Length = rubySource.Length
                 };
-                var scriptPtr = NativeMethods.ScriptCompile(DangerousGetPtr(), source);
-                if (scriptPtr == null)
+                try
                 {
-                    throw new MRubyScriptCompileException();
-                }
+                    captureScriptErrors = true;
+                    lastScriptError = null;
 
-                var script = new MRubyScript(this, scriptPtr);
-                MRubyScript.Scripts.TryAdd(script.ScriptId, script);
-                return script;
+                    var scriptPtr = NativeMethods.ScriptCompile(DangerousGetPtr(), source);
+                    if (scriptPtr == null)
+                    {
+                        throw new MRubyScriptCompileException();
+                    }
+
+                    var script = new MRubyScript(this, scriptPtr);
+                    MRubyScript.Scripts.TryAdd(script.ScriptId, script);
+                    return script;
+                }
+                finally
+                {
+                    captureScriptErrors = false;
+                    lastScriptError = null;
+                }
             }
         }
 

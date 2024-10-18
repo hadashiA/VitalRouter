@@ -53,6 +53,34 @@ namespace VitalRouter.Tests
             Assert.That(stateCommand!.IntValue, Is.EqualTo(123));
             Assert.That(stateCommand!.StringValue, Is.EqualTo("hoge moge"));
         }
+
+        [Test]
+        public void CatchSynctaxError()
+        {
+            var router = new Router();
+            var commandPreset = new TestCommandPreset();
+            var ctx = MRubyContext.Create(router, commandPreset);
+
+            Assert.Throws<MRubyScriptCompileException>(() => ctx.CompileScript("1 1"));
+        }
+
+        [Test]
+        public void CatchRuntimeError()
+        {
+            var router = new Router();
+            var commandPreset = new TestCommandPreset();
+            var ctx = MRubyContext.Create(router, commandPreset);
+
+            var script = ctx.CompileScript( "raise 'hoge fuga'");
+            Assert.ThrowsAsync<MRubyScriptException>(async () => await script.RunAsync());
+        }
+
+        [Test]
+        public void CatchEvaluateError()
+        {
+            var ctx = MRubyContext.Create();
+            Assert.Throws<MRubyScriptException>(() => ctx.Load( "raise 'hoge fuga'"));
+        }
     }
 }
 #endif
