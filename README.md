@@ -1195,27 +1195,46 @@ context.Load(
 var result = context.Evaluate<int>("mymethod(7)");
 // => 700
 
+// Syntax error and runtime error on the Ruby side can be supplemented with try/catch.
+try
+{
+    context.Evaluate<int>("raise 'ERRRO!'");
+}
+catch (Exception ex)
+{
+    // ...
+}
+
 // Execute scripts, including the async method including VitalRouter, such as command publishing.
 var script = context.CompileScript("3.times { |i| cmd :text, body: \"Hello Hello #{i}\" }");
 await script.RunAsync();
 
+// When a syntax error is detected, CompileScript throws an exception.
+try
+{
+    context.CompileScript("invalid invalid invalid");
+}
+catch (Exception ex)
+{
+}
+
 // The completed script can be reused.
 await script.RunAsync();
+
+// You can supplement Ruby runtime errors by try/catch RunAsync.
+try
+{
+    await script.RunAsync();
+}
+catch (Exception ex)
+{
+    // ...
+}
 
 script.Dispose();
 ```
 
-By default, syntax errors and runtime errors that occur in mruby scripts are reported via `UnityEngine.Debug.LogError`. 
-To customize this, do the following:
-
-```cs
-MRubyContext.GlobalErrorHandler = exception =>
-{
-    UnityEngine.Debug.LogError(exception);
-};
-```
-
-Also, if you want to handle logs sent from the mruby side, do as follows:
+if you want to handle logs sent from the mruby side, do as follows:
 
 ```cs
 MRubyContext.GlobalLogHandler = message =>
