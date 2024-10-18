@@ -2,6 +2,7 @@
 MRuby::CrossBuild.new("windows") do |conf|
   conf.toolchain
   conf.gembox '../../../vitalrouter'
-  cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO)
+  conf.disable_presym
+  cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO MRB_NO_PRESYM)
   cc.flags << '-Os'
 end
