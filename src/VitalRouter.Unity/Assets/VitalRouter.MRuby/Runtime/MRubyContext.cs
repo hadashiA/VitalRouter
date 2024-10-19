@@ -254,9 +254,9 @@ namespace VitalRouter.MRuby
                     lastScriptError = null;
 
                     var scriptPtr = NativeMethods.ScriptCompile(DangerousGetPtr(), source);
-                    if (scriptPtr == null)
+                    if (scriptPtr == null || lastScriptError != null)
                     {
-                        throw new MRubyScriptCompileException();
+                        throw lastScriptError ?? new MRubyScriptCompileException();
                     }
 
                     var script = new MRubyScript(this, scriptPtr);
