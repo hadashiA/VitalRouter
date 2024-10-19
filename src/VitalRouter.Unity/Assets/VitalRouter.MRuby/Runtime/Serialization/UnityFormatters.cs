@@ -175,17 +175,23 @@ namespace VitalRouter.MRuby
         {
             MRubySerializationException.ThrowIfNotEnoughArrayLength(mrbValue, 4, "Matrix4x4");
 
-            var col0Value = NativeMethods.MrbArrayEntry(mrbValue, 0);
-            var col1Value = NativeMethods.MrbArrayEntry(mrbValue, 1);
-            var col2Value = NativeMethods.MrbArrayEntry(mrbValue, 2);
-            var col3Value = NativeMethods.MrbArrayEntry(mrbValue, 3);
+            var row0Value = NativeMethods.MrbArrayEntry(mrbValue, 0);
+            var row1Value = NativeMethods.MrbArrayEntry(mrbValue, 1);
+            var row2Value = NativeMethods.MrbArrayEntry(mrbValue, 2);
+            var row3Value = NativeMethods.MrbArrayEntry(mrbValue, 3);
 
             var vector4Formatter = options.Resolver.GetFormatterWithVerify<Vector4>();
-            var col0 = vector4Formatter.Deserialize(col0Value, context, options);
-            var col1 = vector4Formatter.Deserialize(col1Value, context, options);
-            var col2 = vector4Formatter.Deserialize(col2Value, context, options);
-            var col3 = vector4Formatter.Deserialize(col3Value, context, options);
-            return new Matrix4x4(col0, col1, col2, col3);
+            var row0 = vector4Formatter.Deserialize(row0Value, context, options);
+            var row1 = vector4Formatter.Deserialize(row1Value, context, options);
+            var row2 = vector4Formatter.Deserialize(row2Value, context, options);
+            var row3 = vector4Formatter.Deserialize(row3Value, context, options);
+
+            var result = new Matrix4x4();
+            result.SetRow(0, row0);
+            result.SetRow(1, row1);
+            result.SetRow(2, row2);
+            result.SetRow(3, row3);
+            return result;
         }
     }
 
