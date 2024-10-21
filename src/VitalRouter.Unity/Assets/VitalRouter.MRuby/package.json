@@ -1,7 +1,7 @@
 {
   "name": "jp.hadashikick.vitalrouter-mruby",
   "displayName": "VitalRouter.MRuby",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "unity": "2022.2",
   "description": "The VitalRouter extension to allow scripting by mruby",
   "keywords": ["pubsub", "event", "mvc", "framework", "ruby", "mruby"],
