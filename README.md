@@ -52,6 +52,7 @@ router.Subscribe<FooCommand>(cmd => { /* ... */ })
 router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
 ```
 
+## Table of Contents
 
 | Feature                                                           | Description                                                                                                                                                                                                                 |
 |-------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -60,9 +61,10 @@ router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ 
 | With DI and without DI                                            | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                     |
 | Fast, less allocations                                            | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.                                                                         |
 | Async sequence controlling (Parallel, FIFO, Drop, Switch)         | The behavior when async processes are executed in parallel can be specified in detail. See [Command ordering](#command-ordering) section for details.                                                                       |                                                                                                                                                                                                               
-| Scripting with [mruby](https://github.com/mruby/mruby) (Optional) | You can write ruby scripts to publish messages to the C# async handlers. This is very useful for adding a layer to your game that allows scripted hot loading. See [VitalRouter.MRuby](#mruby-scripting) section for details. |
-
-## Table of Contents
+| Extension                                                           | Description                                                                                                                                                                                                                 |
+|-------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Scripting with [mruby](https://github.com/mruby/mruby) (Optional) | You can write ruby scripts to publish messages to the C# async handlers. This is very useful for adding a layer to your game that allows scripted hot loading. See [mruby scriptiong](#mruby-scripting) section for details. |
+| [R3](https://github.com/Cysharp/R3) Integration (Optional) | Support integration with R3 a new generation reactive extensions. See [R3 Integration](#r3-integration) section for details. |
 
 - [Installation](#installation)
 - [Getting Started](#getting-started)
@@ -1396,7 +1398,7 @@ refs:
 It is the successor to the popular UniRx, with a more modern implementation, a refined API, and an abstraction layer.
 Check the R3 documentation for more details.
 
-VitalRouter supports experimental integration with R3.
+VitalRouter supports integration with R3.
 
 ```cs
 publisher.AsObservable<TCommand>() // Convert pub/sub to R3 Observable
