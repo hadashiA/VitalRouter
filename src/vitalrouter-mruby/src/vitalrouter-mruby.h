@@ -43,11 +43,12 @@ extern void vitalrouter_mrb_callbacks_set(vitalrouter_mrb_ctx *ctx,
                                           vitalrouter_mrb_command_cb on_command,
                                           vitalrouter_mrb_error_cb on_error);
 
-extern void vitalrouter_mrb_state_set_int32(vitalrouter_mrb_ctx *ctx, char *key,int32_t value);
-extern void vitalrouter_mrb_state_set_float(vitalrouter_mrb_ctx *ctx, char *key, float value);
-extern void vitalrouter_mrb_state_set_bool(vitalrouter_mrb_ctx *ctx, char *key,int32_t value);
-extern void vitalrouter_mrb_state_set_string(vitalrouter_mrb_ctx *ctx, char *key, char *value);
-extern void vitalrouter_mrb_state_remove(vitalrouter_mrb_ctx *ctx, char *key);
+extern void vitalrouter_mrb_state_set_int32(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, int32_t value);
+extern void vitalrouter_mrb_state_set_float(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, float value);
+extern void vitalrouter_mrb_state_set_bool(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key,int32_t value);
+extern void vitalrouter_mrb_state_set_string(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, vitalrouter_nstring value);
+extern void vitalrouter_mrb_state_set_symbol(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, vitalrouter_nstring value);
+extern void vitalrouter_mrb_state_remove(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key);
 extern void vitalrouter_mrb_state_clear(vitalrouter_mrb_ctx *ctx);
 
 extern mrb_value vitalrouter_mrb_load(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring source);

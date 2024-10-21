@@ -17,6 +17,10 @@ namespace VitalRouter.Tests
             Assert.That(sharedState.Get<string>("string_value"), Is.EqualTo("bar"));
             Assert.That(context.Evaluate<string>("state[:string_value]"), Is.EqualTo("bar"));
 
+            sharedState.Set("symbol_value", "bra_bra", asSymbol: true);
+            Assert.That(sharedState.Get<string>("symbol_value"), Is.EqualTo("bra_bra"));
+            Assert.That(context.Evaluate<string>("state[:symbol_value]"), Is.EqualTo("bra_bra"));
+
             sharedState.Set("int_value", 123);
             Assert.That(sharedState.Get<int>("int_value"), Is.EqualTo(123));
             Assert.That(context.Evaluate<int>("state[:int_value]"), Is.EqualTo(123));
