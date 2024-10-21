@@ -19,15 +19,16 @@ namespace VitalRouter.MRuby
         public void Remove(string key)
         {
             var keyMaxBytes = System.Text.Encoding.UTF8.GetMaxByteCount(key.Length + 1);
-            var keyUtf8 = keyMaxBytes > 255
-                ? new byte[keyMaxBytes]
-                : stackalloc byte[keyMaxBytes];
+            var keyUtf8 = keyMaxBytes > 255 ? new byte[keyMaxBytes] : stackalloc byte[keyMaxBytes];
             var keyBytesWritten = System.Text.Encoding.UTF8.GetBytes(key, keyUtf8);
-            keyUtf8[keyBytesWritten] = 0; // NULL terminated
 
             fixed (byte* keyPtr = keyUtf8)
             {
-                NativeMethods.MrbStateRemove(context.DangerousGetPtr(), keyPtr);
+                NativeMethods.MrbStateRemove(context.DangerousGetPtr(), new MrbNString
+                {
+                    Bytes = keyPtr,
+                    Length = keyBytesWritten
+                });
             }
             values.TryRemove(key, out _);
         }
@@ -67,48 +68,46 @@ namespace VitalRouter.MRuby
             return default!;
         }
 
-        public void Set(string key, int value)
+        public void Set(string key, int value, bool asSymbol = false)
         {
-            Set(typeof(int), key, value);
+            Set(typeof(int), key, value, asSymbol);
         }
 
-        public void Set(string key, float value)
+        public void Set(string key, float value, bool asSymbol = false)
         {
-            Set(typeof(float), key, value);
+            Set(typeof(float), key, value, asSymbol);
         }
 
-        public void Set(string key, bool value)
+        public void Set(string key, bool value, bool asSymbol = false)
         {
-            Set(typeof(bool), key, value);
+            Set(typeof(bool), key, value, asSymbol);
         }
 
-        public void Set(string key, string value)
+        public void Set(string key, string value, bool asSymbol = false)
         {
-            Set(typeof(string), key, value);
+            Set(typeof(string), key, value, asSymbol);
         }
 
-        void Set(Type type, string key, object boxedValue)
+        void Set(Type type, string key, object boxedValue, bool asSymbol)
         {
             var keyMaxBytes = System.Text.Encoding.UTF8.GetMaxByteCount(key.Length + 1);
-            var keyUtf8 = keyMaxBytes > 255
-                ? new byte[keyMaxBytes]
-                : stackalloc byte[keyMaxBytes];
+            var keyUtf8 = keyMaxBytes > 255 ? new byte[keyMaxBytes] : stackalloc byte[keyMaxBytes];
             var keyBytesWritten = System.Text.Encoding.UTF8.GetBytes(key, keyUtf8);
-            keyUtf8[keyBytesWritten] = 0; // NULL terminated
 
             var typeCode = Type.GetTypeCode(type);
             fixed (byte* keyPtr = keyUtf8)
             {
+                var keyNString = new MrbNString { Bytes = keyPtr, Length = keyBytesWritten };
                 switch (typeCode)
                 {
                     case TypeCode.Boolean:
-                        NativeMethods.MrbStateSetBool(context.DangerousGetPtr(), keyPtr, (bool)boxedValue);
+                        NativeMethods.MrbStateSetBool(context.DangerousGetPtr(), keyNString, (bool)boxedValue);
                         break;
                     case TypeCode.Int32:
-                        NativeMethods.MrbStateSetInt32(context.DangerousGetPtr(), keyPtr, (int)boxedValue);
+                        NativeMethods.MrbStateSetInt32(context.DangerousGetPtr(), keyNString, (int)boxedValue);
                         break;
                     case TypeCode.Single:
-                        NativeMethods.MrbStateSetFloat(context.DangerousGetPtr(), keyPtr, (float)boxedValue);
+                        NativeMethods.MrbStateSetFloat(context.DangerousGetPtr(), keyNString, (float)boxedValue);
                         break;
                     case TypeCode.String:
                     {
@@ -118,10 +117,18 @@ namespace VitalRouter.MRuby
                             ? new byte[valueMaxBytes]
                             : stackalloc byte[valueMaxBytes];
                         var valueBytesWritten = System.Text.Encoding.UTF8.GetBytes(value, valueUtf8);
-                        valueUtf8[valueBytesWritten] = 0; // NULL terminated
+
                         fixed (byte* valuePtr = valueUtf8)
                         {
-                            NativeMethods.MrbStateSetString(context.DangerousGetPtr(), keyPtr, valuePtr);
+                            var valueNString = new MrbNString { Bytes = valuePtr, Length = valueBytesWritten };
+                            if (asSymbol)
+                            {
+                                NativeMethods.MrbStateSetSymbol(context.DangerousGetPtr(), keyNString, valueNString);
+                            }
+                            else
+                            {
+                                NativeMethods.MrbStateSetString(context.DangerousGetPtr(), keyNString, valueNString);
+                            }
                         }
                         break;
                     }

@@ -74,10 +74,10 @@ static void running_script_entries_remove(mrb_value fiber) {
   }
 }
 
-static void shared_state_set(mrb_state *mrb, char *key, mrb_value value) {
+static void shared_state_set(mrb_state *mrb, vitalrouter_nstring key, mrb_value value) {
   mrb_value self = mrb_obj_value(mrb->top_self);
   mrb_value state = mrb_funcall(mrb, self, "state", 0);
-  mrb_value sym = mrb_symbol_value(mrb_intern_cstr(mrb, key));
+  mrb_value sym = mrb_symbol_value(mrb_intern(mrb, (const char *)key.bytes, key.length));
   mrb_funcall(mrb, state, "[]=", 2, sym, value);
 }
 
@@ -116,31 +116,36 @@ extern void vitalrouter_mrb_callbacks_set(vitalrouter_mrb_ctx *ctx,
   ctx->on_error = on_error;
 }
 
-extern void vitalrouter_mrb_state_set_int32(vitalrouter_mrb_ctx *ctx, char *key, int32_t value)
+extern void vitalrouter_mrb_state_set_int32(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, int32_t value)
 {
   shared_state_set(ctx->mrb, key, mrb_fixnum_value(value));
 }
 
-extern void vitalrouter_mrb_state_set_float(vitalrouter_mrb_ctx *ctx, char *key, float_t value)
+extern void vitalrouter_mrb_state_set_float(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, float_t value)
 {
   shared_state_set(ctx->mrb, key, mrb_float_value(ctx->mrb, value));
 }
 
-extern void vitalrouter_mrb_state_set_bool(vitalrouter_mrb_ctx *ctx, char *key, int32_t value)
+extern void vitalrouter_mrb_state_set_bool(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, int32_t value)
 {
   shared_state_set(ctx->mrb, key, value == 0 ? mrb_false_value() : mrb_true_value());
 }
 
-extern void vitalrouter_mrb_state_set_string(vitalrouter_mrb_ctx *ctx, char *key, char *value)
+extern void vitalrouter_mrb_state_set_string(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, vitalrouter_nstring value)
 {
-  shared_state_set(ctx->mrb, key, mrb_str_new_cstr(ctx->mrb, value));
+  shared_state_set(ctx->mrb, key, mrb_str_new(ctx->mrb, (const char *)value.bytes, value.length));
 }
 
-extern void vitalrouter_mrb_state_remove(vitalrouter_mrb_ctx *ctx,char *key)
+extern void vitalrouter_mrb_state_set_symbol(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key, vitalrouter_nstring value)
+{
+  shared_state_set(ctx->mrb, key, mrb_symbol_value(mrb_intern(ctx->mrb, (const char *)value.bytes, value.length)));
+}
+
+extern void vitalrouter_mrb_state_remove(vitalrouter_mrb_ctx *ctx, vitalrouter_nstring key)
 {
   mrb_value self = mrb_obj_value(ctx->mrb->top_self);
   mrb_value state = mrb_funcall(ctx->mrb, self, "state", 0);
-  mrb_value sym = mrb_symbol_value(mrb_intern_cstr(ctx->mrb, key));
+  mrb_value sym = mrb_symbol_value(mrb_intern(ctx->mrb, (const char *)key.bytes, key.length));
   mrb_funcall(ctx->mrb, state, "delete", 1, sym);
 }
 

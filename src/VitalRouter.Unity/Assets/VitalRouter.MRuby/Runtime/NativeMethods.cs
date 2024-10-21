@@ -138,19 +138,22 @@ namespace VitalRouter.MRuby
         public static extern void MrbCallbacksSet(MrbContextCore* context, MrbCommandHandler onCommand, MrbErrorHandler onError);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_state_set_int32", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void MrbStateSetInt32(MrbContextCore* state, byte* key, int value);
+        public static extern void MrbStateSetInt32(MrbContextCore* state, MrbNString key, int value);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_state_set_float", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void MrbStateSetFloat(MrbContextCore* state, byte* key, float value);
+        public static extern void MrbStateSetFloat(MrbContextCore* state, MrbNString key, float value);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_state_set_bool", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void MrbStateSetBool(MrbContextCore* state, byte* key, bool value);
+        public static extern void MrbStateSetBool(MrbContextCore* state, MrbNString key, bool value);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_state_set_string", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void MrbStateSetString(MrbContextCore* state, byte* key, byte* value);
+        public static extern void MrbStateSetString(MrbContextCore* state, MrbNString key, MrbNString value);
+
+        [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_state_set_symbol", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void MrbStateSetSymbol(MrbContextCore* state, MrbNString key, MrbNString value);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_state_remove", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void MrbStateRemove(MrbContextCore* state, byte* key);
+        public static extern void MrbStateRemove(MrbContextCore* state, MrbNString key);
 
         [DllImport(__DllName, EntryPoint = "vitalrouter_mrb_state_clear", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void MrbStateClear(MrbContextCore* state);

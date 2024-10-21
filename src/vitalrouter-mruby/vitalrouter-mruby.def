@@ -7,6 +7,7 @@ EXPORTS
     vitalrouter_mrb_state_set_float
     vitalrouter_mrb_state_set_bool
     vitalrouter_mrb_state_set_string
+    vitalrouter_mrb_state_set_symbol
     vitalrouter_mrb_state_remove
     vitalrouter_mrb_state_clear
     vitalrouter_mrb_load
