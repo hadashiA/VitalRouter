@@ -1283,6 +1283,7 @@ context.SharedState.Set("int_value", 1234);
 context.SharedState.Set("bool_value", true);
 context.SharedState.Set("float_value", 678.9);
 context.SharedState.Set("string_value", "Hoge Hoge");
+context.SharedState.Set("symbol_value", "fuga_fuga", asSymbol: true);
 ```
 
 SharedState can also be referenced via PublishContext.
@@ -1319,6 +1320,7 @@ state[:int_value]    #=> 1234
 state[:bool_value]   #=> true
 state[:float_value]  #=> 678.9
 state[:string_value] #=> "Hoge Hoge"
+state[:symbol_value] #=> :fuga_fuga
 
 # A somewhat fuzzy matcher, the `is?` method, is available for shared states.
 state[:a] #=> 'buz'
