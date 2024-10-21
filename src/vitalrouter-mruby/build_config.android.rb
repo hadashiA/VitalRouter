@@ -4,7 +4,7 @@ MRuby::CrossBuild.new('android-arm64') do |conf|
   conf.gembox '../../../vitalrouter'
 
   conf.disable_presym  
-  conf.cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO MRB_NO_PRESYM)
+  conf.cc.defines = %w(MRB_WORD_BOXING MRB_NO_STDIO MRB_NO_PRESYM)
   conf.cc.flags << '-Os'
 end
 
@@ -13,6 +13,6 @@ MRuby::CrossBuild.new('android-x64') do |conf|
   conf.gembox '../../../vitalrouter'
 
   conf.disable_presym    
-  conf.cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO MRB_NO_PRESYM)
+  conf.cc.defines = %w(MRB_WORD_BOXING MRB_NO_STDIO MRB_NO_PRESYM)
   conf.cc.flags << '-Os'
 end

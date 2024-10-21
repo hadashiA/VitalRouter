@@ -6,7 +6,7 @@ MRuby::CrossBuild.new("linux-x64") do |conf|
   conf.disable_presym
 
   conf.compilers.each do |cc|
-    cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO MRB_NO_PRESYM)    
+    cc.defines = %w(MRB_WORD_BOXING MRB_NO_STDIO MRB_NO_PRESYM)    
     cc.flags << '-fPIC'
     cc.flags << '-Os'
   end
@@ -38,7 +38,7 @@ MRuby::CrossBuild.new("linux-arm64") do |conf|
   conf.disable_presym
 
   conf.compilers.each do |cc|
-    cc.defines = %w(MRB_NO_BOXING MRB_NO_STDIO MRB_NO_PRESYM)
+    cc.defines = %w(MRB_WORD_BOXING MRB_NO_STDIO MRB_NO_PRESYM)
     cc.flags << '-fPIC'
     cc.flags << '-Os'
   end
