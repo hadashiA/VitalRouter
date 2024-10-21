@@ -23,16 +23,14 @@ static char *cstr(char *nstr, int32_t len) {
   return result;
 }
 
-void on_command(int32_t script_id, uint8_t *command_name, int32_t command_name_len, uint8_t *payload, int32_t payload_len) {
+void on_command(int32_t script_id, vitalrouter_nstring command_name, mrb_value payload) {
 
-  char *command_name_cstr = cstr((char *)command_name, command_name_len);
-  char *payload_cstr = cstr((char *)payload, payload_len);
-  printf("[CALLBACK(%d)] cmd:%s %s\n", script_id, command_name_cstr, payload_cstr);
+  char *command_name_cstr = cstr((char *)command_name.bytes, command_name.length);
+  printf("[CALLBACK(%d)] cmd:%s\n", script_id, command_name_cstr);
   uint32_t result = vitalrouter_mrb_script_resume(ctx, script);
   printf("RESUMED: %d\n", result);
   
   free(command_name_cstr);
-  free(payload_cstr);
 }
 
 void on_error(int32_t script_id, char *exception_inspection) {
@@ -43,7 +41,7 @@ int main() {
   size_t len = strlen(RUBY_SOURCE);
   uint8_t *buf = (uint8_t *)malloc(len * sizeof(uint8_t));
   memcpy(buf, RUBY_SOURCE, len);
-  vitalrouter_mrb_source source = { buf, len };
+  vitalrouter_nstring source = { buf, len };
 
   ctx = vitalrouter_mrb_ctx_new();
   if (ctx == NULL) {
@@ -55,8 +53,10 @@ int main() {
   vitalrouter_mrb_callbacks_set(ctx, on_command, on_error);
   printf("CALLBACKS set\n");
 
-  vitalrouter_mrb_state_set_int32(ctx, "i", 123);
-  vitalrouter_mrb_state_set_int32(ctx, "b", 1);
+  /* vitalrouter_nstring key1 = { (uint8_t *)"i", 1 }; */
+  /* vitalrouter_nstring key2 = { (uint8_t *)"b", 1 }; */
+  /* vitalrouter_mrb_state_set_int32(ctx, key1, 123); */
+  /* vitalrouter_mrb_state_set_int32(ctx, key2, 1); */
 
   script = vitalrouter_mrb_script_compile(ctx, source);
   printf("COMPILED id:%d\n", script->id);

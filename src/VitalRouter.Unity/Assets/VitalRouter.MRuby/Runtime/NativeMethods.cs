@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace VitalRouter.MRuby
 {
@@ -38,52 +39,28 @@ namespace VitalRouter.MRuby
         public int Length;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    unsafe struct RBasic
+    {
+        IntPtr c;
+        IntPtr gcnext;
+        public MrbVtype TT;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    unsafe struct RInteger
+    {
+        IntPtr c;
+        IntPtr gcnext;
+        public MrbVtype TT;
+        fixed byte Footer[3];
+        public nint IntValue;
+    }
+
     // mruby types
 
-    [StructLayout(LayoutKind.Explicit)]
-    public struct MrbValueUnion
-    {
-        // Assuming MRB_NO_FLOAT is off, MRB_USE_FLOAT is off.
-        [FieldOffset(0)]
-        public double F;
-
-        [FieldOffset(0)]
-        public nint I;
-
-        [FieldOffset(0)]
-        public IntPtr P;
-
-        [FieldOffset(0)]
-        public uint Sym;
-    }
-
-    // NOTE: Assuming MRUBY_BOXING_NO
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MrbValue
-    {
-        MrbValueUnion value;
-        public MrbVtype TT;
-
-        public bool IsNil => TT == MrbVtype.MRB_TT_FALSE && value.I == 0;
-        public long IntValue => value.I;
-        public double FlaotValue => value.F;
-
-        public unsafe string ToString(MRubyContext context)
-        {
-            var nstring = NativeMethods.MrbToString(context.DangerousGetPtr(), this);
-            return System.Text.Encoding.UTF8.GetString(nstring.Bytes, nstring.Length);
-        }
-
-        public unsafe FixedUtf8String ToFixedUtf8String(MRubyContext context)
-        {
-            var nstring = NativeMethods.MrbToString(context.DangerousGetPtr(), this);
-            return new FixedUtf8String(nstring.Bytes, nstring.Length);
-        }
-    }
-
-    // NOTE: Assuming MRUBY_BOXING_NO
     // ReSharper disable InconsistentNaming
-    public enum MrbVtype
+    public enum MrbVtype : byte
     {
         MRB_TT_FALSE,
         MRB_TT_TRUE,
@@ -115,6 +92,96 @@ namespace VitalRouter.MRuby
         MRB_TT_BIGINT,
     }
     // ReShaper enable InconsistentNaming
+
+    // NOTE: Assuming MRB_WORD_BOXING
+    //
+    // mrb_value representation:
+    //
+    // 64-bit word with inline float:
+    //   nil   : ...0000 0000 (all bits are 0)
+    //   false : ...0000 0100 (mrb_fixnum(v) != 0)
+    //   true  : ...0000 1100
+    //   undef : ...0001 0100
+    //   symbol: ...SSS1 1100 (use only upper 32-bit as symbol value with MRB_64BIT)
+    //   fixnum: ...IIII III1
+    //   float : ...FFFF FF10 (51 bit significands; require MRB_64BIT)
+    //   object: ...PPPP P000
+    //
+    // 32-bit word with inline float:
+    //   nil   : ...0000 0000 (all bits are 0)
+    //   false : ...0000 0100 (mrb_fixnum(v) != 0)
+    //   true  : ...0000 1100
+    //   undef : ...0001 0100
+    //   symbol: ...SSS1 0100 (symbol occupies 20bits)
+    //   fixnum: ...IIII III1
+    //   float : ...FFFF FF10 (22 bit significands; require MRB_64BIT)
+    //   object: ...PPPP P000
+    //
+    [StructLayout(LayoutKind.Explicit)]
+    public unsafe struct MrbValue
+    {
+        [FieldOffset(0)]
+        nint bits;
+
+        [FieldOffset(0)]
+        RBasic* ptr;
+
+        public MrbVtype TT => this switch
+        {
+            { IsFalse: true } => MrbVtype.MRB_TT_FALSE,
+            { IsTrue: true } => MrbVtype.MRB_TT_TRUE,
+            { IsUndef: true } => MrbVtype.MRB_TT_UNDEF,
+            { IsSymbol: true } => MrbVtype.MRB_TT_SYMBOL,
+            { IsFixnum: true } => MrbVtype.MRB_TT_INTEGER,
+            { IsFloat: true } => MrbVtype.MRB_TT_FLOAT,
+            { IsObject: true} => ptr->TT,
+            _ => default
+        };
+
+        public bool IsNil => bits == 0;
+        public bool IsFalse => bits == 0b0000_0100;
+        public bool IsTrue => bits == 0b0000_1100;
+        public bool IsUndef => bits == 0b0001_0100;
+        public bool IsSymbol => (bits & 0b1_1111) == 0b1_1100;
+        public bool IsFixnum => (bits & 1) == 1;
+        public bool IsFloat => (bits & 0b11) == 0b10;
+        public bool IsObject => (bits & 0b111) == 0;
+
+        public long IntValue
+        {
+            get
+            {
+                if (IsObject && ptr->TT == MrbVtype.MRB_TT_INTEGER)
+                {
+                    return ((RInteger*)ptr)->IntValue;
+                }
+                return bits >> 1;
+            }
+        }
+
+        public double FloatValue
+        {
+            get
+            {
+                // Assume that MRB_USE_FLOAT32 is not defined
+                // Assume that MRB_WORDBOX_NO_FLOAT_TRUNCATE is not defined
+                var fbits = (bits & ~3) | 2;
+                return UnsafeUtility.As<nint, double>(ref fbits);
+            }
+        }
+
+        public unsafe string ToString(MRubyContext context)
+        {
+            var nstring = NativeMethods.MrbToString(context.DangerousGetPtr(), this);
+            return System.Text.Encoding.UTF8.GetString(nstring.Bytes, nstring.Length);
+        }
+
+        public unsafe FixedUtf8String ToFixedUtf8String(MRubyContext context)
+        {
+            var nstring = NativeMethods.MrbToString(context.DangerousGetPtr(), this);
+            return new FixedUtf8String(nstring.Bytes, nstring.Length);
+        }
+    }
 
 #pragma warning disable CS8500
 #pragma warning disable CS8981

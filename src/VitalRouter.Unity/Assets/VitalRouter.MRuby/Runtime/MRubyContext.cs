@@ -106,7 +106,7 @@ namespace VitalRouter.MRuby
 
         public static unsafe MRubyContext Create()
         {
-            NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
+            // NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
 
             var ptr = NativeMethods.MrbContextNew();
             NativeMethods.MrbCallbacksSet(ptr, MRubyScript.OnCommandCalled, MRubyScript.OnError);

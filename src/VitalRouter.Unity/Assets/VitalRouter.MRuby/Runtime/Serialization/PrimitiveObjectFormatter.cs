@@ -22,7 +22,7 @@ namespace VitalRouter.MRuby
                 case MrbVtype.MRB_TT_INTEGER:
                     return value.IntValue;
                 case MrbVtype.MRB_TT_FLOAT:
-                    return value.FlaotValue;
+                    return value.FloatValue;
                 case MrbVtype.MRB_TT_SYMBOL:
                 case MrbVtype.MRB_TT_STRING:
                     return value.ToString(context);
