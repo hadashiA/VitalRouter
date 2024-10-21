@@ -61,10 +61,12 @@ namespace VitalRouter.MRuby
     [StructLayout(LayoutKind.Sequential)]
     public struct MrbValue
     {
-        public MrbValueUnion Value;
+        MrbValueUnion value;
         public MrbVtype TT;
 
-        public bool IsNil => TT == MrbVtype.MRB_TT_FALSE && Value.I == 0;
+        public bool IsNil => TT == MrbVtype.MRB_TT_FALSE && value.I == 0;
+        public long IntValue => value.I;
+        public double FlaotValue => value.F;
 
         public unsafe string ToString(MRubyContext context)
         {

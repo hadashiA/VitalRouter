@@ -10,7 +10,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((byte)mrbValue.Value.I);
+            return checked((byte)mrbValue.IntValue);
         }
     }
 
@@ -24,7 +24,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((sbyte)mrbValue.Value.I);
+            return checked((sbyte)mrbValue.IntValue);
         }
     }
 
@@ -38,7 +38,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((char)mrbValue.Value.I);
+            return checked((char)mrbValue.IntValue);
         }
     }
 
@@ -52,7 +52,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((short)mrbValue.Value.I);
+            return checked((short)mrbValue.IntValue);
         }
     }
 
@@ -66,7 +66,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((int)mrbValue.Value.I);
+            return checked((int)mrbValue.IntValue);
         }
     }
 
@@ -80,7 +80,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((long)mrbValue.Value.I);
+            return checked((long)mrbValue.IntValue);
         }
     }
 
@@ -94,7 +94,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((ushort)mrbValue.Value.I);
+            return checked((ushort)mrbValue.IntValue);
         }
     }
 
@@ -108,7 +108,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((uint)mrbValue.Value.I);
+            return checked((uint)mrbValue.IntValue);
         }
     }
 
@@ -122,7 +122,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((ulong)mrbValue.Value.I);
+            return checked((ulong)mrbValue.IntValue);
         }
     }
 }

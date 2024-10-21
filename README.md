@@ -1179,6 +1179,43 @@ See the table below for the support status of mutually convertible types.
 | `[Int, Int, Int, Int]`               | `RectInt`, `BoundsInt`, `Color32`                                                                                                                                                                                                                                                                                                                                                       |
 | `nil`                                | `T?`, `Nullable<T>`                                                                                                                                                                                                                                                                                                                                                                     |
 
+If you want to customize the formatting behavior, implement `IMrbValueFormatter` . 
+
+```csharp
+// Example type...
+public struct UserId
+{
+    public int Value;
+}
+    
+public class UserIdFormatter : IMrbValueFormatter<UserId>
+{
+    public static readonly UserIdFormatter Instance = new();
+
+    public UserId Deserialize(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions options)
+    {
+        if (mrbValue.IsNil) return default;
+        retun new UserId { Value = mrbValue.IntValue };
+    }
+}
+```
+
+To enable the custom formatter, set MrbValueSerializerOptions as follows.
+
+```csharp
+StaticCompositeResolver.Instance
+    .AddFormatters(UserIdFormatter.Instance)  // < Yoru custom formatters
+    .AddResolvers(StandardResolver.Instance); // < Default behaviours 
+
+// Set serializer options to context.
+var context = MRubyContext.Create(...);
+context.SerializerOptions = new MrbValueSerializerOptions
+{
+    Resolver = StaticCompositeResolver
+};
+```
+
+
 ### MRubyContext
 
 `MRubyContext` provides several APIs for executing mruby scripts.
