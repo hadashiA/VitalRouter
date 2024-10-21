@@ -11,21 +11,6 @@ namespace VitalRouter.SourceGenerator.MRuby;
 [Generator]
 public class VitalRouterMRubyIncrementalSourceGenerator : IIncrementalGenerator
 {
-    class Comparer : IEqualityComparer<GeneratorAttributeSyntaxContext>
-    {
-        public static readonly Comparer Instance = new();
-
-        public bool Equals(GeneratorAttributeSyntaxContext x, GeneratorAttributeSyntaxContext y)
-        {
-            return x.TargetNode.Equals(y.TargetNode);
-        }
-
-        public int GetHashCode(GeneratorAttributeSyntaxContext obj)
-        {
-            return obj.TargetNode.GetHashCode();
-        }
-    }
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var commandPresetProvider = context.SyntaxProvider
@@ -536,7 +521,7 @@ partial class {{commandPresetTypeMeta.TypeName}}
         {
             if (!__Names.TryGetValue(commandName, out var index))
             {
-                script.Fail(new ArgumentOutOfRangeException(nameof(commandName), $"No such command {commandName} in {GetType().Name}. Please use `[MRubyCommand(...)]` attribute and register it."));
+                script.Fail(new ArgumentOutOfRangeException(nameof(commandName), $"No such command `{commandName}` in {GetType().Name}. Please use `[MRubyCommand(...)]` attribute and register it."));
                 return;
             }
 

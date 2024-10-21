@@ -20,9 +20,9 @@ namespace VitalRouter.MRuby
                 case MrbVtype.MRB_TT_TRUE:
                     return true;
                 case MrbVtype.MRB_TT_INTEGER:
-                    return (long)value.Value.I;
+                    return value.IntValue;
                 case MrbVtype.MRB_TT_FLOAT:
-                    return value.Value.F;
+                    return value.FlaotValue;
                 case MrbVtype.MRB_TT_SYMBOL:
                 case MrbVtype.MRB_TT_STRING:
                     return value.ToString(context);

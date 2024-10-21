@@ -4,7 +4,7 @@ namespace VitalRouter.MRuby
     {
         public static T? Deserialize<T>(MrbValue mrbValue, MRubyContext context, MrbValueSerializerOptions? options = null)
         {
-            options ??= MrbValueSerializerOptions.Default;
+            options ??= context.SerializerOptions;
             return options.Resolver.GetFormatterWithVerify<T>()
                 .Deserialize(mrbValue, context, options);
        }

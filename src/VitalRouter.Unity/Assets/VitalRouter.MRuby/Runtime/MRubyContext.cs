@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using AOT;
 using Unity.Collections;
@@ -102,6 +101,9 @@ namespace VitalRouter.MRuby
         [ThreadStatic]
         static bool captureScriptErrors;
 
+        public static Action<Exception> GlobalErrorHandler { get; set; } = OnScriptError;
+        public static Action<string> GlobalLogHandler { get; set; } = UnityEngine.Debug.Log;
+
         public static unsafe MRubyContext Create()
         {
             NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
@@ -120,9 +122,6 @@ namespace VitalRouter.MRuby
             return context;
         }
 
-        public static Action<Exception> GlobalErrorHandler { get; set; } = OnScriptError;
-        public static Action<string> GlobalLogHandler { get; set; } = UnityEngine.Debug.Log;
-
         static void OnScriptError(Exception ex)
         {
             if (captureScriptErrors)
@@ -136,6 +135,7 @@ namespace VitalRouter.MRuby
         }
 
         public MRubySharedState SharedState { get; }
+        public MrbValueSerializerOptions SerializerOptions { get; set; } = MrbValueSerializerOptions.Default;
 
         public Router Router
         {
@@ -187,13 +187,13 @@ namespace VitalRouter.MRuby
         public T? Evaluate<T>(string rubySource, MrbValueSerializerOptions? options = null)
         {
             var bytes = System.Text.Encoding.UTF8.GetBytes(rubySource);
-            return Evaluate<T>(bytes);
+            return Evaluate<T>(bytes, options);
         }
 
         public T? Evaluate<T>(ReadOnlySpan<byte> rubySource, MrbValueSerializerOptions? options = null)
         {
             using var result = EvaluateUnsafe(rubySource);
-            return MrbValueSerializer.Deserialize<T>(result.RawValue, this, options);
+            return MrbValueSerializer.Deserialize<T>(result.RawValue, this, options ?? SerializerOptions);
         }
 
         public MrbValueHandle EvaluateUnsafe(string rubySource)

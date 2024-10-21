@@ -8,8 +8,8 @@ namespace VitalRouter.MRuby
         {
             return mrbValue.TT switch
             {
-                MrbVtype.MRB_TT_FLOAT => (float)mrbValue.Value.F,
-                MrbVtype.MRB_TT_INTEGER => mrbValue.Value.I,
+                MrbVtype.MRB_TT_FLOAT => (float)mrbValue.FlaotValue,
+                MrbVtype.MRB_TT_INTEGER => mrbValue.IntValue,
                 _ => throw new MRubySerializationException($"mrb_value cannot deserialize as float: {mrbValue.TT}")
             };
         }
@@ -23,8 +23,8 @@ namespace VitalRouter.MRuby
         {
             return mrbValue.TT switch
             {
-                MrbVtype.MRB_TT_FLOAT => (float)mrbValue.Value.F,
-                MrbVtype.MRB_TT_INTEGER => mrbValue.Value.I,
+                MrbVtype.MRB_TT_FLOAT => (float)mrbValue.FlaotValue,
+                MrbVtype.MRB_TT_INTEGER => mrbValue.IntValue,
                 _ => throw new MRubySerializationException($"mrb_value cannot deserialize as double: {mrbValue.TT}")
             };
         }
@@ -38,8 +38,8 @@ namespace VitalRouter.MRuby
         {
             return mrbValue.TT switch
             {
-                MrbVtype.MRB_TT_FLOAT => (decimal)mrbValue.Value.F,
-                MrbVtype.MRB_TT_INTEGER => mrbValue.Value.I,
+                MrbVtype.MRB_TT_FLOAT => (decimal)mrbValue.FlaotValue,
+                MrbVtype.MRB_TT_INTEGER => mrbValue.IntValue,
                 _ => throw new MRubySerializationException($"mrb_value cannot deserialize as decimal: {mrbValue.TT}")
             };
         }
