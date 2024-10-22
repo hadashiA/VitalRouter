@@ -57,6 +57,17 @@ namespace VitalRouter.MRuby
         public nint IntValue;
     }
 
+
+    [StructLayout(LayoutKind.Sequential)]
+    unsafe struct RFloat
+    {
+        IntPtr c;
+        IntPtr gcnext;
+        public MrbVtype TT;
+        fixed byte Footer[3];
+        public double FloatValue;
+    }
+
     // mruby types
 
     // ReSharper disable InconsistentNaming
@@ -117,14 +128,12 @@ namespace VitalRouter.MRuby
     //   float : ...FFFF FF10 (22 bit significands; require MRB_64BIT)
     //   object: ...PPPP P000
     //
-    [StructLayout(LayoutKind.Explicit)]
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct MrbValue
     {
-        [FieldOffset(0)]
-        nint bits;
+        static readonly bool Is64bitTarget = IntPtr.Size == 8;
 
-        [FieldOffset(0)]
-        RBasic* ptr;
+        IntPtr ptr;
 
         public MrbVtype TT => this switch
         {
@@ -134,28 +143,31 @@ namespace VitalRouter.MRuby
             { IsSymbol: true } => MrbVtype.MRB_TT_SYMBOL,
             { IsFixnum: true } => MrbVtype.MRB_TT_INTEGER,
             { IsFloat: true } => MrbVtype.MRB_TT_FLOAT,
-            { IsObject: true} => ptr->TT,
+            { IsObject: true} => ((RBasic*)ptr)->TT,
             _ => default
         };
 
-        public bool IsNil => bits == 0;
-        public bool IsFalse => bits == 0b0000_0100;
-        public bool IsTrue => bits == 0b0000_1100;
-        public bool IsUndef => bits == 0b0001_0100;
-        public bool IsSymbol => (bits & 0b1_1111) == 0b1_1100;
-        public bool IsFixnum => (bits & 1) == 1;
-        public bool IsFloat => (bits & 0b11) == 0b10;
-        public bool IsObject => (bits & 0b111) == 0;
+        public bool IsNil => ptr == IntPtr.Zero;
+        public bool IsFalse => ptr.ToInt64() == 0b0000_0100;
+        public bool IsTrue => ptr.ToInt64() == 0b0000_1100;
+        public bool IsUndef => ptr.ToInt64() == 0b0001_0100;
+        public bool IsSymbol => (ptr.ToInt64() & 0b1_1111) == 0b1_1100;
+        public bool IsFixnum => (ptr.ToInt64() & 1) == 1;
+        public bool IsFloat => Is64bitTarget
+            ? (ptr.ToInt64() & 0b11) == 0b10
+            : IsObject && ((RBasic*)ptr)->TT == MrbVtype.MRB_TT_FLOAT;
+
+        public bool IsObject => (ptr.ToInt64() & 0b111) == 0;
 
         public long IntValue
         {
             get
             {
-                if (IsObject && ptr->TT == MrbVtype.MRB_TT_INTEGER)
+                if (IsObject && ((RBasic *)ptr)->TT == MrbVtype.MRB_TT_INTEGER)
                 {
                     return ((RInteger*)ptr)->IntValue;
                 }
-                return bits >> 1;
+                return ptr.ToInt64() >> 1;
             }
         }
 
@@ -165,8 +177,15 @@ namespace VitalRouter.MRuby
             {
                 // Assume that MRB_USE_FLOAT32 is not defined
                 // Assume that MRB_WORDBOX_NO_FLOAT_TRUNCATE is not defined
-                var fbits = (bits & ~3) | 2;
-                return UnsafeUtility.As<nint, double>(ref fbits);
+                if (Is64bitTarget)
+                {
+                    var fbits = (ptr.ToInt64() & ~3) | 2;
+                    return UnsafeUtility.As<long, double>(ref fbits);
+                }
+                else
+                {
+                    return ((RFloat*)ptr)->FloatValue;
+                }
             }
         }
 
