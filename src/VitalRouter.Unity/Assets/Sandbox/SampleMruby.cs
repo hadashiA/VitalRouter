@@ -72,6 +72,9 @@ namespace Sandbox
         {
             using var context = MRubyContext.Create(Router.Default, new MyCommands());
 
+            var fvalue = context.EvaluateUnsafe("0.12345").RawValue;
+            UnityEngine.Debug.Log($"!!!!! float {fvalue.TT} IsObject={fvalue.IsObject} F={fvalue.FloatValue:F5}");
+
             context.Load("def hoge(x) = x * 100");
             var h = context.Evaluate<int>("hoge(7)");
 

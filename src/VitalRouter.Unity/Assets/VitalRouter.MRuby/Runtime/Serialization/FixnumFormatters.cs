@@ -80,7 +80,7 @@ namespace VitalRouter.MRuby
             {
                 throw new MRubySerializationException($"value is not a Integer. {mrbValue.TT}");
             }
-            return checked((long)mrbValue.IntValue);
+            return mrbValue.IntValue;
         }
     }
 

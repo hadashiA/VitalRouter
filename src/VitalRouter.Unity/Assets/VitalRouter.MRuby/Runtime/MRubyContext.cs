@@ -75,7 +75,7 @@ namespace VitalRouter.MRuby
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void* Malloc(uint size)
         {
-            var allocated = UnsafeUtility.Malloc(size + HeaderSize, sizeof(byte), DefaultAllocator);
+            var allocated = UnsafeUtility.Malloc(size + HeaderSize, 4, DefaultAllocator);
             WriteHeader(allocated, size);
             return (byte*)allocated + HeaderSize;
         }
@@ -106,7 +106,7 @@ namespace VitalRouter.MRuby
 
         public static unsafe MRubyContext Create()
         {
-            NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
+            // NativeMethods.MrbAllocfSet(MRubyAllocator.AllocPersistent);
 
             var ptr = NativeMethods.MrbContextNew();
             NativeMethods.MrbCallbacksSet(ptr, MRubyScript.OnCommandCalled, MRubyScript.OnError);
