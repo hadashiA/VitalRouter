@@ -511,7 +511,7 @@ partial class {{commandPresetTypeMeta.TypeName}}
         builder.AppendLine($$"""
     };
     
-    public override async global::Cysharp.Threading.Tasks.UniTask CommandCallFromMrubyAsync(
+    public override async global::System.Threading.Tasks.ValueTask CommandCallFromMrubyAsync(
         global::VitalRouter.MRuby.MRubyScript script,
         global::VitalRouter.MRuby.FixedUtf8String commandName,
         global::VitalRouter.MRuby.MrbValue payload,

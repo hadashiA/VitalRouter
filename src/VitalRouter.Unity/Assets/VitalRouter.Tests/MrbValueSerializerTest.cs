@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
 using VitalRouter.MRuby;
@@ -11,7 +11,7 @@ namespace VitalRouter.Tests
 {
     class DummyCommandPreset : MRubyCommandPreset
     {
-        public override UniTask CommandCallFromMrubyAsync(MRubyScript script, FixedUtf8String commandName, MrbValue payload,
+        public override ValueTask CommandCallFromMrubyAsync(MRubyScript script, FixedUtf8String commandName, MrbValue payload,
             CancellationToken cancellation = default)
         {
             throw new System.NotImplementedException();
