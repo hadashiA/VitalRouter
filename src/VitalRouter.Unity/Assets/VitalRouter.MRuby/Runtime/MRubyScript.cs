@@ -55,6 +55,13 @@ namespace VitalRouter.MRuby
                     await UniTask.Delay(TimeSpan.FromSeconds(duration));
                     script.Resume();
                 });
+#elif UNITY_2023_1_OR_NEWER
+                async UnityEngine.Awaitable WaitSecsAsync(float d)
+                {
+                    await UnityEngine.Awaitable.WaitForSecondsAsync(d);
+                    script.Resume();
+                }
+                _ = WaitSecsAsync((float)duration);
 #else
                 MRubyContext.GlobalErrorHandler.Invoke(new NotSupportedException(
                     $"{Names.WaitSecs} is only supported with UniTask. Please install UniTask"));
