@@ -1,11 +1,52 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
 {
+
+static class ContextPool<T> where T : class, new()
+{
+    static readonly ConcurrentQueue<T> items = new(new []
+    {
+        new T(),
+        new T(),
+        new T(),
+        new T(),
+    });
+
+    static T? fastItem;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Rent()
+    {
+        var value = fastItem;
+        if (value != null &&
+            Interlocked.CompareExchange(ref fastItem, null, value) == value)
+        {
+            return value;
+        }
+        if (items.TryDequeue(out value))
+        {
+            return value;
+        }
+        return new T();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Return(T value)
+    {
+        if (fastItem != null ||
+            Interlocked.CompareExchange(ref fastItem, value, null) != null)
+        {
+            items.Enqueue(value);
+        }
+    }
+}
+
 public partial class PublishContext
 {
     /// <summary>
@@ -33,24 +74,14 @@ public partial class PublishContext
     /// </summary>
     public IDictionary<string, object?> Extensions { get; } = new Dictionary<string, object?>();
 
-    static readonly ConcurrentQueue<PublishContext> Pool = new(new []
-    {
-        new PublishContext(),
-        new PublishContext(),
-        new PublishContext(),
-        new PublishContext(),
-    });
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static PublishContext Rent(
         CancellationToken cancellation,
         string? callerMemberName,
         string? callerFilePath,
         int callerLineNumber)
     {
-        if (!Pool.TryDequeue(out var value))
-        {
-            value = new PublishContext();
-        }
+        var value = ContextPool<PublishContext>.Rent();
         value.CancellationToken = cancellation;
         value.CallerMemberName = callerMemberName;
         value.CallerFilePath = callerFilePath;
@@ -58,29 +89,23 @@ public partial class PublishContext
         return value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal virtual void Return()
     {
         Extensions.Clear();
-        Pool.Enqueue(this);
+        ContextPool<PublishContext>.Return(this);
     }
 }
 
 public class PublishContext<T> : PublishContext where T : ICommand
 {
-    static readonly ConcurrentQueue<PublishContext<T>> Pool = new(new []
-    {
-        new PublishContext<T>(),
-        new PublishContext<T>(),
-        new PublishContext<T>(),
-        new PublishContext<T>(),
-    });
-
     FreeList<ICommandInterceptor> interceptors = default!;
     IAsyncCommandSubscriber core = default!;
     int currentInterceptorIndex = -1;
 
     readonly PublishContinuation<T> continuation;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PublishContext<T> Rent(
         FreeList<ICommandInterceptor> interceptors,
         IAsyncCommandSubscriber core,
@@ -89,10 +114,7 @@ public class PublishContext<T> : PublishContext where T : ICommand
         string? callerFilePath,
         int callerLineNumber)
     {
-        if (!Pool.TryDequeue(out var value))
-        {
-            value = new PublishContext<T>();
-        }
+        var value = ContextPool<PublishContext<T>>.Rent();
         value.interceptors = interceptors;
         value.core = core;
         value.CancellationToken = cancellation;
@@ -103,16 +125,18 @@ public class PublishContext<T> : PublishContext where T : ICommand
         return value;
     }
 
-    PublishContext()
+    public PublishContext()
     {
         continuation = InvokeRecursiveAsync;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask PublishAsync(T command)
     {
         return InvokeRecursiveAsync(command, this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ValueTask InvokeRecursiveAsync(T command, PublishContext context)
     {
         if (MoveNextInterceptor(out var interceptor))
@@ -122,11 +146,13 @@ public class PublishContext<T> : PublishContext where T : ICommand
         return core.ReceiveAsync(command, context);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal override void Return()
     {
         interceptors = null!;
         currentInterceptorIndex = -1;
-        Pool.Enqueue(this);
+        Extensions.Clear();
+        ContextPool<PublishContext<T>>.Return(this);
     }
 
     bool MoveNextInterceptor(out ICommandInterceptor nextInterceptor)

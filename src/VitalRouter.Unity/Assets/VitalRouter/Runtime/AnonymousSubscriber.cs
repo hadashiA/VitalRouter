@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using VitalRouter.Internal;
 
@@ -81,6 +82,7 @@ class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
         this.callback = callback;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Receive<TReceive>(TReceive command, PublishContext context) where TReceive : ICommand
     {
         if (typeof(TReceive) == typeof(T))
@@ -89,5 +91,8 @@ class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
             callback(commandCasted, context);
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ReceiveInternal(T command, PublishContext context) => callback(command, context);
 }
 }

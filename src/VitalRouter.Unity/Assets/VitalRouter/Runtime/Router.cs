@@ -110,6 +110,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     readonly FreeList<ICommandInterceptor> interceptors = new(8);
 
     bool disposed;
+    bool hasInterceptor;
 
     readonly PublishCore publishCore;
 
@@ -126,7 +127,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         Filter(ordering);
     }
 
-    public async ValueTask PublishAsync<T>(
+    public ValueTask PublishAsync<T>(
         T command,
         CancellationToken cancellation = default,
         [CallerMemberName] string? callerMemberName = null,
@@ -136,28 +137,45 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     {
         CheckDispose();
 
-        if (HasInterceptor())
+        ValueTask task;
+        PublishContext context = default!;
+        try
         {
-            var context = PublishContext<T>.Rent(interceptors, publishCore, cancellation, callerMemberName, callerFilePath, callerLineNumber);
-            try
+            if (HasInterceptor())
             {
-                await context.PublishAsync(command);
+                var c = PublishContext<T>.Rent(interceptors, publishCore, cancellation, callerMemberName, callerFilePath, callerLineNumber);
+                context = c;
+                task = c.PublishAsync(command);
             }
-            finally
+            else
             {
-                context.Return();
+                context = PublishContext.Rent(cancellation, callerMemberName, callerFilePath, callerLineNumber);
+                task = publishCore.ReceiveAsync(command, context!);
             }
         }
-        else
+        finally
         {
-            var context = PublishContext.Rent(cancellation, callerMemberName, callerFilePath, callerLineNumber);
+            context.Return();
+        }
+
+
+        if (task.IsCompletedSuccessfully)
+        {
+            return task;
+        }
+
+        return ContinueAsync(task, context);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        async ValueTask ContinueAsync(ValueTask x, PublishContext c)
+        {
             try
             {
-                await publishCore.ReceiveAsync(command, context);
+                await x;
             }
             finally
             {
-                context.Return();
+                c.Return();
             }
         }
     }
@@ -190,22 +208,36 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         asyncSubscribers.Clear();
     }
 
+    [Obsolete("Use AddFilter instead")]
     public Router Filter(ICommandInterceptor interceptor)
     {
-        interceptors.Add(interceptor);
+        AddFilter(interceptor);
         return this;
+    }
+
+    public void AddFilter(ICommandInterceptor interceptor)
+    {
+        hasInterceptor = true;
+        interceptors.Add(interceptor);
     }
 
     public void RemoveFilter(Func<ICommandInterceptor, bool> predicate)
     {
         var span = interceptors.AsSpan();
+        var count = 0;
         for (var i = span.Length - 1; i >= 0; i--)
         {
-            if (interceptors[i] is { } x && predicate(x))
+            if (interceptors[i] is { } x)
             {
-                interceptors.RemoveAt(i);
+                count++;
+                if (predicate(x))
+                {
+                    interceptors.RemoveAt(i);
+                    count--;
+                }
             }
         }
+        hasInterceptor = count > 0;
     }
 
     public void Dispose()
@@ -231,18 +263,10 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         return false;
     }
 
-    public bool HasInterceptor()
-    {
-        foreach (var interceptorOrNull in interceptors.AsSpan())
-        {
-            if (interceptorOrNull != null)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool HasInterceptor() => hasInterceptor;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void CheckDispose()
     {
         if (disposed)
@@ -263,33 +287,35 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
         public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
-            try
+            foreach (var sub in source.subscribers.AsSpan())
             {
-                foreach (var sub in source.subscribers.AsSpan())
+                switch (sub)
                 {
-                    sub?.Receive(command, context);
+                    case AnonymousSubscriber<T> x: // Optimize devirtualization
+                        x.ReceiveInternal(command, context);
+                        break;
+                    case { } x:
+                        x.Receive(command, context);
+                        break;
                 }
-
-                foreach (var sub in source.asyncSubscribers.AsSpan())
-                {
-                    if (sub != null)
-                    {
-                        var task = sub.ReceiveAsync(command, context);
-                        executingTasks.Add(task);
-                    }
-                }
-
-                if (executingTasks.Count > 0)
-                {
-                    return WhenAllUtility.WhenAll(executingTasks);
-                }
-
-                return default;
             }
-            finally
+
+            executingTasks.Clear();
+            foreach (var sub in source.asyncSubscribers.AsSpan())
             {
-                executingTasks.Clear();
+                var task = sub?.ReceiveAsync(command, context);
+                if (task != null)
+                {
+                    executingTasks.Add(task.Value);
+                }
             }
+
+            if (executingTasks.Count > 0)
+            {
+                return WhenAllUtility.WhenAll(executingTasks);
+            }
+
+            return default;
         }
     }
 }

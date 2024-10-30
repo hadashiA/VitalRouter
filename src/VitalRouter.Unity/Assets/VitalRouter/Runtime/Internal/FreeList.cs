@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace VitalRouter.Internal
@@ -10,7 +11,7 @@ public class FreeList<T> where T : class
     public bool IsDisposed => lastIndex == -2;
 
     readonly object gate = new();
-    T?[] values;
+    internal T?[] values;
     int lastIndex = -1;
 
     public FreeList(int initialCapacity)
@@ -18,16 +19,16 @@ public class FreeList<T> where T : class
         values = new T[initialCapacity];
     }
 
-    public ReadOnlySpan<T?> AsSpan()
-    {
-        if (lastIndex < 0)
-        {
-            return ReadOnlySpan<T?>.Empty;
-        }
-        return values.AsSpan(0, lastIndex + 1);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ReadOnlySpan<T?> AsSpan() => lastIndex >= 0
+        ? values.AsSpan(0, lastIndex + 1)
+        : ReadOnlySpan<T?>.Empty;
 
-    public T? this[int index] => values[index];
+    public T? this[int index]
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => values[index];
+    }
 
     public void Add(T item)
     {
@@ -119,6 +120,7 @@ public class FreeList<T> where T : class
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void CheckDispose()
     {
         if (IsDisposed)
@@ -129,6 +131,7 @@ public class FreeList<T> where T : class
 
 #if NET6_0_OR_GREATER
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static int FindNullIndex(T?[] target)
     {
         var span = MemoryMarshal.CreateReadOnlySpan(
