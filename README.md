@@ -49,9 +49,6 @@ Alternatively, a style in which handlers are registered directly in lambda expre
 ```cs
 router.Subscribe<FooCommand>(cmd => { /* ... */ })
 router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
-
-// with interceptor
-router.Filter<ExtraFilter>();
 ```
 
 
