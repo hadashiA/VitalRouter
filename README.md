@@ -3,11 +3,11 @@
 [![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
 ![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
 
-VitalRouter, is a source-generator powered zero-allocation fast in-memory message passing library for games and other complex GUI applications, and the very thin layer that organize application data-flow.
+VitalRouter, is a source-generator powered zero-allocation fast in-memory message passing library for games and other complex GUI applications. And the very thin layer that organize application data-flow.
 It is mainly focused on Unity, but also works with any .NET env.
 
 
-An simple example is below. Bringing declarative routing to client-side programming where control flow is complex.
+Declarative Routing:
 
 ```cs
 [Routes]
@@ -44,12 +44,19 @@ public partial class ExamplePresenter
 }
 ```
 
-
-Another, easier way is to register a lambda expression directly as a handler.
+And or, simple observer pattern:
 
 ```cs
 router.Subscribe<FooCommand>(cmd => { /* ... */ })
 router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
+
+// with interceptor
+router.Filter<ExtraFilter>();
+```
+
+
+
+```cs
 ```
 
 ## Table of Contents
@@ -57,6 +64,7 @@ router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ 
 | Feature                                                           | Description                                                                                                                                                                                                                 |
 |-------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Declarative routing                                               | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                                                                                           |
+| Simple observer pattern                                           | The event delivery destination and interceptor stack are self-explanatory in the type definition.                                                                                                                           |
 | Async/non-Async handlers                                          | Integrate with async/await, and providing optimized fast pass for non-async way                                                                                                                                             |
 | With DI and without DI                                            | Auto-wiring the publisher/subscriber reference by DI (Dependency Injection). But can be used without DI for any project                                                                                                     |
 | Fast, less allocations                                            | The SourceGenerator eliminates meta-programming overhead and is more attentive to performance. See [Performance](#performance) section for details.                                                                         |
@@ -157,7 +165,13 @@ See [Concept, Technical Explanation](#concept-technical-explanation) section to 
  >Modern C# has additional syntax that makes it easy to define such data-oriented types. Using record or record struct is also a good option.
 > In fact, even in Unity, you can use the new syntax by specifying `langVersion:11` compiler option or by doing dll separation.  It would be worth considering.
 
-Next, define the class that will handle the commands.
+Next, define the handler for the command.
+This can be done in two styles.
+
+- 1. Define a class that defines declarative routing
+- 2. Simply register an event handler.
+
+Declarative routing:
 
 ```cs
 using VitalRouter;
@@ -207,6 +221,19 @@ void On(FooCommand cmd) { /* .. */ }
 
 > [!NOTE] 
 > There are no restrictions by Interface but it will generate source code that will be resolved at compile time, so you will be able to follow the code well enough.
+
+Simply register an event handler:
+
+```cs
+// sync handler
+Router.Default.Subscribe<FooCommand>(cmd => { /* ... */ });
+
+// async handler
+Router.Default.SubscribeAwait<FooCommand>(asaync (cmd, cancellationToken) => { /* ... */ });
+
+// async handler with PublishContext
+Router.Default.SubscribeAwait<FooCommand>(asaync (cmd, publishContext) => { /* ... */ });
+```
 
 Now, when and how does the routing defined here call? There are several ways to make it enable this.
 
@@ -347,7 +374,18 @@ public class GameLifetimeScope : LifetimeScope
         });			
     }
 }
+```
 
+Also, the `IPublisher` and `ISubscribable` interfaces can also be obtained from the DI container.
+
+```cs
+public class HandlerA
+{
+    public HandlerA(ISubscribable subscribable)
+    {
+        subscribable.Subscribe<FooCommand>(cmd => { /* ... */ })
+    }
+}
 ```
 
 #### Setup with DI in Microsoft.Extensions.DependencyInjection
