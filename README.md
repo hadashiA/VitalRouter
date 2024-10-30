@@ -44,7 +44,7 @@ public partial class ExamplePresenter
 }
 ```
 
-And or, simple observer pattern:
+Alternatively, a style in which handlers are registered directly in lambda expressions without using class definitions is also possible.
 
 ```cs
 router.Subscribe<FooCommand>(cmd => { /* ... */ })
@@ -55,9 +55,6 @@ router.Filter<ExtraFilter>();
 ```
 
 
-
-```cs
-```
 
 ## Table of Contents
 
