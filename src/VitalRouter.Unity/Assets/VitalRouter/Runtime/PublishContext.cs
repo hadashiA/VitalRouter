@@ -10,13 +10,7 @@ namespace VitalRouter
 
 static class ContextPool<T> where T : class, new()
 {
-    static readonly ConcurrentQueue<T> items = new(new []
-    {
-        new T(),
-        new T(),
-        new T(),
-        new T(),
-    });
+    static readonly ConcurrentQueue<T> Items = new();
 
     static T? fastItem;
 
@@ -29,7 +23,7 @@ static class ContextPool<T> where T : class, new()
         {
             return value;
         }
-        if (items.TryDequeue(out value))
+        if (Items.TryDequeue(out value))
         {
             return value;
         }
@@ -42,7 +36,7 @@ static class ContextPool<T> where T : class, new()
         if (fastItem != null ||
             Interlocked.CompareExchange(ref fastItem, value, null) != null)
         {
-            items.Enqueue(value);
+            Items.Enqueue(value);
         }
     }
 }
@@ -72,7 +66,15 @@ public partial class PublishContext
     /// <summary>
     /// A general-purpose shared data area that is valid only while it is being Publish. (Experimental)
     /// </summary>
-    public IDictionary<string, object?> Extensions { get; } = new Dictionary<string, object?>();
+    public IDictionary<string, object?> Extensions
+    {
+        get
+        {
+            return extensions ??= new Dictionary<string, object?>();
+        }
+    }
+
+    protected Dictionary<string, object?>? extensions;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static PublishContext Rent(
@@ -92,7 +94,7 @@ public partial class PublishContext
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal virtual void Return()
     {
-        Extensions.Clear();
+        extensions?.Clear();
         ContextPool<PublishContext>.Return(this);
     }
 }
@@ -121,7 +123,6 @@ public class PublishContext<T> : PublishContext where T : ICommand
         value.CallerMemberName = callerMemberName;
         value.CallerFilePath = callerFilePath;
         value.CallerLineNumber = callerLineNumber;
-        value.Extensions.Clear();
         return value;
     }
 
@@ -149,9 +150,8 @@ public class PublishContext<T> : PublishContext where T : ICommand
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal override void Return()
     {
-        interceptors = null!;
+        extensions?.Clear();
         currentInterceptorIndex = -1;
-        Extensions.Clear();
         ContextPool<PublishContext<T>>.Return(this);
     }
 
