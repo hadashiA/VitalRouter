@@ -1474,16 +1474,16 @@ await observable
 Below is a benchmark for synchronous Publish:
 
 ```
-| Method                              | Mean        | Error     | StdDev    | Gen0   | Allocated |
-|------------------------------------ |------------:|----------:|----------:|-------:|----------:|
-| 'Publish (VitalRouter)'             |    49.80 ns |  0.631 ns |  0.591 ns |      - |         - |
-| 'Publish (ZeroMessenger)'           |    47.99 ns |  0.979 ns |  1.005 ns |      - |         - |
-| 'Publish (MessagePipe)'             |    67.82 ns |  1.166 ns |  1.091 ns |      - |         - |
-| 'Publish (R3 Subject)'              |    70.97 ns |  0.867 ns |  0.724 ns |      - |         - |
-| 'Publish (System.Reactive Subject)' |    77.49 ns |  1.454 ns |  1.428 ns |      - |         - |
-| 'Publish (MediatR)'                 |   257.98 ns |  2.894 ns |  2.707 ns |      - |      64 B |
-| 'Publish (PubSub)'                  |   529.87 ns |  5.980 ns |  5.301 ns |      - |     248 B |
-| 'Publish (Prism)'                   | 2,158.16 ns | 42.981 ns | 42.213 ns | 0.1000 |    1552 B |
+| Method                              | Mean        | Error     | StdDev     | Median      | Gen0   | Allocated |
+|------------------------------------ |------------:|----------:|-----------:|------------:|-------:|----------:|
+| 'Publish (ZeroMessenger)'           |    48.55 ns |  0.626 ns |   0.585 ns |    48.55 ns |      - |         - |
+| 'Publish (MessagePipe)'             |    63.77 ns |  0.853 ns |   0.756 ns |    63.69 ns |      - |         - |
+| 'Publish (R3 Subject)'              |    71.61 ns |  1.259 ns |   1.499 ns |    71.51 ns |      - |         - |
+| 'Publish (System.Reactive Subject)' |    76.56 ns |  0.656 ns |   0.582 ns |    76.32 ns |      - |         - |
+| 'Publish (VitalRouter)'             |    83.31 ns |  0.802 ns |   0.750 ns |    83.39 ns |      - |         - |
+| 'Publish (MediatR)'                 |   260.63 ns |  2.586 ns |   2.419 ns |   260.59 ns |      - |      64 B |
+| 'Publish (PubSub)'                  |   515.71 ns |  6.076 ns |   5.683 ns |   516.50 ns |      - |     248 B |
+| 'Publish (Prism)'                   | 1,374.80 ns | 39.718 ns | 103.232 ns | 1,334.21 ns | 0.1000 |    1552 B |
 ```
 
 ### Heap allocations
