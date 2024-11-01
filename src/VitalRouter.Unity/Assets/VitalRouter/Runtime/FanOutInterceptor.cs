@@ -25,12 +25,7 @@ public class FanOutInterceptor : ICommandInterceptor
 
             foreach (var x in subsequents)
             {
-                var awaiter = x.PublishAsync(
-                    command,
-                    context.CancellationToken,
-                    context.CallerMemberName,
-                    context.CallerFilePath,
-                    context.CallerLineNumber).GetAwaiter();
+                var awaiter = x.PublishAsync(command, context.CancellationToken).GetAwaiter();
                 whenAll.AddAwaiter(awaiter);
             }
 

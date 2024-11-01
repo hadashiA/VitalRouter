@@ -49,21 +49,6 @@ public partial class PublishContext
     public CancellationToken CancellationToken { get; set; }
 
     /// <summary>
-    /// The Member name of the caller who published. `[CallerMemberName]` is the source.
-    /// </summary>
-    public string? CallerMemberName { get; protected set; }
-
-    /// <summary>
-    /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
-    /// </summary>
-    public string? CallerFilePath { get; protected set; }
-
-    /// <summary>
-    /// The line number of the caller who published. `[CallerLineNumber]` is the source.
-    /// </summary>
-    public int CallerLineNumber { get; protected set; }
-
-    /// <summary>
     /// A general-purpose shared data area that is valid only while it is being Publish. (Experimental)
     /// </summary>
     public IDictionary<string, object?> Extensions
@@ -77,17 +62,10 @@ public partial class PublishContext
     protected ConcurrentDictionary<string, object?>? extensions;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static PublishContext Rent(
-        CancellationToken cancellation,
-        string? callerMemberName,
-        string? callerFilePath,
-        int callerLineNumber)
+    internal static PublishContext Rent(CancellationToken cancellation)
     {
         var value = ContextPool<PublishContext>.Rent();
         value.CancellationToken = cancellation;
-        value.CallerMemberName = callerMemberName;
-        value.CallerFilePath = callerFilePath;
-        value.CallerLineNumber = callerLineNumber;
         return value;
     }
 
@@ -111,18 +89,12 @@ public class PublishContext<T> : PublishContext where T : ICommand
     public static PublishContext<T> Rent(
         FreeList<ICommandInterceptor> interceptors,
         IAsyncCommandSubscriber core,
-        CancellationToken cancellation,
-        string? callerMemberName,
-        string? callerFilePath,
-        int callerLineNumber)
+        CancellationToken cancellation)
     {
         var value = ContextPool<PublishContext<T>>.Rent();
         value.interceptors = interceptors;
         value.core = core;
         value.CancellationToken = cancellation;
-        value.CallerMemberName = callerMemberName;
-        value.CallerFilePath = callerFilePath;
-        value.CallerLineNumber = callerLineNumber;
         return value;
     }
 

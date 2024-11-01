@@ -8,13 +8,7 @@ namespace VitalRouter
 {
 public interface ICommandPublisher
 {
-    ValueTask PublishAsync<T>(
-        T command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
-        where T : ICommand;
+    ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
 }
 
 public interface ICommandSubscribable
@@ -61,12 +55,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         AddFilter(ordering);
     }
 
-    public ValueTask PublishAsync<T>(
-        T command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
+    public ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
     {
         CheckDispose();
@@ -75,13 +64,13 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         PublishContext context;
         if (HasInterceptor())
         {
-            var c = PublishContext<T>.Rent(interceptors, publishCore, cancellation, callerMemberName, callerFilePath, callerLineNumber);
+            var c = PublishContext<T>.Rent(interceptors, publishCore, cancellation);
             context = c;
             task = c.PublishAsync(command);
         }
         else
         {
-            context = PublishContext.Rent(cancellation, callerMemberName, callerFilePath, callerLineNumber);
+            context = PublishContext.Rent(cancellation);
             task = publishCore.ReceiveAsync(command, context);
         }
 

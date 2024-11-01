@@ -17,10 +17,7 @@ public static class CommandPublisherExtensions
         this ICommandPublisher publisher,
         Type commandType,
         object command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
+        CancellationToken cancellation = default)
     {
         MethodInfo publishMethod;
         lock (publisher)
@@ -39,25 +36,16 @@ public static class CommandPublisherExtensions
         var args = CappedArrayPool<object?>.Shared8Limit.Rent(5);
         args[0] = command;
         args[1] = cancellation;
-        args[2] = callerMemberName;
-        args[3] = callerFilePath;
-        args[4] = callerLineNumber;
         var result = publishMethod.Invoke(publisher, args);
         CappedArrayPool<object?>.Shared8Limit.Return(args);
         return (ValueTask)result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Enqueue<T>(
-        this ICommandPublisher publisher,
-        T command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
+    public static void Enqueue<T>(this ICommandPublisher publisher, T command, CancellationToken cancellation = default)
         where T : ICommand
     {
-        publisher.PublishAsync(command, cancellation, callerMemberName, callerFilePath, callerLineNumber);
+        publisher.PublishAsync(command, cancellation);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -65,12 +53,9 @@ public static class CommandPublisherExtensions
         this ICommandPublisher publisher,
         Type commandType,
         object command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
+        CancellationToken cancellation = default)
     {
-        publisher.PublishAsync(commandType, command, cancellation, callerMemberName, callerFilePath, callerLineNumber);
+        publisher.PublishAsync(commandType, command, cancellation);
     }
 }
 }
