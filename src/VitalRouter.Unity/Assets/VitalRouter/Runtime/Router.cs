@@ -62,7 +62,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
         ValueTask task;
         PublishContext context;
-        if (HasInterceptor())
+        if (hasInterceptor)
         {
             var c = PublishContext<T>.Rent(interceptors, publishCore, cancellation);
             context = c;
@@ -167,6 +167,9 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool HasInterceptor() => hasInterceptor;
+
     public bool HasInterceptor<T>() where T : ICommandInterceptor
     {
         foreach (var interceptorOrNull in interceptors.AsSpan())
@@ -179,10 +182,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool HasInterceptor() => hasInterceptor;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void CheckDispose()
     {
         if (disposed)
@@ -215,9 +214,8 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
                 }
             }
 
+            if (source.asyncSubscribers.IsEmpty) return default;
             var asyncSubscribers = source.asyncSubscribers.AsSpan();
-            if (asyncSubscribers.IsEmpty) return default;
-            if (asyncSubscribers.Length == 1) return source.asyncSubscribers[0]?.ReceiveAsync(command, context) ?? default;
 
             var whenAll = ContextPool<ReusableWhenAllSource>.Rent();
             whenAll.Reset(asyncSubscribers.Length);

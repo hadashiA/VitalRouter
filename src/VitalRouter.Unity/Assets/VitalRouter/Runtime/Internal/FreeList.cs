@@ -7,27 +7,36 @@ namespace VitalRouter.Internal
 {
 public class FreeList<T> where T : class
 {
-    public int LastIndex => lastIndex;
-    public bool IsDisposed => lastIndex == -2;
+    public bool IsDisposed
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => LastIndex == -2;
+    }
+
+    public bool IsEmpty
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => LastIndex < 0;
+    }
 
     readonly object gate = new();
-    T?[] values;
-    int lastIndex = -1;
+    internal T?[] Values;
+    internal int LastIndex = -1;
 
     public FreeList(int initialCapacity)
     {
-        values = new T[initialCapacity];
+        Values = new T[initialCapacity];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ReadOnlySpan<T?> AsSpan() => lastIndex >= 0
-        ? values.AsSpan(0, lastIndex + 1)
+    public ReadOnlySpan<T?> AsSpan() => LastIndex >= 0
+        ? Values.AsSpan(0, LastIndex + 1)
         : ReadOnlySpan<T?>.Empty;
 
     public T? this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => values[index];
+        get => Values[index];
     }
 
     public void Add(T item)
@@ -37,21 +46,21 @@ public class FreeList<T> where T : class
             CheckDispose();
 
             // try find blank
-            var index = FindNullIndex(values);
+            var index = FindNullIndex(Values);
             if (index == -1)
             {
                 // full, 1, 4, 6,...resize(x1.5)
-                var len = values.Length;
+                var len = Values.Length;
                 var newValues = new T[len + len / 2];
-                Array.Copy(values, newValues, len);
-                values = newValues;
+                Array.Copy(Values, newValues, len);
+                Values = newValues;
                 index = len;
             }
 
-            values[index] = item;
-            if (lastIndex < index)
+            Values[index] = item;
+            if (LastIndex < index)
             {
-                lastIndex = index;
+                LastIndex = index;
             }
         }
     }
@@ -60,15 +69,15 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            if (index < values.Length)
+            if (index < Values.Length)
             {
-                ref var v = ref values[index];
+                ref var v = ref Values[index];
                 if (v == null) throw new KeyNotFoundException($"key index {index} is not found.");
 
                 v = null;
-                if (index == lastIndex)
+                if (index == LastIndex)
                 {
-                    lastIndex = FindLastNonNullIndex(values, index);
+                    LastIndex = FindLastNonNullIndex(Values, index);
                 }
             }
         }
@@ -78,10 +87,10 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            if (lastIndex < 0) return false;
+            if (LastIndex < 0) return false;
 
             var index = -1;
-            var span = values.AsSpan(0, lastIndex + 1);
+            var span = Values.AsSpan(0, LastIndex + 1);
             for (var i = 0; i < span.Length; i++)
             {
                 if (span[i] == value)
@@ -104,10 +113,10 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            if (lastIndex > -1)
+            if (LastIndex > -1)
             {
-                values.AsSpan(0, lastIndex + 1).Clear();
-                lastIndex = -1;
+                Values.AsSpan(0, LastIndex + 1).Clear();
+                LastIndex = -1;
             }
         }
     }
@@ -116,7 +125,7 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            lastIndex = -2; // -2 is disposed.
+            LastIndex = -2; // -2 is disposed.
         }
     }
 
