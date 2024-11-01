@@ -1471,7 +1471,10 @@ await observable
 
 ## Performance
 
-Below is a benchmark for synchronous Publish:
+Below is a benchmark for synchronous Publish.
+There is zero extra heap allocation due to publish; if ICommand is struct, no boxing occurs. Also, if interceptor is used, type-specific allocations occur the first time, but are cached the second and subsequent times.
+So it could be used for very granular messaging in games.
+
 
 ```
 | Method                              | Mean        | Error     | StdDev     | Median      | Gen0   | Allocated |
@@ -1486,17 +1489,6 @@ Below is a benchmark for synchronous Publish:
 | 'Publish (Prism)'                   | 1,374.80 ns | 39.718 ns | 103.232 ns | 1,334.21 ns | 0.1000 |    1552 B |
 ```
 
-### Heap allocations
-
-There is zero extra heap allocation due to publish; if ICommand is struct, no boxing occurs. Also, if interceptor is used, type-specific allocations occur the first time, but are cached the second and subsequent times.
-
-So it could be used for very granular messaging in games.
-
-> [!WARNING]
-> There is a difference in the optimization of the async method between the debug build and the release build.
-> If you want to check the allocations in production, you should look at the Release build.
-> ![](./docs/screenshot_codeopt.png)
-> Also, refer to the UniTask documentation for.
 
 ### Static type caching
 
