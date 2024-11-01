@@ -28,7 +28,11 @@ public class FreeList<T> where T : class
         Values = new T[initialCapacity];
     }
 
+#if NET6_0_OR_GREATER
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
     public ReadOnlySpan<T?> AsSpan() => LastIndex >= 0
         ? Values.AsSpan(0, LastIndex + 1)
         : ReadOnlySpan<T?>.Empty;

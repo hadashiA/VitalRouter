@@ -55,9 +55,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         AddFilter(ordering);
     }
 
-#if NET6_0_OR_GREATER
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
     {
@@ -202,9 +199,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             this.source = source;
         }
 
-#if NET6_0_OR_GREATER
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
         public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
             foreach (var sub in source.subscribers.AsSpan())
