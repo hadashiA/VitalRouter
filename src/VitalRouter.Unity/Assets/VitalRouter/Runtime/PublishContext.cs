@@ -51,17 +51,17 @@ public partial class PublishContext
     /// <summary>
     /// The Member name of the caller who published. `[CallerMemberName]` is the source.
     /// </summary>
-    public string? CallerMemberName { get; set; }
+    public string? CallerMemberName { get; protected set; }
 
     /// <summary>
     /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
     /// </summary>
-    public string? CallerFilePath { get; set; }
+    public string? CallerFilePath { get; protected set; }
 
     /// <summary>
     /// The line number of the caller who published. `[CallerLineNumber]` is the source.
     /// </summary>
-    public int CallerLineNumber { get; set; }
+    public int CallerLineNumber { get; protected set; }
 
     /// <summary>
     /// A general-purpose shared data area that is valid only while it is being Publish. (Experimental)
@@ -70,11 +70,11 @@ public partial class PublishContext
     {
         get
         {
-            return extensions ??= new Dictionary<string, object?>();
+            return extensions ??= new ConcurrentDictionary<string, object?>();
         }
     }
 
-    protected Dictionary<string, object?>? extensions;
+    protected ConcurrentDictionary<string, object?>? extensions;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static PublishContext Rent(

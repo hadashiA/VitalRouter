@@ -11,7 +11,7 @@ public class FreeList<T> where T : class
     public bool IsDisposed => lastIndex == -2;
 
     readonly object gate = new();
-    internal T?[] values;
+    T?[] values;
     int lastIndex = -1;
 
     public FreeList(int initialCapacity)
