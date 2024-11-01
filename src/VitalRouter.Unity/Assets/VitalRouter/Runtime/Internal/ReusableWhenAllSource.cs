@@ -170,11 +170,18 @@ namespace VitalRouter.Internal
 
         public void GetResult(short token)
         {
-            if (version != token)
+            try
             {
-                throw new InvalidOperationException($"Invalid operation. Expected token {version} but was {token}.");
+                if (version != token)
+                {
+                    throw new InvalidOperationException($"Invalid operation. Expected token {version} but was {token}.");
+                }
+                error?.Throw();
             }
-            error?.Throw();
+            finally
+            {
+                ContextPool<ReusableWhenAllSource>.Return(this);
+            }
         }
 
         public void IncrementSuccessfully()
