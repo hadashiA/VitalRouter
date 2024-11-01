@@ -17,27 +17,30 @@ Declarative Routing:
 public partial class ExamplePresenter
 {
     // Declare event handler
-    public void On(FooCommand cmd)
+    [Route]
+    void On(FooCommand cmd)
     {
         // Do something ...
     }
 
     // Declare event handler (async)
-    public async UniTask On(BarCommand cmd)
+    [Route] 
+    async UniTask On(BarCommand cmd)
     {
         // Do something for await ...
     }
     
     // Declare event handler with extra filter
+    [Route]
     [Filter(typeof(ExtraFilter))]
-    public async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
+    async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
     {
         // Do something after all filters runs on.
     }
        
     // Declare event handler with specifies behavior when async handlers are executed concurrently
     [Route(CommandOrdering.Sequential)]
-    public async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
+    async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
     {
         // Do something after all filters runs on.
     }
@@ -162,8 +165,8 @@ See [Concept, Technical Explanation](#concept-technical-explanation) section to 
 Next, define the handler for the command.
 This can be done in two styles.
 
-- 1. Define a class that defines declarative routing
-- 2. Simply register an event handler.
+1. Define a class that defines declarative routing
+2. Simply register an event handler.
 
 Declarative routing:
 
@@ -235,21 +238,30 @@ Now, when and how does the routing defined here call? There are several ways to 
 
 If your project does not use DI, set it up in the way of bare bones.
 
+Decralative Routing:
+
 ```cs
 var presenter = new FooPresenter();
 presenter.MapTo(Router.Default);
 ```
 
-In this case, unmapping is required manually to discard the FooPresenter.
+Simple event handler;
 
 ```cs
-presenter.UnmapRoutes();
+Router.Default.Subscribe<FooCommand>((command, ctx) => { /* ... */ });
+Router.Default.SubscribeAwait<FooCommand>(async (command, ctx) => /* ... */ });
 ```
 
-Or, handle subscription.
+In this case, unmapping is required manually.
 
 ```cs
 var subscription = presenter.MapTo(Router.Default);
+// ...
+subscription.Dispose();
+```
+
+```cs
+var subscription = Router.Default.Subscribe<FooCommand>((command, ctx) => { /* ... */ });
 // ...
 subscription.Dispose();
 ```
@@ -518,19 +530,9 @@ public class PublishContext
     public CancellationToken CancellationToken { get; set; }
 
     /// <summary>
-    /// The Member name of the caller who published. `[CallerMemberName]` is the source.
+    /// A general-purpose shared data area that is valid only while it is being Publish.
     /// </summary>
-    public string? CallerMemberName { get; set; }
-
-    /// <summary>
-    /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
-    /// </summary>
-    public string? CallerFilePath { get; set; }
-
-    /// <summary>
-    /// The line number of the caller who published. `[CallerLineNumber]` is the source.
-    /// </summary>
-    public int CallerLineNumber { get; set; }
+    public IDictionary<string, object?> Extensions { get; }
 }
 ```
 
