@@ -857,33 +857,6 @@ public class SampleLifetimeScope : LifetimeScope
 }
 ```
 
-Now we have the structure shown in the following:
-
-```mermaid
-flowchart LR
-
-Default(Router.Default)
-GroupA(groupA)
-GroupB(groupB)
-P1(presenter1)
-P2(presenter2)
-P3(presenter3)
-P4(presenter4)
-
-Default -->|concurrent| GroupA
-Default -->|concurrent| GroupB
-
-subgraph FIFO 1
-  GroupA --> P1
-  GroupA --> P2
-end
-
-subgraph FIFO 2
-  GroupB --> P3
-  GroupB --> P4
-end
-```
-
 ## DI scope
 
 VContainer can create child scopes at any time during execution.
