@@ -1,32 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.DotnetRuntime.Extensions;
-using GeneratorAttributeSyntaxContext = Microsoft.CodeAnalysis.DotnetRuntime.Extensions.GeneratorAttributeSyntaxContext;
 
 namespace VitalRouter.SourceGenerator;
 
 [Generator]
 public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 {
-    class Comparer : IEqualityComparer<(GeneratorAttributeSyntaxContext, Compilation)>
-    {
-        public static readonly Comparer Instance = new();
-
-        public bool Equals((GeneratorAttributeSyntaxContext, Compilation) x, (GeneratorAttributeSyntaxContext, Compilation) y)
-        {
-            return x.Item1.TargetNode.IsEquivalentTo(y.Item1.TargetNode);
-        }
-
-        public int GetHashCode((GeneratorAttributeSyntaxContext, Compilation) obj)
-        {
-            return obj.Item1.TargetNode.GetHashCode();
-        }
-    }
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var provider = context.SyntaxProvider
@@ -35,8 +18,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
                 "VitalRouter.RoutesAttribute",
                 static (node, cancellation) => node is ClassDeclarationSyntax,
                 static (context, cancellation) => context)
-            .Combine(context.CompilationProvider)
-            .WithComparer(Comparer.Instance);
+            .Combine(context.CompilationProvider);
 
         // Generate the source code.
         context.RegisterSourceOutput(
