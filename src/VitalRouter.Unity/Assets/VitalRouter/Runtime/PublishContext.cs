@@ -1,11 +1,46 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using VitalRouter.Internal;
 
 namespace VitalRouter
 {
+
+static class ContextPool<T> where T : class, new()
+{
+    static readonly ConcurrentQueue<T> Items = new();
+
+    static T? fastItem;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Rent()
+    {
+        var value = fastItem;
+        if (value != null &&
+            Interlocked.CompareExchange(ref fastItem, null, value) == value)
+        {
+            return value;
+        }
+        if (Items.TryDequeue(out value))
+        {
+            return value;
+        }
+        return new T();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Return(T value)
+    {
+        if (fastItem != null ||
+            Interlocked.CompareExchange(ref fastItem, value, null) != null)
+        {
+            Items.Enqueue(value);
+        }
+    }
+}
+
 public partial class PublishContext
 {
     /// <summary>
@@ -14,105 +49,67 @@ public partial class PublishContext
     public CancellationToken CancellationToken { get; set; }
 
     /// <summary>
-    /// The Member name of the caller who published. `[CallerMemberName]` is the source.
-    /// </summary>
-    public string? CallerMemberName { get; set; }
-
-    /// <summary>
-    /// The file full path of the caller who published. `[CallerFilePAth]` is the source.
-    /// </summary>
-    public string? CallerFilePath { get; set; }
-
-    /// <summary>
-    /// The line number of the caller who published. `[CallerLineNumber]` is the source.
-    /// </summary>
-    public int CallerLineNumber { get; set; }
-
-    /// <summary>
     /// A general-purpose shared data area that is valid only while it is being Publish. (Experimental)
     /// </summary>
-    public IDictionary<string, object?> Extensions { get; } = new Dictionary<string, object?>();
-
-    static readonly ConcurrentQueue<PublishContext> Pool = new(new []
+    public IDictionary<string, object?> Extensions
     {
-        new PublishContext(),
-        new PublishContext(),
-        new PublishContext(),
-        new PublishContext(),
-    });
-
-    internal static PublishContext Rent(
-        CancellationToken cancellation,
-        string? callerMemberName,
-        string? callerFilePath,
-        int callerLineNumber)
-    {
-        if (!Pool.TryDequeue(out var value))
+        get
         {
-            value = new PublishContext();
+            return extensions ??= new ConcurrentDictionary<string, object?>();
         }
+    }
+
+    protected ConcurrentDictionary<string, object?>? extensions;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static PublishContext Rent(CancellationToken cancellation)
+    {
+        var value = ContextPool<PublishContext>.Rent();
         value.CancellationToken = cancellation;
-        value.CallerMemberName = callerMemberName;
-        value.CallerFilePath = callerFilePath;
-        value.CallerLineNumber = callerLineNumber;
         return value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal virtual void Return()
     {
-        Extensions.Clear();
-        Pool.Enqueue(this);
+        extensions?.Clear();
+        ContextPool<PublishContext>.Return(this);
     }
 }
 
 public class PublishContext<T> : PublishContext where T : ICommand
 {
-    static readonly ConcurrentQueue<PublishContext<T>> Pool = new(new []
-    {
-        new PublishContext<T>(),
-        new PublishContext<T>(),
-        new PublishContext<T>(),
-        new PublishContext<T>(),
-    });
-
     FreeList<ICommandInterceptor> interceptors = default!;
     IAsyncCommandSubscriber core = default!;
     int currentInterceptorIndex = -1;
 
     readonly PublishContinuation<T> continuation;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PublishContext<T> Rent(
         FreeList<ICommandInterceptor> interceptors,
         IAsyncCommandSubscriber core,
-        CancellationToken cancellation,
-        string? callerMemberName,
-        string? callerFilePath,
-        int callerLineNumber)
+        CancellationToken cancellation)
     {
-        if (!Pool.TryDequeue(out var value))
-        {
-            value = new PublishContext<T>();
-        }
+        var value = ContextPool<PublishContext<T>>.Rent();
         value.interceptors = interceptors;
         value.core = core;
         value.CancellationToken = cancellation;
-        value.CallerMemberName = callerMemberName;
-        value.CallerFilePath = callerFilePath;
-        value.CallerLineNumber = callerLineNumber;
-        value.Extensions.Clear();
         return value;
     }
 
-    PublishContext()
+    public PublishContext()
     {
         continuation = InvokeRecursiveAsync;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask PublishAsync(T command)
     {
         return InvokeRecursiveAsync(command, this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ValueTask InvokeRecursiveAsync(T command, PublishContext context)
     {
         if (MoveNextInterceptor(out var interceptor))
@@ -122,11 +119,12 @@ public class PublishContext<T> : PublishContext where T : ICommand
         return core.ReceiveAsync(command, context);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal override void Return()
     {
-        interceptors = null!;
+        extensions?.Clear();
         currentInterceptorIndex = -1;
-        Pool.Enqueue(this);
+        ContextPool<PublishContext<T>>.Return(this);
     }
 
     bool MoveNextInterceptor(out ICommandInterceptor nextInterceptor)

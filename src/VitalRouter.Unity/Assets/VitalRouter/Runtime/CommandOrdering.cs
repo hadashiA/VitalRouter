@@ -30,25 +30,31 @@ public enum CommandOrdering
 
 public partial class Router
 {
+    [Obsolete("Use AddFilter instead")]
     public Router Filter(CommandOrdering ordering)
+    {
+        AddFilter(ordering);
+        return this;
+    }
+
+    public void AddFilter(CommandOrdering ordering)
     {
         switch (ordering)
         {
             case CommandOrdering.Sequential:
-                Filter(new SequentialOrdering());
+                AddFilter(new SequentialOrdering());
                 break;
             case CommandOrdering.Parallel:
                 break;
             case CommandOrdering.Drop:
-                Filter(new DropOrdering());
+                AddFilter(new DropOrdering());
                 break;
             case CommandOrdering.Switch:
-                Filter(new SwitchOrdering());
+                AddFilter(new SwitchOrdering());
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(ordering), ordering, null);
         }
-        return this;
     }
 }
 

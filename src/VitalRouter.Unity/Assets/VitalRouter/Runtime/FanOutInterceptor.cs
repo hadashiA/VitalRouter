@@ -20,12 +20,16 @@ public class FanOutInterceptor : ICommandInterceptor
         await next(command, context);
         try
         {
+            var whenAll = ContextPool<ReusableWhenAllSource>.Rent();
+            whenAll.Reset(subsequents.Count);
+
             foreach (var x in subsequents)
             {
-                executingTasks.Add(x.PublishAsync(command, context.CancellationToken, context.CallerMemberName, context.CallerFilePath, context.CallerLineNumber));
+                var awaiter = x.PublishAsync(command, context.CancellationToken).GetAwaiter();
+                whenAll.AddAwaiter(awaiter);
             }
 
-            await WhenAllUtility.WhenAll(executingTasks);
+            await new ValueTask(whenAll, whenAll.Version);
         }
         finally
         {

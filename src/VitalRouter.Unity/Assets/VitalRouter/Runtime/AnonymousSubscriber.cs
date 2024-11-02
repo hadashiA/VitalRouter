@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using VitalRouter.Internal;
 
@@ -15,7 +16,7 @@ public static class SubscribableAnonymousExtensions
     [Obsolete("Use SubscribeAwait instead")]
     public static Subscription Subscribe<T>(
         this ICommandSubscribable subscribable,
-        Func<T, PublishContext, ValueTask> callback)
+        PublishContinuation<T> callback)
         where T : ICommand
     {
         return subscribable.Subscribe(new AsyncAnonymousSubscriber<T>(callback));
@@ -23,7 +24,7 @@ public static class SubscribableAnonymousExtensions
 
     public static Subscription SubscribeAwait<T>(
         this ICommandSubscribable subscribable,
-        Func<T, PublishContext, ValueTask> callback,
+        PublishContinuation<T> callback,
         CommandOrdering? ordering = null)
         where T : ICommand
     {
@@ -33,10 +34,10 @@ public static class SubscribableAnonymousExtensions
 
 class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
 {
-    Func<T, PublishContext, ValueTask> callback;
+    readonly PublishContinuation<T> callback;
     readonly ICommandInterceptor? commandOrdering;
 
-    public AsyncAnonymousSubscriber(Func<T, PublishContext, ValueTask> callback, CommandOrdering? ordering = null)
+    public AsyncAnonymousSubscriber(PublishContinuation<T> callback, CommandOrdering? ordering = null)
     {
         this.callback = callback;
         commandOrdering = ordering switch
@@ -70,6 +71,15 @@ class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
         }
         return default;
     }
+
+    internal ValueTask ReceiveInternalAsync(T command, PublishContext context)
+    {
+        if (commandOrdering != null)
+        {
+            return commandOrdering.InvokeAsync(command, context, callback);
+        }
+        return callback(command, context);
+    }
 }
 
 class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
@@ -81,6 +91,7 @@ class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
         this.callback = callback;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Receive<TReceive>(TReceive command, PublishContext context) where TReceive : ICommand
     {
         if (typeof(TReceive) == typeof(T))
@@ -89,5 +100,8 @@ class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
             callback(commandCasted, context);
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ReceiveInternal(T command, PublishContext context) => callback(command, context);
 }
 }

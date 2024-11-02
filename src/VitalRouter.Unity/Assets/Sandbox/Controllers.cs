@@ -8,8 +8,7 @@ public class LoggingInterceptor : ICommandInterceptor
 {
     public async ValueTask InvokeAsync<T>(T command, PublishContext ctx, PublishContinuation<T> next) where T : ICommand
     {
-        var path = ctx.CallerFilePath.Replace(Application.dataPath, "Assets");
-        UnityEngine.Debug.Log($"publish {ctx.CallerMemberName} at (<a href=\"{path}\" line=\"{ctx.CallerLineNumber}\">{path}:{ctx.CallerLineNumber}</a>) {command.GetType()}");
+        UnityEngine.Debug.Log($"publish {command}");
         await next(command, ctx);
     }
 }

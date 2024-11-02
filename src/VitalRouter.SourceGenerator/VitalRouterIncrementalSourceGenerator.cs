@@ -18,7 +18,7 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 
         public bool Equals((GeneratorAttributeSyntaxContext, Compilation) x, (GeneratorAttributeSyntaxContext, Compilation) y)
         {
-            return x.Item1.TargetNode.Equals(y.Item1.TargetNode);
+            return x.Item1.TargetNode.IsEquivalentTo(y.Item1.TargetNode);
         }
 
         public int GetHashCode((GeneratorAttributeSyntaxContext, Compilation) obj)

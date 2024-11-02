@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,13 +8,7 @@ namespace VitalRouter
 {
 public interface ICommandPublisher
 {
-    ValueTask PublishAsync<T>(
-        T command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
-        where T : ICommand;
+    ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
 }
 
 public interface ICommandSubscribable
@@ -37,70 +29,6 @@ public interface IAsyncCommandSubscriber
     ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand;
 }
 
-public static class CommandPublisherExtensions
-{
-    static readonly Dictionary<Type, MethodInfo> PublishMethods = new();
-    static MethodInfo? publishMethodOpenGeneric;
-
-    public static ValueTask PublishAsync(
-        this ICommandPublisher publisher,
-        Type commandType,
-        object command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
-    {
-        MethodInfo publishMethod;
-        lock (publisher)
-        {
-            if (!PublishMethods.TryGetValue(commandType, out publishMethod))
-            {
-                publishMethodOpenGeneric ??= typeof(ICommandPublisher).GetMethod("PublishAsync", BindingFlags.Instance | BindingFlags.Public);
-                var typeArguments = CappedArrayPool<Type>.Shared8Limit.Rent(1);
-                typeArguments[0] = commandType;
-                publishMethod = publishMethodOpenGeneric!.MakeGenericMethod(typeArguments);
-                PublishMethods.Add(commandType, publishMethod);
-                CappedArrayPool<Type>.Shared8Limit.Return(typeArguments);
-            }
-        }
-
-        var args = CappedArrayPool<object?>.Shared8Limit.Rent(5);
-        args[0] = command;
-        args[1] = cancellation;
-        args[2] = callerMemberName;
-        args[3] = callerFilePath;
-        args[4] = callerLineNumber;
-        var result = publishMethod.Invoke(publisher, args);
-        CappedArrayPool<object?>.Shared8Limit.Return(args);
-        return (ValueTask)result;
-    }
-
-    public static void Enqueue<T>(
-        this ICommandPublisher publisher,
-        T command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
-        where T : ICommand
-    {
-        publisher.PublishAsync(command, cancellation, callerMemberName, callerFilePath, callerLineNumber);
-    }
-
-    public static void Enqueue(
-        this ICommandPublisher publisher,
-        Type commandType,
-        object command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
-    {
-        publisher.PublishAsync(commandType, command, cancellation, callerMemberName, callerFilePath, callerLineNumber);
-    }
-}
-
 public sealed partial class Router : ICommandPublisher, ICommandSubscribable, IDisposable
 {
     public static readonly Router Default = new();
@@ -110,6 +38,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     readonly FreeList<ICommandInterceptor> interceptors = new(8);
 
     bool disposed;
+    bool hasInterceptor;
 
     readonly PublishCore publishCore;
 
@@ -123,41 +52,46 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     public Router(CommandOrdering ordering) : this()
     {
-        Filter(ordering);
+        AddFilter(ordering);
     }
 
-    public async ValueTask PublishAsync<T>(
-        T command,
-        CancellationToken cancellation = default,
-        [CallerMemberName] string? callerMemberName = null,
-        [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
+    public ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
     {
         CheckDispose();
 
-        if (HasInterceptor())
+        ValueTask task;
+        PublishContext context;
+        if (hasInterceptor)
         {
-            var context = PublishContext<T>.Rent(interceptors, publishCore, cancellation, callerMemberName, callerFilePath, callerLineNumber);
-            try
-            {
-                await context.PublishAsync(command);
-            }
-            finally
-            {
-                context.Return();
-            }
+            var c = PublishContext<T>.Rent(interceptors, publishCore, cancellation);
+            context = c;
+            task = c.PublishAsync(command);
         }
         else
         {
-            var context = PublishContext.Rent(cancellation, callerMemberName, callerFilePath, callerLineNumber);
+            context = PublishContext.Rent(cancellation);
+            task = publishCore.ReceiveAsync(command, context);
+        }
+
+        if (task.IsCompletedSuccessfully)
+        {
+            context.Return();
+            return task;
+        }
+
+        return ContinueAsync(task, context);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        async ValueTask ContinueAsync(ValueTask x, PublishContext c)
+        {
             try
             {
-                await publishCore.ReceiveAsync(command, context);
+                await x;
             }
             finally
             {
-                context.Return();
+                c.Return();
             }
         }
     }
@@ -190,22 +124,36 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         asyncSubscribers.Clear();
     }
 
+    [Obsolete("Use AddFilter instead")]
     public Router Filter(ICommandInterceptor interceptor)
     {
-        interceptors.Add(interceptor);
+        AddFilter(interceptor);
         return this;
+    }
+
+    public void AddFilter(ICommandInterceptor interceptor)
+    {
+        hasInterceptor = true;
+        interceptors.Add(interceptor);
     }
 
     public void RemoveFilter(Func<ICommandInterceptor, bool> predicate)
     {
         var span = interceptors.AsSpan();
+        var count = 0;
         for (var i = span.Length - 1; i >= 0; i--)
         {
-            if (interceptors[i] is { } x && predicate(x))
+            if (interceptors[i] is { } x)
             {
-                interceptors.RemoveAt(i);
+                count++;
+                if (predicate(x))
+                {
+                    interceptors.RemoveAt(i);
+                    count--;
+                }
             }
         }
+        hasInterceptor = count > 0;
     }
 
     public void Dispose()
@@ -219,23 +167,14 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool HasInterceptor() => hasInterceptor;
+
     public bool HasInterceptor<T>() where T : ICommandInterceptor
     {
         foreach (var interceptorOrNull in interceptors.AsSpan())
         {
             if (interceptorOrNull is T)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public bool HasInterceptor()
-    {
-        foreach (var interceptorOrNull in interceptors.AsSpan())
-        {
-            if (interceptorOrNull != null)
             {
                 return true;
             }
@@ -254,7 +193,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     class PublishCore : IAsyncCommandSubscriber
     {
         readonly Router source;
-        readonly ExpandBuffer<ValueTask> executingTasks = new(8);
 
         public PublishCore(Router source)
         {
@@ -263,33 +201,40 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
         public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
-            try
+            foreach (var sub in source.subscribers.AsSpan())
             {
-                foreach (var sub in source.subscribers.AsSpan())
+                switch (sub)
                 {
-                    sub?.Receive(command, context);
+                    case AnonymousSubscriber<T> x: // Optimize devirtualization
+                        x.ReceiveInternal(command, context);
+                        break;
+                    case { } x:
+                        x.Receive(command, context);
+                        break;
                 }
-
-                foreach (var sub in source.asyncSubscribers.AsSpan())
-                {
-                    if (sub != null)
-                    {
-                        var task = sub.ReceiveAsync(command, context);
-                        executingTasks.Add(task);
-                    }
-                }
-
-                if (executingTasks.Count > 0)
-                {
-                    return WhenAllUtility.WhenAll(executingTasks);
-                }
-
-                return default;
             }
-            finally
+
+            if (source.asyncSubscribers.IsEmpty) return default;
+            var asyncSubscribers = source.asyncSubscribers.AsSpan();
+
+            var whenAll = ContextPool<ReusableWhenAllSource>.Rent();
+            whenAll.Reset(asyncSubscribers.Length);
+            foreach (var sub in asyncSubscribers)
             {
-                executingTasks.Clear();
+                switch (sub)
+                {
+                    case AsyncAnonymousSubscriber<T> x: // Devirtualization
+                        whenAll.AddAwaiter(x.ReceiveInternalAsync(command, context).GetAwaiter());
+                        break;
+                    case { } x:
+                        whenAll.AddAwaiter(x.ReceiveAsync(command, context).GetAwaiter());
+                        break;
+                    default:
+                        whenAll.IncrementSuccessfully();
+                        break;
+                }
             }
+            return new ValueTask(whenAll, whenAll.Version);
         }
     }
 }
