@@ -86,7 +86,7 @@ public class PublishContext<T> : PublishContext where T : ICommand
     readonly PublishContinuation<T> continuation;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PublishContext<T> Rent(
+    internal static PublishContext<T> Rent(
         FreeList<ICommandInterceptor> interceptors,
         IAsyncCommandSubscriber core,
         CancellationToken cancellation)

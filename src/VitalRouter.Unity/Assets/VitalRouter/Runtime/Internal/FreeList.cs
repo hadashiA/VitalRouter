@@ -5,42 +5,48 @@ using System.Runtime.InteropServices;
 
 namespace VitalRouter.Internal
 {
-public class FreeList<T> where T : class
+class FreeList<T> where T : class
 {
     public bool IsDisposed
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => LastIndex == -2;
+        get => lastIndex == -2;
     }
 
     public bool IsEmpty
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => LastIndex < 0;
+        get => lastIndex < 0;
+    }
+
+    public int LastIndex
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => lastIndex;
     }
 
     readonly object gate = new();
-    internal T?[] Values;
-    internal int LastIndex = -1;
+    T?[] values;
+    int lastIndex = -1;
 
     public FreeList(int initialCapacity)
     {
-        Values = new T[initialCapacity];
+        values = new T[initialCapacity];
     }
 
 #if NET6_0_OR_GREATER
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
 #else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-    public ReadOnlySpan<T?> AsSpan() => LastIndex >= 0
-        ? Values.AsSpan(0, LastIndex + 1)
+    public ReadOnlySpan<T?> AsSpan() => lastIndex >= 0
+        ? values.AsSpan(0, lastIndex + 1)
         : ReadOnlySpan<T?>.Empty;
 
     public T? this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Values[index];
+        get => values[index];
     }
 
     public void Add(T item)
@@ -50,21 +56,21 @@ public class FreeList<T> where T : class
             CheckDispose();
 
             // try find blank
-            var index = FindNullIndex(Values);
+            var index = FindNullIndex(values);
             if (index == -1)
             {
                 // full, 1, 4, 6,...resize(x1.5)
-                var len = Values.Length;
+                var len = values.Length;
                 var newValues = new T[len + len / 2];
-                Array.Copy(Values, newValues, len);
-                Values = newValues;
+                Array.Copy(values, newValues, len);
+                values = newValues;
                 index = len;
             }
 
-            Values[index] = item;
-            if (LastIndex < index)
+            values[index] = item;
+            if (lastIndex < index)
             {
-                LastIndex = index;
+                lastIndex = index;
             }
         }
     }
@@ -73,15 +79,15 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            if (index < Values.Length)
+            if (index < values.Length)
             {
-                ref var v = ref Values[index];
+                ref var v = ref values[index];
                 if (v == null) throw new KeyNotFoundException($"key index {index} is not found.");
 
                 v = null;
-                if (index == LastIndex)
+                if (index == lastIndex)
                 {
-                    LastIndex = FindLastNonNullIndex(Values, index);
+                    lastIndex = FindLastNonNullIndex(values, index);
                 }
             }
         }
@@ -91,10 +97,10 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            if (LastIndex < 0) return false;
+            if (lastIndex < 0) return false;
 
             var index = -1;
-            var span = Values.AsSpan(0, LastIndex + 1);
+            var span = values.AsSpan(0, lastIndex + 1);
             for (var i = 0; i < span.Length; i++)
             {
                 if (span[i] == value)
@@ -117,10 +123,10 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            if (LastIndex > -1)
+            if (lastIndex > -1)
             {
-                Values.AsSpan(0, LastIndex + 1).Clear();
-                LastIndex = -1;
+                values.AsSpan(0, lastIndex + 1).Clear();
+                lastIndex = -1;
             }
         }
     }
@@ -129,7 +135,7 @@ public class FreeList<T> where T : class
     {
         lock (gate)
         {
-            LastIndex = -2; // -2 is disposed.
+            lastIndex = -2; // -2 is disposed.
         }
     }
 

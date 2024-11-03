@@ -190,7 +190,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         }
     }
 
-    class PublishCore : IAsyncCommandSubscriber
+    sealed class PublishCore : IAsyncCommandSubscriber
     {
         readonly Router source;
 

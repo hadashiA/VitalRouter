@@ -15,7 +15,7 @@ public static class CommandBusAnonymousExtensions
     }
 }
 
-class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
+sealed class AnonymousInterceptor<T> : ICommandInterceptor where T : ICommand
 {
     readonly Func<T, PublishContext, PublishContinuation<T>, ValueTask> callback;
 
