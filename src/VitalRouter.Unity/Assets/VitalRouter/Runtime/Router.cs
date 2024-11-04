@@ -201,40 +201,54 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
         public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
-            foreach (var sub in source.subscribers.AsSpan())
+            if (!source.subscribers.IsEmpty)
             {
-                switch (sub)
+                foreach (var sub in source.subscribers.Values.AsSpan(source.subscribers.LastIndex + 1))
                 {
-                    case AnonymousSubscriber<T> x: // Optimize devirtualization
-                        x.ReceiveInternal(command, context);
-                        break;
-                    case { } x:
+                    if (sub == null) continue;
+                    ref var x = ref Unsafe.AsRef(in sub);
+                    if (Unsafe.As<ICommandSubscriber, nint>(ref x) == AnonymousSubscriber<T>.TypeHandleValue)
+                    {
+                        Unsafe.As<ICommandSubscriber, AnonymousSubscriber<T>>(ref x).ReceiveInternal(command, context);
+                    }
+                    else
+                    {
                         x.Receive(command, context);
-                        break;
+                    }
                 }
             }
 
-            if (source.asyncSubscribers.IsEmpty) return default;
-            var asyncSubscribers = source.asyncSubscribers.AsSpan();
-
-            var whenAll = ContextPool<ReusableWhenAllSource>.Rent();
-            whenAll.Reset(asyncSubscribers.Length);
-            foreach (var sub in asyncSubscribers)
+            if (!source.asyncSubscribers.IsEmpty)
             {
-                switch (sub)
+                var asyncSubscribers = source.asyncSubscribers.Values.AsSpan(source.asyncSubscribers.LastIndex + 1);
+
+                var whenAll = ContextPool<ReusableWhenAllSource>.Rent();
+                whenAll.Reset(asyncSubscribers.Length);
+                foreach (var sub in asyncSubscribers)
                 {
-                    case AsyncAnonymousSubscriber<T> x: // Devirtualization
-                        whenAll.AddAwaiter(x.ReceiveInternalAsync(command, context).GetAwaiter());
-                        break;
-                    case { } x:
-                        whenAll.AddAwaiter(x.ReceiveAsync(command, context).GetAwaiter());
-                        break;
-                    default:
+                    if (sub == null)
+                    {
                         whenAll.IncrementSuccessfully();
-                        break;
+                        continue;
+                    }
+
+                    ValueTask task;
+                    ref var x = ref Unsafe.AsRef(in sub);
+                    if (Unsafe.As<IAsyncCommandSubscriber, uint>(ref x) == AsyncAnonymousSubscriber<T>.TypeHandleValue)
+                    {
+                        task = Unsafe.As<IAsyncCommandSubscriber, AsyncAnonymousSubscriber<T>>(ref x)
+                            .ReceiveInternalAsync(command, context);
+                        whenAll.AddAwaiter(task.GetAwaiter());
+                    }
+                    else
+                    {
+                        task = x.ReceiveAsync(command, context);
+                    }
+                    whenAll.AddAwaiter(x.ReceiveAsync(command, context).GetAwaiter());
                 }
+                return new ValueTask(whenAll, whenAll.Version);
             }
-            return new ValueTask(whenAll, whenAll.Version);
+            return default;
         }
     }
 }
