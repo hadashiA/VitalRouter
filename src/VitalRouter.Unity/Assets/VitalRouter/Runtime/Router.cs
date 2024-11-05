@@ -9,6 +9,7 @@ namespace VitalRouter
 public interface ICommandPublisher
 {
     ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
+    ICommandPublisher WithFilter(ICommandInterceptor interceptor);
 }
 
 public interface ICommandSubscribable
@@ -17,6 +18,7 @@ public interface ICommandSubscribable
     Subscription Subscribe(IAsyncCommandSubscriber subscriber);
     void Unsubscribe(ICommandSubscriber subscriber);
     void Unsubscribe(IAsyncCommandSubscriber subscriber);
+    ICommandSubscribable WithFilter(ICommandInterceptor interceptor);
 }
 
 public interface ICommandSubscriber
@@ -156,6 +158,16 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         hasInterceptor = count > 0;
     }
 
+    public Router WithFilter(ICommandInterceptor interceptor)
+    {
+        var filtered = Clone();
+        filtered.AddFilter(interceptor);
+        return filtered;
+    }
+
+    ICommandPublisher ICommandPublisher.WithFilter(ICommandInterceptor interceptor) => WithFilter(interceptor);
+    ICommandSubscribable ICommandSubscribable.WithFilter(ICommandInterceptor interceptor) => WithFilter(interceptor);
+
     public void Dispose()
     {
         if (!disposed)
@@ -180,6 +192,19 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             }
         }
         return false;
+    }
+
+    Router Clone()
+    {
+        var result = new Router();
+        foreach (var interceptor in interceptors.AsSpan())
+        {
+            if (interceptor != null)
+            {
+                result.AddFilter(interceptor);
+            }
+        }
+        return result;
     }
 
     void CheckDispose()

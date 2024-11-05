@@ -50,11 +50,18 @@ public partial class ExamplePresenter
 Alternatively, a style in which handlers are registered directly in lambda expressions without using class definitions is also possible.
 
 ```cs
+// Lambda handlers
 router.Subscribe<FooCommand>(cmd => { /* ... */ })
 router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
+
+// lambda interceptors
+router
+    .WithFilter<FooCommand>(async (x, context) => 
+    {
+        if (condition) await next(x, context);
+    })
+    .Subscribe<FooCommand>(cmd => { /* .. */ });
 ```
-
-
 
 ## Table of Contents
 
