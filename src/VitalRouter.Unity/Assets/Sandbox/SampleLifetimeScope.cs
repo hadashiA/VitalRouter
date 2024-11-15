@@ -29,33 +29,31 @@ public class SampleLifetimeScope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
-        // builder.RegisterEntryPoint<SampleEntryPoint>();
-
         builder.RegisterVitalRouter(routing =>
         {
             routing.Filters.Add<LoggingInterceptor>();
-            routing.Map<SamplePresenter>();
-            routing.Map<RoutingBehaviour>();
+            routing.MapEntryPoint<SamplePresenter>();
+            routing.MapComponent(b)<RoutingBehaviour>();
 
             // routing.FanOut(childRouter =>
             // {
             //     childRouter.Map<SamplePresenter2>();
             // });
 
-            routing.FanOut(childRouter =>
-            {
-                childRouter.Map<SamplePresenter3>();
-
-                childRouter.FanOut(grandChildRouter =>
-                {
-                    grandChildRouter.Map<SamplePresenter4>();
-                });
-
-                childRouter.FanOut(grandChildRouter =>
-                {
-                    grandChildRouter.Map<SamplePresenter5>();
-                });
-            });
+            // routing.FanOut(childRouter =>
+            // {
+            //     childRouter.Map<SamplePresenter3>();
+            //
+            //     childRouter.FanOut(grandChildRouter =>
+            //     {
+            //         grandChildRouter.Map<SamplePresenter4>();
+            //     });
+            //
+            //     childRouter.FanOut(grandChildRouter =>
+            //     {
+            //         grandChildRouter.Map<SamplePresenter5>();
+            //     });
+            // });
         });
     }
 }

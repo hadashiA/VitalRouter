@@ -44,19 +44,20 @@ public class RoutingBuilder
         this.containerBuilder = containerBuilder;
     }
 
-    public RegistrationBuilder Map<T>()
+    public void Map<T>()
     {
-        RegistrationBuilder registrationBuilder;
-        if (typeof(UnityEngine.Component).IsAssignableFrom(typeof(T)))
+        if (!containerBuilder.Exists(typeof(T)))
         {
-            registrationBuilder = containerBuilder.RegisterComponentOnNewGameObject(typeof(T), Lifetime.Singleton);
-        }
-        else
-        {
-            registrationBuilder = containerBuilder.Register<T>(Lifetime.Singleton);
+            if (typeof(UnityEngine.Component).IsAssignableFrom(typeof(T)))
+            {
+                containerBuilder.RegisterComponentOnNewGameObject(typeof(T), Lifetime.Singleton);
+            }
+            else
+            {
+                containerBuilder.Register<T>(Lifetime.Singleton);
+            }
         }
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
-        return registrationBuilder;
     }
 
     public RegistrationBuilder Map<T>(T instance) where T : class
@@ -65,13 +66,31 @@ public class RoutingBuilder
         return containerBuilder.RegisterInstance(instance);
     }
 
-    public RegistrationBuilder MapComponentInHierarchy<T>() where T : UnityEngine.Component
+    public RegistrationBuilder MapEntryPoint<T>()
+    {
+        MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        return containerBuilder.RegisterEntryPoint<T>();
+    }
+
+    public RegistrationBuilder MapComponent<T>(T instance) where T : UnityEngine.Component
+    {
+        MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        return containerBuilder.RegisterComponent(instance);
+    }
+
+    public RegistrationBuilder MapComponentOnNewGameObject<T>() where T : UnityEngine.Component
+    {
+        MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
+        return containerBuilder.RegisterComponentOnNewGameObject<T>(Lifetime.Singleton);
+    }
+
+    public ComponentRegistrationBuilder MapComponentInHierarchy<T>() where T : UnityEngine.Component
     {
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
         return containerBuilder.RegisterComponentInHierarchy<T>();
     }
 
-    public RegistrationBuilder MapComponentInNewPrefab<T>(T prefab) where T : UnityEngine.Component
+    public ComponentRegistrationBuilder MapComponentInNewPrefab<T>(T prefab) where T : UnityEngine.Component
     {
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
         return containerBuilder.RegisterComponentInNewPrefab(prefab, Lifetime.Singleton);
@@ -122,7 +141,7 @@ public static class VContainerExtensions
 
             if (fanOut != null)
             {
-                router.Filter(fanOut);
+                router.AddFilter(fanOut);
             }
         });
     }
@@ -149,7 +168,7 @@ public static class VContainerExtensions
             InvokeMapRoutes(routerInstance, routing, container);
             if (fanOut != null)
             {
-                routerInstance.Filter(fanOut);
+                routerInstance.AddFilter(fanOut);
             }
         });
     }
@@ -201,7 +220,7 @@ public static class VContainerExtensions
     {
         foreach (var interceptorType in routing.Filters.Types)
         {
-            router.Filter((ICommandInterceptor)container.Resolve(interceptorType));
+            router.AddFilter((ICommandInterceptor)container.Resolve(interceptorType));
         }
 
         for (var i = 0; i < routing.MapRoutesInfos.Count; i++)
