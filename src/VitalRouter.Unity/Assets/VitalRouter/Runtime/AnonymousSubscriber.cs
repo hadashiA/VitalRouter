@@ -34,6 +34,8 @@ public static class SubscribableAnonymousExtensions
 
 sealed class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
 {
+    internal static readonly nint TypeHandleValue = typeof(AnonymousInterceptor<T>).TypeHandle.Value;
+
     readonly PublishContinuation<T> callback;
     readonly ICommandInterceptor? commandOrdering;
 
@@ -84,6 +86,8 @@ sealed class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICo
 
 sealed class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
 {
+    internal static readonly nint TypeHandleValue = typeof(AnonymousInterceptor<T>).TypeHandle.Value;
+
     readonly Action<T, PublishContext> callback;
 
     public AnonymousSubscriber(Action<T, PublishContext> callback)

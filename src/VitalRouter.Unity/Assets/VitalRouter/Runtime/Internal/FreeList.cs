@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace VitalRouter.Internal
 {
-class FreeList<T> where T : class
+sealed class FreeList<T> where T : class
 {
     public bool IsDisposed
     {
@@ -25,6 +25,12 @@ class FreeList<T> where T : class
         get => lastIndex;
     }
 
+    public T?[] Values
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => values;
+    }
+
     readonly object gate = new();
     T?[] values;
     int lastIndex = -1;
@@ -34,11 +40,7 @@ class FreeList<T> where T : class
         values = new T[initialCapacity];
     }
 
-#if NET6_0_OR_GREATER
-    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-#else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
     public ReadOnlySpan<T?> AsSpan() => lastIndex >= 0
         ? values.AsSpan(0, lastIndex + 1)
         : ReadOnlySpan<T?>.Empty;
