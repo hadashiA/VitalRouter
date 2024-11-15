@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Sandbox;
-using UnityEngine;
+using VContainer.Unity;
 using VitalRouter;
 
 public class LoggingInterceptor : ICommandInterceptor
@@ -34,11 +34,16 @@ public class BInterceptor : ICommandInterceptor
 [Routes]
 // [Filter(typeof(LoggingInterceptor))]
 [Filter(typeof(AInterceptor))]
-public partial class SamplePresenter
+public partial class SamplePresenter : IInitializable
 {
     public SamplePresenter()
     {
         UnityEngine.Debug.Log("SamplePresenter.ctor");
+    }
+
+    public void Initialize()
+    {
+        UnityEngine.Debug.Log("SamplePresenter.Initialize");
     }
 
     public UniTask On(CharacterEnterCommand cmd)
