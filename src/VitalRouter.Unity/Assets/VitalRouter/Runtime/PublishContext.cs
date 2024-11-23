@@ -109,7 +109,6 @@ public class PublishContext<T> : PublishContext where T : ICommand
         return InvokeRecursiveAsync(command, this);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ValueTask InvokeRecursiveAsync(T command, PublishContext context)
     {
         if (MoveNextInterceptor(out var interceptor))
