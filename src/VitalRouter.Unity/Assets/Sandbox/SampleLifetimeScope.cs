@@ -1,8 +1,9 @@
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using MyNamespace;
 using Sandbox;
-using UnityEngine.Profiling;
 using VContainer;
 using VContainer.Unity;
 using VitalRouter;
@@ -19,9 +20,7 @@ public class SampleEntryPoint : IAsyncStartable
 
     public async UniTask StartAsync(CancellationToken cancellation)
     {
-        Profiler.BeginSample("Publish!");
-        _ = router.PublishAsync(new CharacterEnterCommand(), cancellation);
-        Profiler.EndSample();
+        await router.PublishAsync(new CharacterEnterCommand(), cancellation);
     }
 }
 

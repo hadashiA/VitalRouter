@@ -25,8 +25,7 @@ public class FanOutInterceptor : ICommandInterceptor
 
             foreach (var x in subsequents)
             {
-                var awaiter = x.PublishAsync(command, context.CancellationToken).GetAwaiter();
-                whenAll.AddAwaiter(awaiter);
+                whenAll.AddTask(x.PublishAsync(command, context.CancellationToken));
             }
 
             await new ValueTask(whenAll, whenAll.Version);
