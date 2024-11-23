@@ -62,10 +62,20 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddVitalRouter(this IServiceCollection services, Action<VitalRouterOptions> configure)
     {
-        var options = new VitalRouterOptions();
-        configure(options);
+        return services.AddVitalRouterCore(null, configure);
+    }
 
-        var router = new Router();
+    public static IServiceCollection AddVitalRouter(this IServiceCollection services, Router router, Action<VitalRouterOptions> configure)
+    {
+        return services.AddVitalRouterCore(router, configure);
+    }
+
+    static IServiceCollection AddVitalRouterCore(this IServiceCollection services, Router? router, Action<VitalRouterOptions>? configure)
+    {
+        var options = new VitalRouterOptions();
+        configure?.Invoke(options);
+
+        router ??= new Router();
         var routers = new List<(Router, VitalRouterOptions)>();
         services.AddVitalRouterRecursive(router, options, routers);
 

@@ -109,10 +109,26 @@ public static class VContainerExtensions
 {
     public static void RegisterVitalRouter(this IContainerBuilder builder, Action<RoutingBuilder> configure)
     {
+        builder.RegisterVitalRouterCore(null, configure);
+    }
+
+    public static void RegisterVitalRouter(this IContainerBuilder builder, Router router, Action<RoutingBuilder> configure)
+    {
+        builder.RegisterVitalRouterCore(router, configure);
+    }
+
+    static void RegisterVitalRouterCore(this IContainerBuilder builder, Router? routerInstance, Action<RoutingBuilder> configure)
+    {
         var routing = new RoutingBuilder(builder);
         configure(routing);
 
-        if (routing.Isolated || !builder.Exists(typeof(Router), findParentScopes: true))
+        if (routerInstance != null!)
+        {
+            builder.RegisterInstance(routerInstance)
+                .AsImplementedInterfaces()
+                .AsSelf();
+        }
+        else if (routing.Isolated || !builder.Exists(typeof(Router), findParentScopes: true))
         {
             builder.Register<Router>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
