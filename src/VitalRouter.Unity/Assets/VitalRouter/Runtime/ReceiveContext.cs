@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using System;
 using System.Threading.Tasks;
 
 namespace VitalRouter
@@ -18,14 +18,6 @@ public class ReceiveContext<T> where T : ICommand
         }
     }
 
-    static readonly ConcurrentQueue<ReceiveContext<T>> Pool = new(new []
-    {
-        new ReceiveContext<T>(),
-        new ReceiveContext<T>(),
-        new ReceiveContext<T>(),
-        new ReceiveContext<T>(),
-    });
-
     ICommandInterceptor[] interceptors = default!;
     int currentInterceptorIndex = -1;
 
@@ -33,15 +25,12 @@ public class ReceiveContext<T> where T : ICommand
 
     public static ReceiveContext<T> Rent(ICommandInterceptor[] interceptors)
     {
-        if (!Pool.TryDequeue(out var value))
-        {
-            value = new ReceiveContext<T>();
-        }
+        var value = ContextPool<ReceiveContext<T>>.Rent();
         value.interceptors = interceptors;
         return value;
     }
 
-    ReceiveContext()
+    public ReceiveContext()
     {
         continuation = InvokeRecursiveAsync;
     }
@@ -59,7 +48,7 @@ public class ReceiveContext<T> where T : ICommand
     {
         interceptors = null!;
         currentInterceptorIndex = -1;
-        Pool.Enqueue(this);
+        ContextPool<ReceiveContext<T>>.Return(this);
     }
 
     bool MoveNextInterceptor(out ICommandInterceptor nextInterceptor)

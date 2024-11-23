@@ -69,7 +69,7 @@ public class RoutingBuilder
     public RegistrationBuilder MapEntryPoint<T>()
     {
         MapRoutesInfos.Add(MapRoutesInfo.Analyze(typeof(T)));
-        return containerBuilder.RegisterEntryPoint<T>();
+        return containerBuilder.RegisterEntryPoint<T>().AsSelf();
     }
 
     public RegistrationBuilder MapComponent<T>(T instance) where T : UnityEngine.Component

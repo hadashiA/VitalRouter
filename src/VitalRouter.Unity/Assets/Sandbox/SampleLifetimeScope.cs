@@ -1,8 +1,8 @@
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using MyNamespace;
 using Sandbox;
-using UnityEngine.Profiling;
 using VContainer;
 using VContainer.Unity;
 using VitalRouter;
@@ -19,9 +19,24 @@ public class SampleEntryPoint : IAsyncStartable
 
     public async UniTask StartAsync(CancellationToken cancellation)
     {
-        Profiler.BeginSample("Publish!");
-        _ = router.PublishAsync(new CharacterEnterCommand(), cancellation);
-        Profiler.EndSample();
+        await router.PublishAsync(new CharacterEnterCommand(), cancellation);
+    }
+}
+
+public class TestInterceptor : ICommandInterceptor
+{
+    public string Name { get; set; }
+
+    public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
+    {
+        try
+        {
+            await next(command, context);
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.Log($"ERROR DANE! {e.Message}");
+        }
     }
 }
 
@@ -29,11 +44,19 @@ public class SampleLifetimeScope : LifetimeScope
 {
     protected override void Configure(IContainerBuilder builder)
     {
+        builder.RegisterInstance(Router.Default);
+        Router.Default.AddFilter(new TestInterceptor
+        {
+            Name = "Default!!"
+        });
+
+        builder.RegisterEntryPoint<SampleEntryPoint>();
+
         builder.RegisterVitalRouter(routing =>
         {
             routing.Filters.Add<LoggingInterceptor>();
             routing.MapEntryPoint<SamplePresenter>();
-            routing.MapComponent(b)<RoutingBehaviour>();
+            // routing.MapComponent(b)<RoutingBehaviour>();
 
             // routing.FanOut(childRouter =>
             // {

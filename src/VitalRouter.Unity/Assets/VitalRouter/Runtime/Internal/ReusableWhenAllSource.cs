@@ -78,21 +78,13 @@ namespace VitalRouter.Internal
 
             foreach (var task in tasks)
             {
-                try
+                if (task is { } t)
                 {
-                    if (task is { } t)
-                    {
-                        source.AddAwaiter(t.GetAwaiter());
-                    }
-                    else
-                    {
-                        source.IncrementSuccessfully();
-                    }
+                    source.AddTask(t);
                 }
-                catch (Exception ex)
+                else
                 {
-                    source.error = ExceptionDispatchInfo.Capture(ex);
-                    return source;
+                    source.IncrementSuccessfully();
                 }
             }
             return source;
@@ -111,15 +103,26 @@ namespace VitalRouter.Internal
             continuationState = null;
         }
 
-        public void AddAwaiter(ValueTaskAwaiter awaiter)
+        public void AddTask(ValueTask task)
         {
-            if (awaiter.IsCompleted)
+            if (task.IsCompletedSuccessfully)
             {
                 IncrementSuccessfully();
             }
+            else if (task.IsFaulted)
+            {
+                try
+                {
+                    task.GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    error = ExceptionDispatchInfo.Capture(ex);
+                }
+            }
             else
             {
-                AwaiterNode.RegisterUnsafeOnCompleted(this, awaiter);
+                AwaiterNode.RegisterUnsafeOnCompleted(this, task.GetAwaiter());
             }
         }
 

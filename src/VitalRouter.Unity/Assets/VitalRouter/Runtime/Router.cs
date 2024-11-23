@@ -249,10 +249,10 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
                 switch (sub)
                 {
                     case AsyncAnonymousSubscriber<T> x: // Devirtualization
-                        whenAll.AddAwaiter(x.ReceiveInternalAsync(command, context).GetAwaiter());
+                        whenAll.AddTask(x.ReceiveInternalAsync(command, context));
                         break;
                     case { } x:
-                        whenAll.AddAwaiter(x.ReceiveAsync(command, context).GetAwaiter());
+                        whenAll.AddTask(x.ReceiveAsync(command, context));
                         break;
                     default:
                         whenAll.IncrementSuccessfully();
