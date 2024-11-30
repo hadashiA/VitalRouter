@@ -119,7 +119,7 @@ public class FooPresenter : MonoBehaviour
 
 :::tip
 When using DI (Dependency Injection), you can leave the life cycle management, including map/unmap, to the DI container.
-See also the [DI](./di/intro) section.
+See also the [DI](../di/intro) section.
 :::
 
 This is the basic declarative routing mechanism.

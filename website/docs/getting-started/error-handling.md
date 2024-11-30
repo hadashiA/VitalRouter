@@ -62,4 +62,4 @@ partial class FooPresenter
 ```
 
 Interceptors can be set globally for the router, or at the level of each handler.
-For details, please refer to the [Interceptor](./pipeline/interceptor) section.
+For details, please refer to the [Interceptor](../pipeline/interceptor) section.
