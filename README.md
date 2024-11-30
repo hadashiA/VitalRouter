@@ -1326,7 +1326,7 @@ cmd :your_command_name, prop1: 123, prop2: "bra bra"
 > [!NOTE]
 >  "Non-blocking" means that after control is transferred to the Unity side, the Ruby script suspends until the C# await completes, without blocking the thread.
 
-### SharedContext
+### SharedState
 
 Arbitrary variables can be set from the C# side to the mruby side.
 
