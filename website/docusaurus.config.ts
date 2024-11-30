@@ -75,12 +75,12 @@ const config: Config = {
           type: 'localeDropdown',
           position: 'left',
         },
-        {
-          to: 'getting-started/installation',
-          activeBasePath: 'none',
-          label: 'Getting Started',
-          position: 'right',
-        },
+        // {
+        //   to: 'getting-started/installation',
+        //   activeBasePath: 'none',
+        //   label: 'Getting Started',
+        //   position: 'right',
+        // },
         {
           href: 'https://github.com/hadashiA/VitalRouter',
           "aria-label": 'Github Repository',
@@ -89,7 +89,7 @@ const config: Config = {
         },
         {
           href: 'https://github.com/hadashiA/VitalRouter/releases',
-          'label': 'v1.15.0',
+          'label': 'v1.16.0',
           position: 'right',
         },
       ],
