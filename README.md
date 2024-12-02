@@ -28,9 +28,6 @@ Assembling an asynchronous function pipeline can be even more effective.
     - R3 integration
     - MRuby scripting
 
-VitalRouter, is a source-generator powered zero-allocation fast in-memory message passing library for games and other complex GUI applications. And the very thin layer that organize application data-flow.
-It is mainly focused on Unity, but also works with any .NET env.
-
 ## Documentation
 
 Visit [vitalrouter.hadashikick.jp](https://vitalrouter.hadashikick.jp) to see the full documentation.
@@ -97,7 +94,7 @@ It is very powerful if the publishing of commands can be controlled by external 
 
 For example, when implementing a game scenario, most of the time we do not implement everything in C# scripts. It is common to express large amounts of text data, branching, flag management, etc. in a simple scripting language or data format.
 
-VitalRouter offers an optional package for this purpose before integrating. mruby. (blog / blog (Japanease) )
+VitalRouter offers an optional package for this purpose before integrating [mruby](https://github.com/mruby/mruby). ([blog](https://medium.com/@hadashiA/vitalrouter-mruby-generic-ruby-scripting-framework-for-unity-d1b2234a5c33) / [blog (Japanease)](https://hadashikick.land/tech/vitalrouter-mruby)
 
 Fiber in mruby and async/await in C# are fully integrated.
 
