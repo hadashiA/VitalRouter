@@ -103,7 +103,7 @@ const config: Config = {
       // },
     },
     prism: {
-      additionalLanguages: ['csharp'],
+      additionalLanguages: ['csharp', 'ruby'],
       theme: prismThemes.jettwaveDark,
       darkTheme: prismThemes.jettwaveDark,
     },
