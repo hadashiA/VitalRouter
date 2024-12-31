@@ -25,7 +25,6 @@ for (var i = 0; i < 100; i++)
 }
 MeasureProfiler.SaveData();
 
-
 BenchmarkSwitcher.FromAssembly(Assembly.GetEntryAssembly()!).Run(args);
 
 class BenchmarkConfig : ManualConfig

@@ -32,7 +32,7 @@ public static class SubscribableAnonymousExtensions
     }
 }
 
-sealed class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
+readonly struct AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
 {
     readonly PublishContinuation<T> callback;
     readonly ICommandInterceptor? commandOrdering;
@@ -82,7 +82,7 @@ sealed class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICo
     }
 }
 
-sealed class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
+readonly struct AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
 {
     readonly Action<T, PublishContext> callback;
 
