@@ -60,8 +60,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     public ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
     {
-        CheckDispose();
-
         ValueTask task;
         PublishContext context;
         if (hasInterceptor)
@@ -207,15 +205,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         return result;
     }
 
-    void CheckDispose()
-    {
-        if (disposed)
-        {
-            throw new ObjectDisposedException(nameof(Router));
-        }
-    }
-
-    sealed class PublishCore : IAsyncCommandSubscriber
+    readonly struct PublishCore : IAsyncCommandSubscriber
     {
         readonly Router source;
 
@@ -226,11 +216,13 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
         public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
-            foreach (var sub in source.subscribers.AsSpan())
+            // var subscribers = source.subscribers.AsSpan();
+            var subscribers = source.subscribers.Values;
+            for (var i = source.subscribers.LastIndex; i >= 0; i--)
             {
-                switch (sub)
+                switch (subscribers[i])
                 {
-                    case AnonymousSubscriber<T> x: // Optimize devirtualization
+                    case AnonymousSubscriber<T> x: // devirtualization
                         x.ReceiveInternal(command, context);
                         break;
                     case { } x:
@@ -239,14 +231,15 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
                 }
             }
 
-            if (source.asyncSubscribers.IsEmpty) return default;
-            var asyncSubscribers = source.asyncSubscribers.AsSpan();
+            var asyncSubscribersLastIndex = source.asyncSubscribers.LastIndex;
+            if (asyncSubscribersLastIndex < 0) return default;
 
+            var asyncSubscribers = source.asyncSubscribers.Values;
             var whenAll = ContextPool<ReusableWhenAllSource>.Rent();
-            whenAll.Reset(asyncSubscribers.Length);
-            foreach (var sub in asyncSubscribers)
+            whenAll.Reset(asyncSubscribersLastIndex + 1);
+            for (var i = asyncSubscribersLastIndex; i >= 0; i--)
             {
-                switch (sub)
+                switch (asyncSubscribers[i])
                 {
                     case AsyncAnonymousSubscriber<T> x: // Devirtualization
                         whenAll.AddTask(x.ReceiveInternalAsync(command, context));

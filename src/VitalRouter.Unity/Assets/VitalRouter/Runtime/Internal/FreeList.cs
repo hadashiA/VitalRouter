@@ -25,6 +25,14 @@ class FreeList<T> where T : class
         get => lastIndex;
     }
 
+    internal T?[] Values
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => values;
+    }
+
+    public ref T GetPinnableReference() => ref values[0]!;
+
     readonly object gate = new();
     T?[] values;
     int lastIndex = -1;
@@ -34,14 +42,16 @@ class FreeList<T> where T : class
         values = new T[initialCapacity];
     }
 
-#if NET6_0_OR_GREATER
-    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-#else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-    public ReadOnlySpan<T?> AsSpan() => lastIndex >= 0
-        ? values.AsSpan(0, lastIndex + 1)
-        : ReadOnlySpan<T?>.Empty;
+    public ReadOnlySpan<T?> AsSpan()
+    {
+        var l = lastIndex;
+        if (l >= 0)
+        {
+            return new ReadOnlySpan<T?>(values, 0, l + 1);
+        }
+        return default;
+    }
 
     public T? this[int index]
     {

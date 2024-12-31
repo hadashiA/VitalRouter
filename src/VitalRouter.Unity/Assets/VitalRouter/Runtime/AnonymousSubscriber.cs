@@ -32,7 +32,7 @@ public static class SubscribableAnonymousExtensions
     }
 }
 
-sealed class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
+readonly struct AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICommand
 {
     readonly PublishContinuation<T> callback;
     readonly ICommandInterceptor? commandOrdering;
@@ -56,10 +56,10 @@ sealed class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICo
             if (commandOrdering != null)
             {
 #if UNITY_2022_2_OR_NEWER
-                // Func<TReceive, PublishContext, UniTask> c = (cmd, ctx) =>
+                var callbackLocal = callback;
                 PublishContinuation<TReceive> c = (cmd, ctx) =>
                 {
-                    return callback.Invoke(global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<TReceive, T>(ref cmd), ctx);
+                    return callbackLocal.Invoke(global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<TReceive, T>(ref cmd), ctx);
                 };
 #else
                 var c = System.Runtime.CompilerServices.Unsafe.As<PublishContinuation<TReceive>>(callback);
@@ -82,7 +82,7 @@ sealed class AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : ICo
     }
 }
 
-sealed class AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
+readonly struct AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
 {
     readonly Action<T, PublishContext> callback;
 
