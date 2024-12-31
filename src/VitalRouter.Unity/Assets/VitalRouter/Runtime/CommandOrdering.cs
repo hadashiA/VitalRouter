@@ -109,16 +109,17 @@ public class DropOrdering : ICommandInterceptor
 public class SwitchOrdering : ICommandInterceptor
 {
     CancellationTokenSource? previousCancellationSource;
-    readonly CancellationToken[] tokensBuffer = new CancellationToken[2];
 
     public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
         previousCancellationSource?.Cancel();
         previousCancellationSource?.Dispose();
         previousCancellationSource = new CancellationTokenSource();
-        tokensBuffer[0] = previousCancellationSource.Token;
-        tokensBuffer[1] = context.CancellationToken;
-        context.CancellationToken = CancellationTokenSource.CreateLinkedTokenSource(tokensBuffer).Token;
+
+        context.CancellationToken = CancellationTokenSource.CreateLinkedTokenSource(
+            previousCancellationSource.Token,
+            context.CancellationToken
+            ).Token;
         return next(command, context);
     }
 }

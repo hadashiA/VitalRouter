@@ -56,10 +56,10 @@ readonly struct AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : 
             if (commandOrdering != null)
             {
 #if UNITY_2022_2_OR_NEWER
-                // Func<TReceive, PublishContext, UniTask> c = (cmd, ctx) =>
+                var callbackLocal = callback;
                 PublishContinuation<TReceive> c = (cmd, ctx) =>
                 {
-                    return callback.Invoke(global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<TReceive, T>(ref cmd), ctx);
+                    return callbackLocal.Invoke(global::Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<TReceive, T>(ref cmd), ctx);
                 };
 #else
                 var c = System.Runtime.CompilerServices.Unsafe.As<PublishContinuation<TReceive>>(callback);
