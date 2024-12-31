@@ -50,7 +50,7 @@ Visit [vitalrouter.hadashikick.jp](https://vitalrouter.hadashikick.jp) to see th
 Then, add git URL from Package Manager:
 
 ```
-https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#1.6.0
+https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#1.6.2
 ```
 
 ### .NET
