@@ -7,7 +7,43 @@ VitalRouter, is a source-generator powered zero-allocation fast in-memory messag
 
 It can declaratively do async handler/async middleware/sequence control, etc., and could serve as a thin framework to promote unidirectional control flow.
 
-![Diagram](./website/docs/assets/diagram0.svg)
+```csharp
+[Routes]
+[Filter(typeof(Logging))]
+[Filter(typeof(ExceptionHandling))]
+[Filter(typeof(GameStateUpdating))]
+public partial class ExamplePresenter
+{
+    // Declare event handler
+    [Route]
+    void On(FooCommand cmd)
+    {
+        // Do something ...
+    }
+
+    // Declare event handler (async)
+    [Route] 
+    async UniTask On(BarCommand cmd)
+    {
+        // Do something for await ...
+    }
+    
+    // Declare event handler with extra filter
+    [Route]
+    [Filter(typeof(ExtraFilter))]
+    async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
+    {
+        // Do something after all filters runs on.
+    }
+       
+    // Declare event handler with specifies behavior when async handlers are executed concurrently
+    [Route(CommandOrdering.Sequential)]
+    async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
+    {
+        // Do something after all filters runs on.
+    }
+}
+```
 
 In games, or complex GUI application development, patterns such as central event aggregator/message broker/mediator are powerful patterns to organize N:N relationships.
 Assembling an asynchronous function pipeline can be even more effective.
