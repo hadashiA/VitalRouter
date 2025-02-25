@@ -55,7 +55,7 @@ jobs:
       run: |
         MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.linux.rb rake
         
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       id: upload-build
       with:
         name: linux-build

@@ -36,7 +36,7 @@ jobs:
       run: |
         MRUBY_CONFIG=${GITHUB_WORKSPACE}/src/vitalrouter-mruby/build_config.windows.rb rake
         
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       id: upload-windows-build
       with:
         name: windows-build
