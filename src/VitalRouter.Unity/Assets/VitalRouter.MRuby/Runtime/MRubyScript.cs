@@ -143,6 +143,7 @@ namespace VitalRouter.MRuby
         {
             if (IsClosed) return false;
             NativeMethods.MrbScriptDispose(DangerousGetStatePtr(), DangerousGetPtr());
+            Scripts.Remove(ScriptId);
             return true;
         }
 

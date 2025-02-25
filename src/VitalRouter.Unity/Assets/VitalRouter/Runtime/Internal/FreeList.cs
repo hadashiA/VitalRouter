@@ -31,6 +31,7 @@ class FreeList<T> where T : class
         get => values;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T GetPinnableReference() => ref values[0]!;
 
     readonly object gate = new();

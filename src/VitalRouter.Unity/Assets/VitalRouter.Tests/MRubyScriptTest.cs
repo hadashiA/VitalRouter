@@ -1,6 +1,10 @@
 #if UNITY_2022_3_OR_NEWER
+using System.Collections;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 using VitalRouter.MRuby;
 
 namespace VitalRouter.Tests
@@ -81,6 +85,27 @@ namespace VitalRouter.Tests
             var ctx = MRubyContext.Create();
             Assert.Throws<MRubyScriptException>(() => ctx.Load( "raise 'hoge fuga'"));
         }
+
+        [UnityTest]
+        public IEnumerator MultipleExecution() => UniTask.ToCoroutine(async () =>
+        {
+            var router = new Router();
+            var commandPreset = new TestCommandPreset();
+            var context = MRubyContext.Create(router, commandPreset);
+
+            var s1 = context.CompileScript("log 's1'");
+            var s2 = context.CompileScript("log 's2'");
+
+            for (var i = 0; i < 100; i++)
+            {
+                Debug.Log(i.ToString());
+                await s1.RunAsync();
+                await s2.RunAsync();
+            }
+
+            s1.Dispose();
+            s2.Dispose();
+        });
     }
 }
 #endif
