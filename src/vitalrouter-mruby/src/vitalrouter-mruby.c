@@ -243,7 +243,7 @@ extern int32_t vitalrouter_mrb_script_start(vitalrouter_mrb_ctx *ctx,
     running_script_entries_remove(script->fiber);
     mrb_gc_unregister(ctx->mrb, script->fiber);
     enum mrb_fiber_state status = fiber_ptr(script->fiber)->cxt->status;
-    if (status != MRB_FIBER_TERMINATED) {
+    if (status != MRB_FIBER_TERMINATED && status != MRB_FIBER_CREATED) {
       return VITALROUTER_ERROR;
     }
   }
