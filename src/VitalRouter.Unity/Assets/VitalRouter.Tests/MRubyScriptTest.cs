@@ -93,18 +93,30 @@ namespace VitalRouter.Tests
             var commandPreset = new TestCommandPreset();
             var context = MRubyContext.Create(router, commandPreset);
 
-            var s1 = context.CompileScript("log 's1'");
-            var s2 = context.CompileScript("log 's2'");
+            var s1 = context.CompileScript("a = [1,2,3]");
+            var s2 = context.CompileScript("b = [4,5,6]");
+            var s3 = context.CompileScript("c = 'abcdeisaoiowao'");
+            var s4 = context.CompileScript("d = 'salakwejaowa'");
+
+            await s1.RunAsync();
+            await s3.RunAsync();
 
             for (var i = 0; i < 100; i++)
             {
-                Debug.Log(i.ToString());
-                await s1.RunAsync();
+                await s4.RunAsync();
+                await s3.RunAsync();
+            }
+
+            for (var i = 0; i < 100; i++)
+            {
                 await s2.RunAsync();
+                await s1.RunAsync(); // これの実行時にクラッシュする
             }
 
             s1.Dispose();
             s2.Dispose();
+            s3.Dispose();
+            s4.Dispose();
         });
     }
 }
