@@ -265,7 +265,7 @@ extern int32_t vitalrouter_mrb_script_start(vitalrouter_mrb_ctx *ctx,
 extern int32_t vitalrouter_mrb_script_resume(vitalrouter_mrb_ctx *ctx,
                                              vitalrouter_mrb_script *script)
 {
-  if (!mrb_test(script->fiber)) {
+  if (!mrb_fiber_p(script->fiber)) {
     return VITALROUTER_ERROR;
   }
 
