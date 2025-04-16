@@ -78,10 +78,10 @@ Visit [vitalrouter.hadashikick.jp](https://vitalrouter.hadashikick.jp) to see th
 - **Optional**
     - Install UniTask >= 2.5.5
         - If [UniTask](https://github.com/Cysharp/UniTask) is installed, `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
-        - See [UniTask Integration](../extensions/unitask) section for more details.
+        - See [UniTask Integration](./website/docs/extensions/unitask.md) section for more details.
     - Install VContainer >= 1.15.1
         - For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
-        - See [DI](../di/vcontainer) section for more details.
+        - See [DI](./website/docs/di/vcontainer.md) section for more details.
 
 Then, add git URL from Package Manager:
 
