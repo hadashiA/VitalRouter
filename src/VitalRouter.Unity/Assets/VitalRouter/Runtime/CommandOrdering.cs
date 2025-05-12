@@ -66,6 +66,13 @@ public class SequentialOrdering : ICommandInterceptor, IDisposable
     readonly SemaphoreSlim publishLock = new(1, 1);
 #endif
 
+#if VITALROUTER_VCONTAINER_INTEGRATION
+    [global::VContainer.Inject]
+#endif
+    public SequentialOrdering()
+    {
+    }
+
     public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
@@ -90,6 +97,13 @@ public class DropOrdering : ICommandInterceptor
 {
     int executingCount;
 
+#if VITALROUTER_VCONTAINER_INTEGRATION
+    [global::VContainer.Inject]
+#endif
+    public DropOrdering()
+    {
+    }
+
     public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
         if (Interlocked.CompareExchange(ref executingCount, 1, 0) == 0)
@@ -109,6 +123,13 @@ public class DropOrdering : ICommandInterceptor
 public class SwitchOrdering : ICommandInterceptor
 {
     CancellationTokenSource? previousCancellationSource;
+
+#if VITALROUTER_VCONTAINER_INTEGRATION
+    [global::VContainer.Inject]
+#endif
+    public SwitchOrdering()
+    {
+    }
 
     public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next) where T : ICommand
     {
