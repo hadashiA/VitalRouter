@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: |
@@ -31,8 +31,8 @@ jobs:
         - unityVersion: 2022.2.21f1
           license: UNITY_LICENSE_2022_2
     steps: 
-    - uses: actions/checkout@v2
-    - uses: actions/cache@v2
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
       with:
         path: src/ViralRouter.Unity/Library
         key: Library-VitalRouter #-${{ matrix.unityVersion }}-${{ matrix.feature }}
