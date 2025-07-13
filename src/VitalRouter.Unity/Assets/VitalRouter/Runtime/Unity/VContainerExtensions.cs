@@ -7,27 +7,6 @@ using VitalRouter.Internal;
 
 namespace VitalRouter.VContainer
 {
-class RoutingDisposable : IDisposable
-{
-    readonly IObjectResolver container;
-    readonly IReadOnlyList<MapRoutesInfo> routes;
-
-    public RoutingDisposable(IObjectResolver container, IReadOnlyList<MapRoutesInfo> routes)
-    {
-        this.container = container;
-        this.routes = routes;
-    }
-
-    public void Dispose()
-    {
-        for (var i = 0; i < routes.Count; i++)
-        {
-            var instance = container.Resolve(routes[i].Type);
-            routes[i].UnmapRoutesMethod.Invoke(instance, null);
-        }
-    }
-}
-
 public class RoutingBuilder
 {
     public InterceptorStackBuilder Filters { get; } = new();
@@ -213,7 +192,15 @@ public static class VContainerExtensions
 
     static void RegisterVitalRouterDisposable(this IContainerBuilder builder, RoutingBuilder routing)
     {
-        builder.Register(container => new RoutingDisposable(container, routing.MapRoutesInfos), Lifetime.Scoped);
+        builder.RegisterDisposeCallback(container =>
+        {
+            var routes = routing.MapRoutesInfos;
+            for (var i = 0; i < routes.Count; i++)
+            {
+                var instance = container.Resolve(routes[i].Type);
+                routes[i].UnmapRoutesMethod.Invoke(instance, null);
+            }
+        });
     }
 
     static void InvokeMapRoutes(Router router, RoutingBuilder routing, IObjectResolver container)
