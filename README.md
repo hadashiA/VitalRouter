@@ -19,6 +19,7 @@ public partial class ExamplePresenter
     void On(FooCommand cmd)
     {
         // Do something ...
+        Console.WriteLine("foo !")
     }
 
     // Declare event handler (async)
@@ -43,6 +44,16 @@ public partial class ExamplePresenter
         // Do something after all filters runs on.
     }
 }
+```
+
+```cs
+var router = new Router();
+
+var presenter = new ExamplePresenter();
+presenter.MapTo(router);
+
+await router.PublishAsync(new FooCommand(/* ... */));
+// foo !
 ```
 
 In games, or complex GUI application development, patterns such as central event aggregator/message broker/mediator are powerful patterns to organize N:N relationships.
