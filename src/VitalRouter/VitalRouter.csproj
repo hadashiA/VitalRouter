@@ -10,14 +10,10 @@
         <Description>The fast in-memory message passing tool with zero-allocation for Unity and .NET. And the very thin layer that organize application datal-flow.</Description>
     </PropertyGroup>
 
-    <ItemGroup>
-        <Compile Include="..\VitalRouter.Unity\Assets\VitalRouter\Runtime\**\*.cs"
-                 Exclude="&#xA;..\VitalRouter.Unity\Assets\VitalRouter\Runtime\Unity\**\*.cs;&#xA;" />
-        <Compile Update="..\VitalRouter.Unity\Assets\VitalRouter\Runtime\Internal\Shims.cs">
-          <Link>Internal\Shims.cs</Link>
-        </Compile>
-    </ItemGroup>
-
+<!--    <ItemGroup>-->
+<!--        <Compile Include="..\VitalRouter.Unity\Assets\VitalRouter\Runtime\**\*.cs"-->
+<!--                 Exclude="&#xA;..\VitalRouter.Unity\Assets\VitalRouter\Runtime\Unity\**\*.cs;&#xA;" />-->
+<!--    </ItemGroup>-->
 
     <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0' Or $(TargetFramework) == 'netstandard2.1'">
         <PackageReference Include="System.Memory" Version="4.5.4" />
@@ -33,5 +29,19 @@
     <ItemGroup>
       <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
     </ItemGroup>
+
+    <!-- Copy files for Unity -->
+    <PropertyGroup>
+        <DestinationRoot>$(MSBuildProjectDirectory)\..\VitalRouter.Unity\Assets\VitalRouter\Runtime</DestinationRoot>
+    </PropertyGroup>
+    <ItemGroup>
+        <TargetFiles1 Include="$(MSBuildProjectDirectory)\**\*.cs" 
+                      Exclude="**\bin\**\*.*;**\obj\**\*.*" />
+    </ItemGroup>
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <Copy SourceFiles="@(TargetFiles1)" 
+              DestinationFiles="$(DestinationRoot)\%(RecursiveDir)%(Filename)%(Extension)" 
+              SkipUnchangedFiles="true" />
+    </Target>
 
 </Project>

@@ -5,6 +5,11 @@ using NUnit.Framework;
 
 namespace VitalRouter.Tests
 {
+struct  TestCommand1 : ICommand
+{
+    public string Id { get; set; }
+}
+
 public class AnonymousSubscriberTest
 {
     [Test]

@@ -24,8 +24,6 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\VitalRouter.Extensions.DependencyInjection\VitalRouter.Extensions.DependencyInjection.csproj" />
       <ProjectReference Include="..\..\src\VitalRouter\VitalRouter.csproj" />
-      <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj" />
-      <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator.MRuby\VitalRouter.SourceGenerator.MRuby.csproj" />
       <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
           <OutputItemType>Analyzer</OutputItemType>
           <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
