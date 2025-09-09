@@ -14,24 +14,6 @@ public delegate ValueTask MRubyPublishDelegate(
 
 public static class MRubyStateExtensions
 {
-    class Names
-    {
-        public Symbol VitalRouterModule { get; }
-        public Symbol StateMethod { get; }
-        public Symbol CmdMethod { get; }
-        public Symbol MethodTableConstant { get; }
-        public Symbol SharedDataInstanceVariable { get; }
-
-        public Names(MRubyState state)
-        {
-            VitalRouterModule = state.Intern("VitalRouter");
-            StateMethod = state.Intern("state");
-            CmdMethod = state.Intern("cmd");
-            MethodTableConstant = state.Intern("PUBLISH_METHOD_TABLE");
-            SharedDataInstanceVariable = state.Intern("@table");
-        }
-    }
-
     public static void AddVitalRouter(this MRubyState state, Action<MRubyState> configure)
     {
         if (!state.TryGetConst(state.Intern("VitalRouter"u8), out _))
@@ -129,6 +111,13 @@ public static class MRubyStateExtensions
                 });
             });
 
+            module.DefineMethod(state.Intern("log"u8), (s, self) =>
+            {
+                var message = s.Stringify(s.GetArgumentAt(0));
+                UnityEngine.Debug.Log(message);
+                return MRubyValue.Nil;
+            });
+
             module.DefineMethod(state.Intern("state"u8), (s, self) =>
             {
                 var value = s.GetInstanceVariable(self.As<RObject>(), s.Intern("@state"u8));
@@ -155,11 +144,12 @@ public static class MRubyStateExtensions
                     propsHash.Add(prop.Key, prop.Value);
                 }
 
-                s.CurrentFiber.Yield();
+                var fiber = s.CurrentFiber;
+                fiber.Yield();
 
-                if (MRubyRoutingScript.TryFindScript(s.CurrentFiber, out var script))
+                if (MRubyRoutingScript.TryFindScript(fiber, out var script))
                 {
-                    _ = ExecuteCommandAsync(script.Router, methodTable, s, commandNameSymbol, propsHash);
+                    _ = ExecuteCommandAsync(script.Router);
                 }
                 else
                 {
@@ -168,26 +158,20 @@ public static class MRubyStateExtensions
 
                 return MRubyValue.Nil;
 
-                async Task ExecuteCommandAsync(
-                    ICommandPublisher publisher,
-                    Dictionary<Symbol, MRubyPublishDelegate> methodTable,
-                    MRubyState state,
-                    Symbol commandName,
-                    RHash commandProps)
+                async Task ExecuteCommandAsync(ICommandPublisher publisher)
                 {
                     try
                     {
-                        if (methodTable.TryGetValue(commandName, out var method))
+                        if (methodTable.TryGetValue(commandNameSymbol, out var method))
                         {
-                            await method(publisher, state, commandProps);
+                            await method(publisher, state, propsHash);
+                            script.Resume();
                         }
                     }
                     catch (Exception ex)
                     {
                         script.SetException(ex);
                     }
-
-                    script.Resume();
                 }
             });
         });
