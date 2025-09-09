@@ -52,10 +52,10 @@
     <path d="M397.627,232.169L388.527,238.016L379.629,231.865" style="fill:none;stroke:rgb(237,178,0);stroke-width:4px;"/>
     <path d="M490.468,212.861L396.029,212.861C392.101,212.861 388.899,216.01 388.832,219.937C388.732,225.881 388.594,234.025 388.527,238.016" style="fill:none;stroke:rgb(237,178,0);stroke-width:4px;stroke-miterlimit:1.5;"/>
     <g transform="matrix(0.589241,0,0,0.589241,306.102,74.8402)">
-        <circle cx="766.686" cy="205.431" r="69.569" style="fill:white;stroke:rgb(237,178,0);stroke-width:3.39px;stroke-miterlimit:1.5;"/>
+        <circle cx="766.686" cy="205.431" r="69.569" style="fill:white;stroke:rgb(0,102,255);stroke-width:3.39px;stroke-miterlimit:1.5;"/>
     </g>
     <g transform="matrix(0.443444,0,0,0.443444,417.343,104.791)">
-        <circle cx="766.686" cy="205.431" r="69.569" style="fill:white;stroke:rgb(237,178,0);stroke-width:4.51px;stroke-miterlimit:1.5;"/>
+        <circle cx="766.686" cy="205.431" r="69.569" style="fill:white;stroke:rgb(0,102,255);stroke-width:4.51px;stroke-miterlimit:1.5;"/>
     </g>
     <g transform="matrix(0.702065,0,0,0.702065,271.889,-6.89854)">
         <g transform="matrix(24,0,0,24,760.082,296.271)">

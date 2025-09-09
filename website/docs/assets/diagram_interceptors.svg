@@ -17,7 +17,7 @@
         <g transform="matrix(0.718816,0,0,0.718816,130.442,-14.3013)">
             <g transform="matrix(45.9088,0,0,45.9088,530.246,268.788)">
             </g>
-            <text x="327.466px" y="268.788px" style="font-family:'TiltWarp-Regular', 'Tilt Warp';font-size:45.909px;fill:rgb(25,26,28);">Publisher</text>
+            <text x="327.466px" y="268.788px" style="font-family:'TiltWarp-Regular', 'Tilt Warp';font-size:45.909px;fill:rgb(25,26,28);stroke:rgb(0,102,255);stroke-width:1.39px;stroke-linecap:butt;stroke-miterlimit:2;">Publisher</text>
         </g>
     </g>
     <g id="Subscriber" transform="matrix(1,0,0,1,-73.7028,368.15)">
@@ -36,22 +36,22 @@
             <text x="327.466px" y="268.788px" style="font-family:'TiltWarp-Regular', 'Tilt Warp';font-size:62.825px;fill:rgb(25,26,28);">Subscriber</text>
         </g>
     </g>
-    <g transform="matrix(1,0,0,0.396552,0,289.62)">
-        <g transform="matrix(1,-0,-0,2.52174,0,-730.345)">
-            <path d="M397.5,445.789L384,454.789L370.5,445.789" style="fill:none;stroke:black;stroke-width:6px;stroke-linejoin:miter;stroke-miterlimit:10;"/>
-            <path d="M384,404.385L384,454.789" style="fill:none;stroke:black;stroke-width:6px;"/>
+    <g transform="matrix(1,0,0,0.396552,0,310.62)">
+        <g transform="matrix(1,-0,-0,2.52174,0,-783.301)">
+            <path d="M397.5,466.789L384,475.789L370.5,466.789" style="fill:none;stroke:rgb(0,102,255);stroke-width:6px;stroke-linejoin:miter;stroke-miterlimit:10;"/>
+            <path d="M384,425.385L384,475.789" style="fill:none;stroke:rgb(0,102,255);stroke-width:6px;"/>
         </g>
     </g>
     <g transform="matrix(1,0,0,0.291166,0,549.062)">
         <g transform="matrix(1,-0,-0,3.43447,0,-1885.73)">
-            <path d="M397.5,660.378L384,669.378L370.5,660.378" style="fill:none;stroke:black;stroke-width:6px;stroke-linejoin:miter;stroke-miterlimit:10;"/>
-            <path d="M384,633.327L384,669.378" style="fill:none;stroke:black;stroke-width:6px;"/>
+            <path d="M397.5,660.378L384,669.378L370.5,660.378" style="fill:none;stroke:rgb(0,102,255);stroke-width:6px;stroke-linejoin:miter;stroke-miterlimit:10;"/>
+            <path d="M384,633.327L384,669.378" style="fill:none;stroke:rgb(0,102,255);stroke-width:6px;"/>
         </g>
     </g>
     <g transform="matrix(1,0,0,0.291166,-0.982881,57.0245)">
         <g transform="matrix(1,-0,-0,3.43447,0.982881,-195.849)">
-            <path d="M396.517,168.341L383.017,177.341L369.517,168.341" style="fill:none;stroke:black;stroke-width:6px;stroke-linejoin:miter;stroke-miterlimit:10;"/>
-            <path d="M383.017,141.29L383.017,177.341" style="fill:none;stroke:black;stroke-width:6px;"/>
+            <path d="M396.517,168.341L383.017,177.341L369.517,168.341" style="fill:none;stroke:rgb(0,102,255);stroke-width:6px;stroke-linejoin:miter;stroke-miterlimit:10;"/>
+            <path d="M383.017,141.29L383.017,177.341" style="fill:none;stroke:rgb(0,102,255);stroke-width:6px;"/>
         </g>
     </g>
     <g id="InterceptorA" transform="matrix(1,0,0,1,-0.900526,80.3706)">
