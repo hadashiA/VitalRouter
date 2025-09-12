@@ -100,17 +100,20 @@ namespace Sandbox
                 "end\n");
 
             var irep = compiler.Compile(
-                "loop do\n" +
-                "  log(state[:counter].to_s)\n" +
+                "3.times do |x|\n" +
+                "  log x\n" +
                 "  c = state[:counter].to_i\n" +
                 "  with(:Bob) do\n" +
-                $"    text \"Hello #{{c}} calculated: {result1}\"\n" +
+                $"    text \"Hello #{{c}}\"\n" +
                 "  end\n" +
-                "end\n");
+                "end\n" +
+                "log 'owari'\n" +
+                "\n");
 
             MapTo(Router.Default);
 
-            await state.ExecuteAsync(Router.Default, irep);
+            await state.ExecuteAsync(Router.Default, irep, destroyCancellationToken);
+            UnityEngine.Debug.Log("OK");
         }
 
         public async UniTask On(TextCommand cmd, PublishContext ctx)

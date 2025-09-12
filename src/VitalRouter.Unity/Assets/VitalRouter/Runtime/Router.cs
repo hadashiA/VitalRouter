@@ -9,6 +9,7 @@ namespace VitalRouter
 public interface ICommandPublisher
 {
     ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default) where T : ICommand;
+    void AddFilter(ICommandInterceptor interceptor);
     ICommandPublisher WithFilter(ICommandInterceptor interceptor);
 }
 
@@ -18,6 +19,7 @@ public interface ICommandSubscribable
     Subscription Subscribe(IAsyncCommandSubscriber subscriber);
     void Unsubscribe(ICommandSubscriber subscriber);
     void Unsubscribe(IAsyncCommandSubscriber subscriber);
+    void AddFilter(ICommandInterceptor interceptor);
     ICommandSubscribable WithFilter(ICommandInterceptor interceptor);
 }
 
@@ -163,6 +165,8 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         return filtered;
     }
 
+    void ICommandPublisher.AddFilter(ICommandInterceptor interceptor) => AddFilter(interceptor);
+    void ICommandSubscribable.AddFilter(ICommandInterceptor interceptor) => AddFilter(interceptor);
     ICommandPublisher ICommandPublisher.WithFilter(ICommandInterceptor interceptor) => WithFilter(interceptor);
     ICommandSubscribable ICommandSubscribable.WithFilter(ICommandInterceptor interceptor) => WithFilter(interceptor);
 
