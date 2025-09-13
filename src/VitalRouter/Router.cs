@@ -124,17 +124,15 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         asyncSubscribers.Clear();
     }
 
-    [Obsolete("Use AddFilter instead")]
-    public Router Filter(ICommandInterceptor interceptor)
-    {
-        AddFilter(interceptor);
-        return this;
-    }
-
     public void AddFilter(ICommandInterceptor interceptor)
     {
         hasInterceptor = true;
         interceptors.Add(interceptor);
+    }
+
+    public void RemoveFilter(ICommandInterceptor interceptor)
+    {
+        RemoveFilter(x => x == interceptor);
     }
 
     public void RemoveFilter(Func<ICommandInterceptor, bool> predicate)

@@ -171,21 +171,19 @@ public static class MRubyStateExtensions
 
                 async ValueTask ExecuteCommandAsync(ICommandPublisher publisher)
                 {
+                    // Ensure the `cmd` method has completed before resuming.
+#if VITALROUTER_UNITASK_INTEGRATION
+                    await Cysharp.Threading.Tasks.UniTask.Yield(cancellationToken: script.CancellationToken);
+#elif UNITY_2023_1_OR_NEWER
+                    await UnityEngine.Awaitable.NextFrameAsync(script.CancellationToken);
+#else
+                    await Task.Yield();
+#endif
                     try
                     {
                         if (methodTable.TryGetValue(commandNameSymbol, out var method))
                         {
-                            // Ensure the `cmd` method has completed before resuming.
-#if VITALROUTER_UNITASK_INTEGRATION
-                            await Cysharp.Threading.Tasks.UniTask.Yield(cancellationToken: script.CancellationToken);
                             await method(publisher, mrb, propsHash, script.CancellationToken);
-#elif UNITY_2023_1_OR_NEWER
-                            await UnityEngine.Awaitable.NextFrameAsync(script.CancellationToken);
-                            await method(publisher, mrb, propsHash, script.CancellationToken);
-#else
-                            await Task.Run(async () => await method(publisher, mrb, propsHash, script.CancellationToken), script.CancellationToken);
-#endif
-                            // await method(publisher, mrb, propsHash, script.CancellationToken);
                             script.Resume();
                         }
                     }
