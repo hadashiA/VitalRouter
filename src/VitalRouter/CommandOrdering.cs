@@ -1,10 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using VitalRouter.Internal;
 
-namespace VitalRouter
-{
+namespace VitalRouter;
+
 public enum CommandOrdering
 {
     /// <summary>
@@ -60,17 +59,12 @@ public partial class Router
 
 public class SequentialOrdering : ICommandInterceptor, IDisposable
 {
-#if VITALROUTER_UNITASK_INTEGRATION
-    readonly UniTaskAsyncLock publishLock = new();
-#else
-    readonly SemaphoreSlim publishLock = new(1, 1);
-#endif
+    readonly IAsyncLock publishLock;
 
-#if VITALROUTER_VCONTAINER_INTEGRATION
-    [global::VContainer.Inject]
-#endif
+    [Preserve]
     public SequentialOrdering()
     {
+        publishLock = Router.AsyncLockFactory.Invoke();
     }
 
     public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
@@ -124,9 +118,7 @@ public class SwitchOrdering : ICommandInterceptor
 {
     CancellationTokenSource? previousCancellationSource;
 
-#if VITALROUTER_VCONTAINER_INTEGRATION
-    [global::VContainer.Inject]
-#endif
+    [Preserve]
     public SwitchOrdering()
     {
     }
@@ -140,8 +132,7 @@ public class SwitchOrdering : ICommandInterceptor
         context.CancellationToken = CancellationTokenSource.CreateLinkedTokenSource(
             previousCancellationSource.Token,
             context.CancellationToken
-            ).Token;
+        ).Token;
         return next(command, context);
     }
-}
 }

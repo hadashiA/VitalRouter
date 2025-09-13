@@ -1,4 +1,3 @@
-using System;
 using Cysharp.Threading.Tasks;
 using MRubyCS;
 using MRubyCS.Compiler;
@@ -70,14 +69,14 @@ namespace Sandbox
 
         async UniTaskVoid Start()
         {
-            var state = MRubyState.Create();
+            var mrb = MRubyState.Create();
 
-            state.AddVitalRouter(x =>
+            mrb.AddVitalRouter(x =>
             {
                 x.AddCommand<TextCommand>("text");
             });
 
-            var compiler = MRubyCompiler.Create(state);
+            var compiler = MRubyCompiler.Create(mrb);
 
             compiler.LoadSourceCode("def hoge(x) = x * 100");
             var result1 = compiler.LoadSourceCode("hoge(7)");
@@ -100,19 +99,19 @@ namespace Sandbox
                 "end\n");
 
             var irep = compiler.Compile(
-                "3.times do |x|\n" +
-                "  log x\n" +
-                "  c = state[:counter].to_i\n" +
-                "  with(:Bob) do\n" +
-                $"    text \"Hello #{{c}}\"\n" +
-                "  end\n" +
+                "3.times do |i|\n" +
+                "  log i\n" +
+                // "  c = state[:counter].to_i\n" +
+                // "  with(:Bob) do\n" +
+                // $"    text \"Hello #{{c}}\"\n" +
+                // "  end\n" +
                 "end\n" +
                 "log 'owari'\n" +
                 "\n");
 
             MapTo(Router.Default);
 
-            await state.ExecuteAsync(Router.Default, irep, destroyCancellationToken);
+            await mrb.ExecuteAsync(Router.Default, irep, destroyCancellationToken);
             UnityEngine.Debug.Log("OK");
         }
 

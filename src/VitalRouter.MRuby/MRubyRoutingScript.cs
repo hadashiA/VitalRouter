@@ -17,9 +17,9 @@ namespace VitalRouter.MRuby
         static readonly ConcurrentDictionary<RFiber, MRubyRoutingScript> scriptTable = new();
 
         public Router Router { get; }
+        public CancellationToken CancellationToken { get; private set; }
 
         TaskCompletionSource<bool>? completionSource;
-        CancellationToken cancellationToken;
         readonly RFiber fiber;
 
         public MRubyRoutingScript(RFiber fiber, Router router)
@@ -42,10 +42,11 @@ namespace VitalRouter.MRuby
             {
                 return new ValueTask();
             }
+
             cancellation.ThrowIfCancellationRequested();
 
             completionSource = new TaskCompletionSource<bool>();
-            cancellationToken = cancellation;
+            CancellationToken = cancellation;
 
             return new ValueTask(completionSource.Task);
         }
@@ -64,7 +65,11 @@ namespace VitalRouter.MRuby
             {
                 SetException(ex);
             }
-            cancellationToken.ThrowIfCancellationRequested();
+
+            if (CancellationToken.IsCancellationRequested)
+            {
+                completionSource!.TrySetCanceled(CancellationToken);
+            }
         }
 
         internal void SetException(Exception exception)

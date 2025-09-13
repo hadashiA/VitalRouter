@@ -20,7 +20,7 @@ public class CommandPoolingTest
     public async Task ReturnToCommandPool()
     {
         var commandPooling = new CommandPooling();
-        var router = new Router().Filter(commandPooling);
+        var router = new Router().WithFilter(commandPooling);
 
         await router.PublishAsync(new PoolableCommand());
 

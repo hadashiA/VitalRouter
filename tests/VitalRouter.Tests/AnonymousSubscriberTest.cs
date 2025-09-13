@@ -3,12 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace VitalRouter.Tests
-{
-struct  TestCommand1 : ICommand
-{
-    public string Id { get; set; }
-}
+namespace VitalRouter.Tests;
 
 public class AnonymousSubscriberTest
 {
@@ -86,5 +81,4 @@ public class AnonymousSubscriberTest
         Assert.That(q, Has.Count.EqualTo(1));
         Assert.That(q.Dequeue().Id, Is.EqualTo("2"));
     }
-}
 }

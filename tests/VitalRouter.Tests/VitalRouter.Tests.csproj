@@ -14,15 +14,12 @@
         <PackageReference Include="NUnit3TestAdapter" Version="4.2.1"/>
         <PackageReference Include="NUnit.Analyzers" Version="3.6.1"/>
         <PackageReference Include="coverlet.collector" Version="6.0.0"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Include="..\..\src\VitalRouter.Unity\Assets\VitalRouter.Tests\**\*.cs"
-                 Exclude="..\..\src\VitalRouter.Unity\Assets\VitalRouetr.Tests\Unity\**\*.cs;" />
+        <PackageReference Include="R3" Version="1.3.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\VitalRouter.Extensions.DependencyInjection\VitalRouter.Extensions.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\VitalRouter.R3\VitalRouter.R3.csproj" />
       <ProjectReference Include="..\..\src\VitalRouter\VitalRouter.csproj" />
       <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
           <OutputItemType>Analyzer</OutputItemType>

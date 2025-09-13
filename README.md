@@ -47,6 +47,19 @@ public partial class ExamplePresenter
 ```
 
 ```cs
+// Subscribe with async
+var subscription = router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
+
+// lambda interceptors
+router
+    .WithFilter<FooCommand>(async (x, context) =>
+    {
+        if (condition) await next(x, context);
+    })
+    .Subscribe<FooCommand>(cmd => { /* .. */ });
+```
+
+```cs
 var router = new Router();
 
 var presenter = new ExamplePresenter();
@@ -81,37 +94,34 @@ Visit [vitalrouter.hadashikick.jp](https://vitalrouter.hadashikick.jp) to see th
 
 ## Installation
 
+The following NuGet packages are available.
+
+| Package                                    | Latest version                                                                                                                                                   |
+|:-------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| VitalRouter                                | [![NuGet](https://img.shields.io/nuget/v/VitalRouter)](https://www.nuget.org/packages/VitalRouter)                                                               | 
+| VitalRouter.Extensions.DependencyInjection | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.Extensions.DependencyInjection)](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | 
+| VitalRouter.R3                             | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.R3)](https://www.nuget.org/packages/VitalRouter.R3)                                                         |
+| VitalRouter.MRuby                          | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.MRuby)](https://www.nuget.org/packages/VitalRouter.MRuby)                                                   |
+
 ### Unity
 
-- **Prerequirements:**
-    - Unity 2022.2+
-        - This limitation is due to the use of the Incremental Source Generator.
-- **Optional**
+> [!NOTE]
+> Requirements: Unity 20222.2+
+> This limitation is due to the use of the Incremental Source Generator.
+
+1. Install [NugetForUnity](https://github.com/GlitchEnzo/NuGetForUnity).
+2. Open the NuGet window by going to NuGet > Manage NuGet Packages, after search for the "VitalRouter" packages, and install it.
+3. **Optional**
+    - Intall Unity Extensions
+        - ```
+          https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#2.0.0
+          ```
     - Install UniTask >= 2.5.5
         - If [UniTask](https://github.com/Cysharp/UniTask) is installed, `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
         - See [UniTask Integration](./website/docs/extensions/unitask.md) section for more details.
     - Install VContainer >= 1.16.6
         - For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
         - See [DI](./website/docs/di/vcontainer.md) section for more details.
-
-Then, add git URL from Package Manager:
-
-```
-https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#1.7.0
-```
-
-### .NET
-
-THe following NuGet packages are available.
-
-| Package | Latest version |
-|:------------ |:----------- |
-| VitalRouter | [![NuGet](https://img.shields.io/nuget/v/VitalRouter)](https://www.nuget.org/packages/VitalRouter) | 
-| VitalRouter.Extensions.DependencyInjection | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.Extensions.DependencyInjection)](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | 
-
-> [!NOTE]
-> For Unity, use of the above package is recommended instead of Nuget.
-
 
 ## Async interceptor pipeline
 

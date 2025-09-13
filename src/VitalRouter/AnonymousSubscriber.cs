@@ -66,7 +66,7 @@ readonly struct AsyncAnonymousSubscriber<T> : IAsyncCommandSubscriber where T : 
 #endif
                 return commandOrdering.InvokeAsync(command, context, c);
             }
-            var commandCasted = UnsafeHelper.As<TReceive, T>(ref command);
+            var commandCasted = Unsafe.As<TReceive, T>(ref command);
             return callback(commandCasted, context);
         }
         return default;
@@ -96,7 +96,7 @@ readonly struct AnonymousSubscriber<T> : ICommandSubscriber where T : ICommand
     {
         if (typeof(TReceive) == typeof(T))
         {
-            var commandCasted = UnsafeHelper.As<TReceive, T>(ref command);
+            var commandCasted = Unsafe.As<TReceive, T>(ref command);
             callback(commandCasted, context);
         }
     }

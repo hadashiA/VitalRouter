@@ -4,8 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "VitalRouter",
-        "UniTask"
+        "UniTask",
+        "VitalRouter.Unity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

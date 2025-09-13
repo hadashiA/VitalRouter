@@ -14,7 +14,7 @@ namespace VitalRouter.MRuby
             this.state = state;
         }
 
-        public MRubyValue GetOrNil(Symbol key) => serializedValues[key];
+        public MRubyValue GetOrNil(Symbol key) => serializedValues.GetValueOrDefault(key);
 
         public T? GetOrDefault<T>(string key) =>
             GetOrDefault<T>(state.Intern(key));

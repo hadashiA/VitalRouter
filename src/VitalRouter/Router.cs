@@ -35,6 +35,9 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 {
     public static readonly Router Default = new();
 
+    public static Func<IAsyncLock> AsyncLockFactory { get; set; } = () => new SemaphoreSlimAsyncLock();
+    public static Func<CancellationToken, ValueTask> YieldAction = async _ => await Task.Yield();
+
     readonly FreeList<ICommandSubscriber> subscribers = new(8);
     readonly FreeList<IAsyncCommandSubscriber> asyncSubscribers = new(8);
     readonly FreeList<ICommandInterceptor> interceptors = new(8);

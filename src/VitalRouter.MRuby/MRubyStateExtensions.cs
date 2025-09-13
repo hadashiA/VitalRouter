@@ -5,108 +5,129 @@ using System.Threading.Tasks;
 using MRubyCS;
 using MRubyCS.Serializer;
 
-namespace VitalRouter.MRuby
-{
+namespace VitalRouter.MRuby;
+
 public delegate ValueTask MRubyPublishDelegate(
     ICommandPublisher publisher,
-    MRubyState mruby,
-    RHash props);
+    MRubyState mrb,
+    RHash props,
+    CancellationToken cancellation);
+
+public delegate void MRubyLoggingDelegate(
+    MRubyState mrb,
+    MRubyValue message);
 
 public static class MRubyStateExtensions
 {
-    public static void AddVitalRouter(this MRubyState state, Action<MRubyState> configure)
+    public static void AddVitalRouter(this MRubyState mrb, Action<MRubyState> configure)
     {
-        if (!state.TryGetConst(state.Intern("VitalRouter"u8), out _))
+        if (!mrb.TryGetConst(mrb.Intern("VitalRouter"u8), out _))
         {
-            state.DefineVitalRouter();
+            mrb.DefineVitalRouter();
         }
-        configure(state);
+        configure(mrb);
     }
 
-    public static void AddCommand<TCommand>(this MRubyState state, string name) where TCommand : ICommand
+    public static void AddCommand<TCommand>(this MRubyState mrb, string name) where TCommand : ICommand
     {
-        var commandTable = state.GetCommandTable();
-        var key = state.Intern(name);
-        commandTable[key] = async (publisher, s, props) =>
+        var commandTable = mrb.GetCommandTable();
+        var key = mrb.Intern(name);
+        commandTable[key] = async (publisher, s, props, cancellation) =>
         {
             var cmd = MRubyValueSerializer.Deserialize<TCommand>(props, s)!;
-            await publisher.PublishAsync(cmd);
+            await publisher.PublishAsync(cmd, cancellation);
         };
     }
 
-    public static MRubySharedVariableTable GetSharedVariables(this MRubyState state)
+    public static void AddLogger(this MRubyState mrb, MRubyLoggingDelegate loggingAction)
     {
-        if (!state.TryGetConst(state.Intern("VitalRouter"u8), out _))
+        mrb.SetInstanceVariable(mrb.ObjectClass, mrb.Intern("@vitalrouter_logger"u8), new RData(loggingAction));
+    }
+
+    public static MRubySharedVariableTable GetSharedVariables(this MRubyState mrb)
+    {
+        if (!mrb.TryGetConst(mrb.Intern("VitalRouter"u8), out _))
         {
-            DefineVitalRouter(state);
+            DefineVitalRouter(mrb);
         }
-        var value = state.Send(state.ObjectClass, state.Intern("state"u8));
+        var value = mrb.Send(mrb.ObjectClass, mrb.Intern("state"u8));
         var data = value.As<RData>().Data;
         return (MRubySharedVariableTable)data;
     }
 
-    static Dictionary<Symbol, MRubyPublishDelegate> GetCommandTable(this MRubyState state)
+    static Dictionary<Symbol, MRubyPublishDelegate> GetCommandTable(this MRubyState mrb)
     {
-        if (!state.TryGetConst(state.Intern("VitalRouter"u8), out _))
+        if (!mrb.TryGetConst(mrb.Intern("VitalRouter"u8), out var module))
         {
-            state.DefineVitalRouter();
+            module = mrb.DefineVitalRouter();
         }
 
-        var methodTableValue = state.GetConst(state.Intern("PUBLISH_METHOD_TABLE"u8), state.ObjectClass);
+        var methodTableValue = mrb.GetConst(mrb.Intern("VITALROUTER_METHOD_TABLE"u8), module.As<RClass>());
         return (methodTableValue.As<RData>().Data as Dictionary<Symbol, MRubyPublishDelegate>)!;
     }
 
     public static async ValueTask ExecuteAsync(
-        this MRubyState state,
+        this MRubyState mrb,
         Router router,
         Irep irep,
         CancellationToken cancellation = default)
     {
-        var proc = state.CreateProc(irep);
-        var fiber = state.CreateFiber(proc);
+        var proc = mrb.CreateProc(irep);
+        var fiber = mrb.CreateFiber(proc);
 
-        var publisher = router.WithFilter(new MRubyStateInterceptor(state));
+        var publisher = router.WithFilter(new MRubyStateInterceptor(mrb));
 
         using var script = new MRubyRoutingScript(fiber, publisher);
         await script.RunAsync(cancellation);
     }
 
-    public static void DefineVitalRouter(this MRubyState state)
+    public static RClass DefineVitalRouter(this MRubyState mrb)
     {
-        var module = state.DefineModule(state.Intern("VitalRouter"u8), state.ObjectClass, module =>
+        var module = mrb.DefineModule(mrb.Intern("VitalRouter"u8), mrb.ObjectClass, module =>
         {
             var methodTable = new Dictionary<Symbol, MRubyPublishDelegate>();
-            module.DefineConst(state.Intern("PUBLISH_METHOD_TABLE"u8), new RData(methodTable));
+            module.DefineConst(mrb.Intern("VITALROUTER_METHOD_TABLE"u8), new RData(methodTable));
 
-            var sharedStateClass = module.DefineClass(state.Intern("SharedState"u8), sharedStateClass =>
+            var sharedStateClass = module.DefineClass(mrb.Intern("SharedState"u8), sharedStateClass =>
             {
-                sharedStateClass.DefineMethod(state.Intern("initialize"u8), (s, self) =>
+                sharedStateClass.DefineMethod(mrb.Intern("initialize"u8), (s, self) =>
                 {
-                    var table = new MRubySharedVariableTable(state);
+                    var table = new MRubySharedVariableTable(mrb);
                     var data = new RData(table);
                     s.SetInstanceVariable(self.As<RObject>(), s.Intern("@table"u8), data);
                     return self;
                 });
 
-                sharedStateClass.DefineMethod(state.Intern("[]"u8), (s, self) =>
+                sharedStateClass.DefineMethod(mrb.Intern("[]"u8), (s, self) =>
                 {
                     var key = s.Intern(s.Stringify(s.GetArgumentAt(0)));
-                    var tableValue = state.Send(state.ObjectClass, state.Intern("state"u8));
+                    var tableValue = s.GetInstanceVariable(self.As<RObject>(), s.Intern("@table"));
                     return ((MRubySharedVariableTable)tableValue.As<RData>().Data).GetOrNil(key);
                 });
 
-                sharedStateClass.DefineMethod(state.Intern("[]="u8), (s, self) =>
+                sharedStateClass.DefineMethod(mrb.Intern("[]="u8), (s, self) =>
                 {
                     var key = s.Intern(s.Stringify(s.GetArgumentAt(0)));
                     var value = s.GetArgumentAt(1);
 
-                    var tableValue = state.Send(state.ObjectClass, state.Intern("state"u8));
+                    var tableValue = s.GetInstanceVariable(self.As<RObject>(), s.Intern("@table"));
                     ((MRubySharedVariableTable)tableValue.As<RData>().Data).Set(key, value);
                     return value;
                 });
             });
 
-            module.DefineMethod(state.Intern("state"u8), (s, self) =>
+            module.DefineMethod(mrb.Intern("log"u8), (s, self) =>
+            {
+                var loggerValue = s.GetInstanceVariable(s.ObjectClass, s.Intern("@logger"u8));
+                if (loggerValue.IsObject && loggerValue.As<RData>().Data is MRubyLoggingDelegate action)
+                {
+                    var message = s.GetArgumentAt(0);
+                    action(s, message);
+                }
+                return MRubyValue.Nil;
+            });
+
+            module.DefineMethod(mrb.Intern("state"u8), (s, self) =>
             {
                 var value = s.GetInstanceVariable(self.As<RObject>(), s.Intern("@state"u8));
                 if (value.IsNil)
@@ -118,9 +139,14 @@ public static class MRubyStateExtensions
                 return value;
             });
 
-            module.DefineMethod(state.Intern("cmd"u8), (s, self) =>
+            module.DefineMethod(mrb.Intern("cmd"u8), (s, self) =>
             {
-                var methodTableValue = s.GetConst(s.Intern("PUBLISH_METHOD_TABLE"u8), s.ObjectClass);
+                if (!mrb.TryGetConst(mrb.Intern("VitalRouter"u8), out var module))
+                {
+                    module = mrb.DefineVitalRouter();
+                }
+
+                var methodTableValue = s.GetConst(s.Intern("VITALROUTER_METHOD_TABLE"u8), module.As<RClass>());
                 var methodTable = (methodTableValue.As<RData>().Data as Dictionary<Symbol, MRubyPublishDelegate>)!;
 
                 var commandNameSymbol = s.GetArgumentAsSymbolAt(0);
@@ -132,9 +158,10 @@ public static class MRubyStateExtensions
                     propsHash.Add(prop.Key, prop.Value);
                 }
 
-                s.CurrentFiber.Yield();
+                var fiber = s.CurrentFiber;
+                fiber.Yield();
 
-                if (MRubyRoutingScript.TryFindScript(s.CurrentFiber, out var script))
+                if (MRubyRoutingScript.TryFindScript(fiber, out var script))
                 {
                     _ = ExecuteCommandAsync(script.Router, methodTable, s, commandNameSymbol, propsHash);
                 }
@@ -148,7 +175,7 @@ public static class MRubyStateExtensions
                 async Task ExecuteCommandAsync(
                     ICommandPublisher publisher,
                     Dictionary<Symbol, MRubyPublishDelegate> methodTable,
-                    MRubyState state,
+                    MRubyState mrb,
                     Symbol commandName,
                     RHash commandProps)
                 {
@@ -156,12 +183,13 @@ public static class MRubyStateExtensions
                     {
                         if (methodTable.TryGetValue(commandName, out var method))
                         {
-                            await method(publisher, state, commandProps);
+                            await Router.YieldAction(script.CancellationToken);
+                            await method(publisher, mrb, commandProps, script.CancellationToken);
                             script.Resume();
                         }
                         else
                         {
-                            script.SetException(new MRubyRoutingException($"No such command name `{state.NameOf(commandName)}`"));
+                            script.SetException(new MRubyRoutingException($"No such command name `{mrb.NameOf(commandName)}`"));
                         }
                     }
                     catch (Exception ex)
@@ -172,7 +200,7 @@ public static class MRubyStateExtensions
             });
         });
 
-        state.IncludeModule(state.ObjectClass, module);
+        mrb.IncludeModule(mrb.ObjectClass, module);
+        return module;
     }
-}
 }

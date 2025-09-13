@@ -8,9 +8,9 @@ public static class PublishContextExtensions
     public static MRubyState? MRuby(this PublishContext publishContext)
     {
         if (publishContext.Extensions.TryGetValue(MRubyStateInterceptor.MRubyStateKey, out var obj) &&
-            obj is MRubyState mrubyState)
+            obj is MRubyState mrb)
         {
-            return mrubyState;
+            return mrb;
         }
         return null;
     }
@@ -26,9 +26,9 @@ public sealed class MRubyStateInterceptor : ICommandInterceptor
     public const string MRubyStateKey = "VitalRouter.MRubyState";
     internal readonly MRubyState? MRubyState;
 
-    public MRubyStateInterceptor(MRubyState mrubyState)
+    public MRubyStateInterceptor(MRubyState mrb)
     {
-        MRubyState = mrubyState;
+        MRubyState = mrb;
     }
 
     public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)

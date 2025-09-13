@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFrameworks>net8.0;net9.0;netstandard2.1</TargetFrameworks>
         <LangVersion>11</LangVersion>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -16,19 +16,4 @@
 <!--      <PackageReference Include="MRubyCS.Compiler" Version="0.15.1-preview" />-->
       <PackageReference Include="MRubyCS.Serializer" Version="0.15.4" />
     </ItemGroup>
-
-    <!-- Copy files for Unity -->
-    <PropertyGroup>
-        <DestinationRoot>$(MSBuildProjectDirectory)\..\VitalRouter.Unity\Assets\VitalRouter.MRuby\Runtime</DestinationRoot>
-    </PropertyGroup>
-    <ItemGroup>
-        <TargetFiles1 Include="$(MSBuildProjectDirectory)\**\*.cs"
-                      Exclude="**\bin\**\*.*;**\obj\**\*.*" />
-    </ItemGroup>
-    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-        <Copy SourceFiles="@(TargetFiles1)"
-              DestinationFiles="$(DestinationRoot)\%(RecursiveDir)%(Filename)%(Extension)"
-              SkipUnchangedFiles="true" />
-    </Target>
-
 </Project>
