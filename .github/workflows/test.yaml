@@ -45,9 +45,10 @@ jobs:
           9.0.x
 
     - name: Resolve NugetForUnity
+      working-directory: ./src/VitalRouter.Unity
       run: |
         dotnet tool restore
-        dotnet nugetforunity restore ./src/VitalRouter.Unity
+        dotnet nugetforunity restore
           
     - uses: game-ci/unity-test-runner@v4
       env:
