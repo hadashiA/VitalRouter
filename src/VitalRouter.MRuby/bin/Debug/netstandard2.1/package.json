@@ -1,0 +1,12 @@
+{
+    "name": "jp.hadashikick.vitalrouter.mruby.internal",
+    "displayName": "VitalRouter.MRuby Internal",
+    "author": { "name": "hadashiA", "url": "https://hadashikick.land" },
+    "version": "1.0.0",
+    "unity": "2021.3",
+    "description": "Internal Package of VitalRouter.MRuby for development time.",
+    "keywords": [],
+    "license": "MIT",
+    "category": "Scripting",
+    "dependencies": {}
+}

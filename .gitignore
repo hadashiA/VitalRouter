@@ -333,6 +333,7 @@ src/VitalRouter.Unity/Assets/AssetStoreTools*
 src/VitalRouter.Unity/*.csproj
 src/VitalRouter.Unity/*.sln
 src/VitalRouter.Unity/UserSettings/*
+src/VitalRouter.Unity/Assets/Packages/*
 
 # tests/VitalRouter.Benchmark/[Ll]ibrary/
 # tests/VitalRouter.Benchmark/[Tt]emp/

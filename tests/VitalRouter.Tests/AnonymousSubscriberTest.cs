@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace VitalRouter.Tests
-{
+namespace VitalRouter.Tests;
+
 public class AnonymousSubscriberTest
 {
     [Test]
@@ -81,5 +81,4 @@ public class AnonymousSubscriberTest
         Assert.That(q, Has.Count.EqualTo(1));
         Assert.That(q.Dequeue().Id, Is.EqualTo("2"));
     }
-}
 }

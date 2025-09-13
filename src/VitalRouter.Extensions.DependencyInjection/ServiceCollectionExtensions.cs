@@ -75,7 +75,7 @@ public static class ServiceCollectionExtensions
             {
                 foreach (var interceptorType in o.Filters.Types)
                 {
-                    r.Filter((ICommandInterceptor)serviceProvider.GetRequiredService(interceptorType));
+                    r.AddFilter((ICommandInterceptor)serviceProvider.GetRequiredService(interceptorType));
                 }
 
                 foreach (var info in o.MapRoutesInfos)
@@ -149,7 +149,7 @@ public static class ServiceCollectionExtensions
                 services.AddVitalRouterRecursive(subsequentRouter, subsequentOptions, routers);
                 fanOut.Add(subsequentRouter);
             }
-            routerInstance.Filter(fanOut);
+            routerInstance.AddFilter(fanOut);
         }
 
         routers.Add((routerInstance, options));

@@ -39,6 +39,17 @@ jobs:
         restore-keys: |
           Library-ViralRouter-
           Library-
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: |
+          9.0.x
+
+    - name: Resolve NugetForUnity
+      working-directory: ./src/VitalRouter.Unity
+      run: |
+        dotnet tool restore
+        dotnet nugetforunity restore
+          
     - uses: game-ci/unity-test-runner@v4
       env:
         UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}

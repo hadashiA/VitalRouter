@@ -1,5 +1,7 @@
-using System;
 using Cysharp.Threading.Tasks;
+using MRubyCS;
+using MRubyCS.Compiler;
+using MRubyCS.Serializer;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -54,9 +56,6 @@ namespace Sandbox
         public string Body;
     }
 
-    [MRubyCommand("text", typeof(TextCommand))]
-    public partial class MyCommands : MRubyCommandPreset {}
-
     [Routes]
     public partial class SampleMruby : MonoBehaviour
     {
@@ -68,48 +67,57 @@ namespace Sandbox
 
         int counter;
 
-        async UniTask Start()
+        async UniTaskVoid Start()
         {
-            using var context = MRubyContext.Create(Router.Default, new MyCommands());
+            var mrb = MRubyState.Create();
 
-            var fvalue = context.EvaluateUnsafe("0.12345").RawValue;
-            UnityEngine.Debug.Log($"!!!!! float {fvalue.TT} IsObject={fvalue.IsObject} F={fvalue.FloatValue:F5}");
+            mrb.AddVitalRouter(x =>
+            {
+                x.AddCommand<TextCommand>("text");
+            });
 
-            context.Load("def hoge(x) = x * 100");
-            var h = context.Evaluate<int>("hoge(7)");
+            var compiler = MRubyCompiler.Create(mrb);
 
-            context.Load("class CharacterContext\n" +
-                         "  def initialize(id)\n" +
-                         "    @id = id\n" +
-                         "  end\n" +
-                         "  \n" +
-                         "  def text(body)\n" +
-                         "log(body)\n" +
-                         "    cmd :text, id: @id, body:\n" +
-                         "  end\n" +
-                         "end\n" +
-                         "\n" +
-                         "def with(id, &block)\n" +
-                         "  CharacterContext.new(id).instance_eval(&block)\n" +
-                         "end\n");
+            compiler.LoadSourceCode("def hoge(x) = x * 100");
+            var result1 = compiler.LoadSourceCode("hoge(7)");
+            UnityEngine.Debug.Log(result1);
 
-            using var script = context.CompileScript(
-                "loop do\n" +
-                "  log(state[:counter].to_s)\n" +
-                "  c = state[:counter].to_i\n" +
-                "  with(:Bob) do\n" +
-                $"    text \"Hello #{{c}} calculated: {h}\"\n" +
+            compiler.LoadSourceCode(
+                "class CharacterContext\n" +
+                "  def initialize(id)\n" +
+                "    @id = id\n" +
                 "  end\n" +
+                "  \n" +
+                "  def text(body)\n" +
+                "    log(body)\n" +
+                "    cmd :text, id: @id, body:\n" +
+                "  end\n" +
+                "end\n" +
+                "\n" +
+                "def with(id, &block)\n" +
+                "  CharacterContext.new(id).instance_eval(&block)\n" +
                 "end\n");
+
+            var irep = compiler.Compile(
+                "3.times do |i|\n" +
+                "  log i\n" +
+                // "  c = state[:counter].to_i\n" +
+                // "  with(:Bob) do\n" +
+                // $"    text \"Hello #{{c}}\"\n" +
+                // "  end\n" +
+                "end\n" +
+                "log 'owari'\n" +
+                "\n");
 
             MapTo(Router.Default);
 
-            await script.RunAsync();
+            await mrb.ExecuteAsync(Router.Default, irep, destroyCancellationToken);
+            UnityEngine.Debug.Log("OK");
         }
 
         public async UniTask On(TextCommand cmd, PublishContext ctx)
         {
-            ctx.MRubySharedState()!.Set("counter", ++counter);
+            ctx.MRubySharedVariables()!.Set("counter", ++counter);
 
             label.text = cmd.Body;
 
