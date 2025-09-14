@@ -116,11 +116,6 @@ public class R3ExtensionsTest
 
         router.Subscribe(subscriber);
 
-        var task = Observable.Range(0, 3)
-            .DelayFrame(1, frameProvider)
-            .Select(x => new TestCommand(x))
-            .ForEachPublishAndAwaitAsync(router, cts.Token);
-
         // Assert.That(subscriber.Queue.Count, Is.EqualTo(1));
         // frameProvider.Advance(1);
         // Assert.That(subscriber.Queue.Count, Is.EqualTo(2));
@@ -128,9 +123,10 @@ public class R3ExtensionsTest
 
         cts.Cancel();
 
-        Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
-
-        await task;
+        Assert.ThrowsAsync<TaskCanceledException>(async () => await Observable.Range(0, 3)
+            .DelayFrame(1, frameProvider)
+            .Select(x => new TestCommand(x))
+            .ForEachPublishAndAwaitAsync(router, cts.Token));
     }
 
     class TestSubscriber : ICommandSubscriber

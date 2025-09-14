@@ -139,11 +139,11 @@ public class RouterTest
         var commandBus = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestInterceptor();
-        commandBus
+        var router = commandBus
             .WithFilter(interceptor1)
             .WithFilter(interceptor2);
 
-        await commandBus.PublishAsync(new TestCommand1());
+        await router.PublishAsync(new TestCommand1());
 
         Assert.That(interceptor1.Calls, Is.EqualTo(1));
         Assert.That(interceptor2.Calls, Is.EqualTo(1));
@@ -152,14 +152,13 @@ public class RouterTest
     [Test]
     public async Task StopPropagationByInterceptor()
     {
-        var router = new Router();
         var interceptor1 = new TestInterceptor();
         var interceptor2 = new TestStopperInterceptor();
         var subscriber1 = new TestSubscriber();
-        router
+        var router = new Router()
             .WithFilter(interceptor1)
-            .WithFilter(interceptor2)
-            .Subscribe(subscriber1);
+            .WithFilter(interceptor2);
+        router.Subscribe(subscriber1);
 
         await router.PublishAsync(new TestCommand1());
 
@@ -172,11 +171,11 @@ public class RouterTest
     {
         var commandBus = new Router();
         var errorHandler = new ErrorHandlingInterceptor();
-        commandBus
-            .WithFilter(errorHandler)
-            .Subscribe(new TestThrowSubscriber());
+        var router = commandBus
+            .WithFilter(errorHandler);
 
-        await commandBus.PublishAsync(new TestCommand1());
+        router.Subscribe(new TestThrowSubscriber());
+        await router.PublishAsync(new TestCommand1());
 
         Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
     }
