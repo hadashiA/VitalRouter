@@ -35,8 +35,12 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 {
     public static readonly Router Default = new();
 
-    public static Func<IAsyncLock> AsyncLockFactory { get; set; } = () => new SemaphoreSlimAsyncLock();
-    public static Func<CancellationToken, ValueTask> YieldAction = async _ => await Task.Yield();
+    public static Func<IAsyncLock> AsyncLockFactory { get; private set; } = () => new SemaphoreSlimAsyncLock();
+    public static Func<CancellationToken, ValueTask> YieldAction { get; private set; } = async _ => await Task.Yield();
+    public static Action<string> Logger { get; private set; } = Console.WriteLine;
+
+    public static void RegisterAsyncLock(Func<IAsyncLock> asyncLockFactory) => AsyncLockFactory = asyncLockFactory;
+    public static void RegisterYieldAction(Func<CancellationToken, ValueTask> yieldAction) => YieldAction = yieldAction;
 
     readonly FreeList<ICommandSubscriber> subscribers = new(8);
     readonly FreeList<IAsyncCommandSubscriber> asyncSubscribers = new(8);
@@ -47,9 +51,7 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     readonly PublishCore publishCore;
 
-#if VITALROUTER_VCONTAINER_INTEGRATION
-    [global::VContainer.Inject]
-#endif
+    [Preserve]
     public Router()
     {
         publishCore = new PublishCore(this);

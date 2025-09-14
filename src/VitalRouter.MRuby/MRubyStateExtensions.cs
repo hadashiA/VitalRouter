@@ -50,9 +50,10 @@ public static class MRubyStateExtensions
         {
             DefineVitalRouter(mrb);
         }
-        var value = mrb.Send(mrb.ObjectClass, mrb.Intern("state"u8));
-        var data = value.As<RData>().Data;
-        return (MRubySharedVariableTable)data;
+        var stateValue = mrb.Send(mrb.ObjectClass, mrb.Intern("state"u8));
+        var tableValue = mrb.GetInstanceVariable(stateValue.As<RObject>(), mrb.Intern("@table"));
+
+        return (MRubySharedVariableTable)tableValue.As<RData>().Data;
     }
 
     static Dictionary<Symbol, MRubyPublishDelegate> GetCommandTable(this MRubyState mrb)
@@ -72,13 +73,25 @@ public static class MRubyStateExtensions
         Irep irep,
         CancellationToken cancellation = default)
     {
-        var proc = mrb.CreateProc(irep);
-        var fiber = mrb.CreateFiber(proc);
+        if (router.HasInterceptor<MRubyStateInterceptor>())
+        {
+            throw new InvalidOperationException("Cannot execute multiple routers for the same MRubyState.");
+        }
 
-        var publisher = router.WithFilter(new MRubyStateInterceptor(mrb));
+        var filter = new MRubyStateInterceptor(mrb);
+        router.AddFilter(filter);
+        try
+        {
+            var proc = mrb.CreateProc(irep);
+            var fiber = mrb.CreateFiber(proc);
 
-        using var script = new MRubyRoutingScript(fiber, publisher);
-        await script.RunAsync(cancellation);
+            using var script = new MRubyRoutingScript(fiber, router);
+            await script.RunAsync(cancellation);
+        }
+        finally
+        {
+            router.RemoveFilter(filter);
+        }
     }
 
     public static RClass DefineVitalRouter(this MRubyState mrb)
@@ -114,17 +127,6 @@ public static class MRubyStateExtensions
                     ((MRubySharedVariableTable)tableValue.As<RData>().Data).Set(key, value);
                     return value;
                 });
-            });
-
-            module.DefineMethod(mrb.Intern("log"u8), (s, self) =>
-            {
-                var loggerValue = s.GetInstanceVariable(s.ObjectClass, s.Intern("@logger"u8));
-                if (loggerValue.IsObject && loggerValue.As<RData>().Data is MRubyLoggingDelegate action)
-                {
-                    var message = s.GetArgumentAt(0);
-                    action(s, message);
-                }
-                return MRubyValue.Nil;
             });
 
             module.DefineMethod(mrb.Intern("state"u8), (s, self) =>
@@ -163,7 +165,7 @@ public static class MRubyStateExtensions
 
                 if (MRubyRoutingScript.TryFindScript(fiber, out var script))
                 {
-                    _ = ExecuteCommandAsync(script.Router, methodTable, s, commandNameSymbol, propsHash);
+                    _ = ExecuteCommandAsync(script, methodTable, s, commandNameSymbol, propsHash);
                 }
                 else
                 {
@@ -173,7 +175,7 @@ public static class MRubyStateExtensions
                 return MRubyValue.Nil;
 
                 async Task ExecuteCommandAsync(
-                    ICommandPublisher publisher,
+                    MRubyRoutingScript script,
                     Dictionary<Symbol, MRubyPublishDelegate> methodTable,
                     MRubyState mrb,
                     Symbol commandName,
@@ -184,7 +186,7 @@ public static class MRubyStateExtensions
                         if (methodTable.TryGetValue(commandName, out var method))
                         {
                             await Router.YieldAction(script.CancellationToken);
-                            await method(publisher, mrb, commandProps, script.CancellationToken);
+                            await method(script.Router, mrb, commandProps, script.CancellationToken);
                             script.Resume();
                         }
                         else

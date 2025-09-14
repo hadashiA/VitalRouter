@@ -76,11 +76,14 @@ namespace Sandbox
                 x.AddCommand<TextCommand>("text");
             });
 
-            var compiler = MRubyCompiler.Create(mrb);
+            mrb.DefineMethod(mrb.ObjectClass, mrb.Intern("log"), (_, self) =>
+            {
+                var inspect = mrb.Stringify(mrb.GetArgumentAt(0));
+                UnityEngine.Debug.Log(inspect.ToString());
+                return MRubyValue.Nil;
+            });
 
-            compiler.LoadSourceCode("def hoge(x) = x * 100");
-            var result1 = compiler.LoadSourceCode("hoge(7)");
-            UnityEngine.Debug.Log(result1);
+            var compiler = MRubyCompiler.Create(mrb);
 
             compiler.LoadSourceCode(
                 "class CharacterContext\n" +
@@ -89,7 +92,7 @@ namespace Sandbox
                 "  end\n" +
                 "  \n" +
                 "  def text(body)\n" +
-                "    log(body)\n" +
+                "    log body\n" +
                 "    cmd :text, id: @id, body:\n" +
                 "  end\n" +
                 "end\n" +
@@ -101,22 +104,28 @@ namespace Sandbox
             var irep = compiler.Compile(
                 "3.times do |i|\n" +
                 "  log i\n" +
-                // "  c = state[:counter].to_i\n" +
-                // "  with(:Bob) do\n" +
-                // $"    text \"Hello #{{c}}\"\n" +
-                // "  end\n" +
+                "  c = state[:counter].to_i\n" +
+                "  with(:Bob) do\n" +
+                $"    text \"Hello #{{c}}\"\n" +
+                "  end\n" +
                 "end\n" +
                 "log 'owari'\n" +
                 "\n");
 
             MapTo(Router.Default);
 
+            destroyCancellationToken.RegisterWithoutCaptureExecutionContext(() =>
+            {
+                UnityEngine.Debug.Log($"!!!!CANCEL!!!!");
+            });
+
             await mrb.ExecuteAsync(Router.Default, irep, destroyCancellationToken);
-            UnityEngine.Debug.Log("OK");
+            UnityEngine.Debug.Log("End Script");
         }
 
         public async UniTask On(TextCommand cmd, PublishContext ctx)
         {
+            UnityEngine.Debug.Log($"On TextCommand {cmd.Id} {cmd.Body}");
             ctx.MRubySharedVariables()!.Set("counter", ++counter);
 
             label.text = cmd.Body;

@@ -10,7 +10,6 @@
     "com.unity.ugui": "2.0.0",
     "jp.hadashikick.mrubycs-compiler": "https://github.com/hadashiA/MRubyCS.git?path=src/MRubyCS.Compiler.Unity/Assets/MRubyCS.Compiler#0.15.2",
     "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.15.1",
-    "jp.hadashikick.vitalrouter.internal": "file:../../VitalRouter/bin/Debug/netstandard2.1",
     "jp.hadashikick.vitalrouter.mruby.internal": "file:../../VitalRouter.MRuby/bin/Debug/netstandard2.1",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.animation": "1.0.0",

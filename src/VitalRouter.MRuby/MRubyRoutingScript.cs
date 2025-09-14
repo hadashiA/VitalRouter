@@ -36,18 +36,11 @@ namespace VitalRouter.MRuby
             }
 
             scriptTable.TryAdd(fiber, this);
-            fiber.Resume(Array.Empty<MRubyValue>());
-
-            if (fiber.State == FiberState.Terminated)
-            {
-                return new ValueTask();
-            }
-
-            cancellation.ThrowIfCancellationRequested();
 
             completionSource = new TaskCompletionSource<bool>();
             CancellationToken = cancellation;
 
+            Resume();
             return new ValueTask(completionSource.Task);
         }
 
@@ -60,15 +53,14 @@ namespace VitalRouter.MRuby
                 {
                     completionSource!.TrySetResult(true);
                 }
+                else if (CancellationToken.IsCancellationRequested)
+                {
+                    completionSource!.TrySetCanceled(CancellationToken);
+                }
             }
             catch (Exception ex)
             {
                 SetException(ex);
-            }
-
-            if (CancellationToken.IsCancellationRequested)
-            {
-                completionSource!.TrySetCanceled(CancellationToken);
             }
         }
 
