@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MRubyCS;
 using MRubyCS.Serializer;
@@ -13,6 +14,8 @@ namespace VitalRouter.MRuby
         {
             this.state = state;
         }
+
+        public Dictionary<Symbol, MRubyValue>.KeyCollection Keys => serializedValues.Keys;
 
         public MRubyValue GetOrNil(Symbol key) => serializedValues.GetValueOrDefault(key);
 

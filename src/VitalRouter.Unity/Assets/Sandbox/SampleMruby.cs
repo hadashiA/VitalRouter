@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using MRubyCS;
 using MRubyCS.Compiler;
@@ -5,6 +7,7 @@ using MRubyCS.Serializer;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ValueTaskSupplement;
 using VitalRouter;
 using VitalRouter.MRuby;
 
@@ -70,8 +73,9 @@ namespace Sandbox
         async UniTaskVoid Start()
         {
             var mrb = MRubyState.Create();
+            using var compiler = MRubyCompiler.Create(mrb);
 
-            mrb.AddVitalRouter(x =>
+            mrb.DefineVitalRouter(x =>
             {
                 x.AddCommand<TextCommand>("text");
             });
@@ -82,8 +86,6 @@ namespace Sandbox
                 UnityEngine.Debug.Log(inspect.ToString());
                 return MRubyValue.Nil;
             });
-
-            var compiler = MRubyCompiler.Create(mrb);
 
             compiler.LoadSourceCode(
                 "class CharacterContext\n" +
@@ -102,8 +104,7 @@ namespace Sandbox
                 "end\n");
 
             var irep = compiler.Compile(
-                "3.times do |i|\n" +
-                "  log i\n" +
+                "loop do\n" +
                 "  c = state[:counter].to_i\n" +
                 "  with(:Bob) do\n" +
                 $"    text \"Hello #{{c}}\"\n" +
@@ -113,11 +114,6 @@ namespace Sandbox
                 "\n");
 
             MapTo(Router.Default);
-
-            destroyCancellationToken.RegisterWithoutCaptureExecutionContext(() =>
-            {
-                UnityEngine.Debug.Log($"!!!!CANCEL!!!!");
-            });
 
             await mrb.ExecuteAsync(Router.Default, irep, destroyCancellationToken);
             UnityEngine.Debug.Log("End Script");
@@ -130,8 +126,7 @@ namespace Sandbox
 
             label.text = cmd.Body;
 
-            await button.OnClickAsync();
+            await button.OnClickAsync(ctx.CancellationToken);
         }
     }
 }
-

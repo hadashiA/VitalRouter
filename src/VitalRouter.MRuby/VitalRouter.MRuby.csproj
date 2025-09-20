@@ -12,8 +12,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MRubyCS" Version="0.15.4" />
+      <PackageReference Include="MRubyCS" Version="0.16.0" />
 <!--      <PackageReference Include="MRubyCS.Compiler" Version="0.15.1-preview" />-->
-      <PackageReference Include="MRubyCS.Serializer" Version="0.15.4" />
+      <PackageReference Include="MRubyCS.Serializer" Version="0.16.0" />
     </ItemGroup>
 </Project>

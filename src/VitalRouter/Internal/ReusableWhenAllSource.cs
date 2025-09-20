@@ -59,7 +59,7 @@ namespace VitalRouter.Internal
         static readonly ContextCallback ExecContextCallback = ExecutionContextCallback;
         static readonly SendOrPostCallback SyncContextCallback = SynchronizationContextCallback;
 
-        public short Version => version;
+        public short Version { get; private set; }
 
         Action<object?> continuation = ContinuationSentinel.AvailableContinuation;
         Action<object?>? invokeContinuation;
@@ -69,7 +69,6 @@ namespace VitalRouter.Internal
         ExceptionDispatchInfo? error;
         int taskCount;
         int completedCount;
-        short version;
 
         public static ReusableWhenAllSource Run(ReadOnlySpan<ValueTask?> tasks)
         {
@@ -93,7 +92,7 @@ namespace VitalRouter.Internal
         public void Reset(int taskCount)
         {
             // Reset/update state for the next use/await of this instance.
-            if (++version == short.MaxValue) version = 0;
+            if (++Version == short.MaxValue) Version = 0;
             this.taskCount = taskCount;
             completedCount = 0;
             error = null;
@@ -175,15 +174,15 @@ namespace VitalRouter.Internal
         {
             try
             {
-                if (version != token)
+                if (Version != token)
                 {
-                    throw new InvalidOperationException($"Invalid operation. Expected token {version} but was {token}.");
+                    throw new InvalidOperationException($"Invalid operation. Expected token {Version} but was {token}.");
                 }
                 error?.Throw();
             }
             finally
             {
-                ContextPool<ReusableWhenAllSource>.Return(this);
+                ReturnToPool();
             }
         }
 
@@ -193,6 +192,12 @@ namespace VitalRouter.Internal
             {
                 TryInvokeContinuation();
             }
+        }
+
+        void ReturnToPool()
+        {
+            Reset(0);
+            ContextPool<ReusableWhenAllSource>.Return(this);
         }
 
         void TryInvokeContinuation()
