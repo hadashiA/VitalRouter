@@ -69,7 +69,8 @@ public class R3ExtensionsTest
         var cts = new CancellationTokenSource();
 
         var subscriber = new TestSubscriber();
-        var router = new Router(CommandOrdering.Sequential);
+        var router = new Router();
+        router.AddFilter(CommandOrdering.Sequential);
         router.Subscribe(subscriber);
 
         var task = Observable.Range(0, 10)
@@ -89,7 +90,8 @@ public class R3ExtensionsTest
     {
         var frameProvider = new FakeFrameProvider();
         var subscriber = new TestAsyncSubscriber(frameProvider);
-        var router = new Router(CommandOrdering.Sequential);
+        var router = new Router();
+        router.AddFilter(CommandOrdering.Sequential);
 
         router.Subscribe(subscriber);
 
@@ -112,7 +114,8 @@ public class R3ExtensionsTest
         var cts = new CancellationTokenSource();
         var frameProvider = new FakeFrameProvider();
         var subscriber = new TestAsyncSubscriber(frameProvider);
-        var router = new Router(CommandOrdering.Sequential);
+        var router = new Router();
+        router.AddFilter(CommandOrdering.Sequential);
 
         router.Subscribe(subscriber);
 

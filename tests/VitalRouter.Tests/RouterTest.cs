@@ -196,7 +196,8 @@ public class RouterTest
     [Test]
     public async Task SequentialOrdering()
     {
-        var commandBus = new Router(CommandOrdering.Sequential);
+        var commandBus = new Router();
+        commandBus.AddFilter(CommandOrdering.Sequential);
 
         using var subscriber1 = new TestSignalSubscriber();
         commandBus.Subscribe(subscriber1);
@@ -221,7 +222,8 @@ public class RouterTest
     [Test]
     public async Task SwitchOrdering()
     {
-        var commandBus = new Router(CommandOrdering.Switch);
+        var commandBus = new Router();
+        commandBus.AddFilter(CommandOrdering.Switch);
 
         var subscriber1 = new TestAsyncSubscriber();
         commandBus.Subscribe(subscriber1);
@@ -243,7 +245,8 @@ public class RouterTest
     [Test]
     public async Task DropOrdering()
     {
-        var commandBus = new Router(CommandOrdering.Drop);
+        var commandBus = new Router();
+        commandBus.AddFilter(CommandOrdering.Drop);
 
         var subscriber1 = new TestAsyncSubscriber();
         commandBus.Subscribe(subscriber1);

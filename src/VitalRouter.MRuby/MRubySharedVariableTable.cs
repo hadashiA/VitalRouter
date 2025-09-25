@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using MRubyCS;
 using MRubyCS.Serializer;
@@ -55,5 +54,9 @@ namespace VitalRouter.MRuby
             var mrubyValue = MRubyValueSerializer.Serialize(value, state);
             serializedValues[key] = mrubyValue;
         }
+
+        public bool Remove(string key) => Remove(state.Intern(key));
+        public bool Remove(Symbol key) => serializedValues.Remove(key);
+        public void Clear() => serializedValues.Clear();
     }
 }

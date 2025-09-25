@@ -104,7 +104,7 @@ namespace Sandbox
                 "end\n");
 
             var irep = compiler.Compile(
-                "loop do\n" +
+                "3.times do\n" +
                 "  c = state[:counter].to_i\n" +
                 "  with(:Bob) do\n" +
                 $"    text \"Hello #{{c}}\"\n" +

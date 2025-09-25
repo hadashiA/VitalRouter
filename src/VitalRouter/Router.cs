@@ -57,11 +57,6 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         publishCore = new PublishCore(this);
     }
 
-    public Router(CommandOrdering ordering) : this()
-    {
-        AddFilter(ordering);
-    }
-
     public ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default)
         where T : ICommand
     {

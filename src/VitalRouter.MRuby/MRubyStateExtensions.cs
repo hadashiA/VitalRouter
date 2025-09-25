@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using MRubyCS;
@@ -10,6 +11,7 @@ namespace VitalRouter.MRuby;
 public delegate ValueTask MRubyPublishDelegate(
     ICommandPublisher publisher,
     MRubyState mrb,
+
     RHash props,
     CancellationToken cancellation);
 
@@ -25,15 +27,28 @@ public static class MRubyStateExtensions
         configure(mrb);
     }
 
-    public static void AddCommand<TCommand>(this MRubyState mrb, string name) where TCommand : ICommand
+    public static MRubyState AddSerializerOptions(this MRubyState mrb, MRubyValueSerializerOptions options)
+    {
+        var data = new RData(options);
+        mrb.SetConst(mrb.Intern("VITALROUTER_SERIALIZER_OPTIONS"), mrb.ObjectClass, data);
+        return mrb;
+    }
+
+    public static MRubyState AddCommand<TCommand>(this MRubyState mrb, string name) where TCommand : ICommand
     {
         var commandTable = mrb.GetCommandTable();
         var key = mrb.Intern(name);
         commandTable[key] = (publisher, s, props, cancellation) =>
         {
-            var cmd = MRubyValueSerializer.Deserialize<TCommand>(props, s)!;
+            var options = MRubyValueSerializerOptions.Default;
+            if (s.TryGetConst(s.Intern("VITALROUTER_SERIALIZER_OPTIONS"), s.ObjectClass, out var value))
+            {
+                options = value.As<RData>().Data as MRubyValueSerializerOptions;
+            }
+            var cmd = MRubyValueSerializer.Deserialize<TCommand>(props, s, options)!;
             return publisher.PublishAsync(cmd, cancellation);
         };
+        return mrb;
     }
 
     public static void AddLogger(this MRubyState mrb, MRubyLoggingDelegate loggingAction)
