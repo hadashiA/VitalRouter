@@ -112,16 +112,16 @@ The following NuGet packages are available.
 1. Install [NugetForUnity](https://github.com/GlitchEnzo/NuGetForUnity).
 2. Open the NuGet window by going to NuGet > Manage NuGet Packages, after search for the "VitalRouter" packages, and install it.
 3. **Optional**
-    - Intall Unity Extensions
+    - The following extensions for Unity are available from the Unity Package Manager:
         - ```
           https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#2.0.0
           ```
-    - Install UniTask >= 2.5.5
-        - If [UniTask](https://github.com/Cysharp/UniTask) is installed, `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
-        - See [UniTask Integration](./website/docs/extensions/unitask.md) section for more details.
-    - Install VContainer >= 1.16.6
-        - For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
-        - See [DI](./website/docs/di/vcontainer.md) section for more details.
+        - Install UniTask >= 2.5.5
+            - If [UniTask](https://github.com/Cysharp/UniTask) is installed, `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
+            - See [UniTask Integration](./website/docs/extensions/unitask.md) section for more details.
+        - Install VContainer >= 1.16.6
+            - For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
+            - See [DI](./website/docs/di/vcontainer.md) section for more details.
 
 ## Async interceptor pipeline
 

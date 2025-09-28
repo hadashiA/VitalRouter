@@ -62,7 +62,18 @@ const sidebars: SidebarsConfig = {
       items: [
         'extensions/unitask',
         'extensions/r3',
-        'extensions/mruby',
+        {
+          type: 'category',
+          label: 'MRuby Scripting',
+          collapsed: false,
+          collapsible: false,
+          link: { type: 'doc', id: "extensions/mruby/intro" },
+          items: [
+            "extensions/mruby/intro",
+            "extensions/mruby/v2",
+            "extensions/mruby/v1",
+          ]
+        }
       ]
     }
   ]
