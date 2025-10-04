@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using MRubyCS;
@@ -126,7 +125,7 @@ public static class MRubyStateExtensions
                 {
                     var key = s.Intern(s.Stringify(s.GetArgumentAt(0)));
                     var tableValue = s.GetInstanceVariable(self.As<RObject>(), s.Intern("@table"));
-                    return ((MRubySharedVariableTable)tableValue.As<RData>().Data).GetOrNil(key);
+                    return ((MRubySharedVariableTable)tableValue.As<RData>().Data).GetAsMRubyValue(key);
                 });
 
                 sharedStateClass.DefineMethod(mrb.Intern("[]="u8), (s, self) =>

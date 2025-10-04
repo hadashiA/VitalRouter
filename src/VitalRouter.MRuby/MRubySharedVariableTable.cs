@@ -16,7 +16,7 @@ namespace VitalRouter.MRuby
 
         public Dictionary<Symbol, MRubyValue>.KeyCollection Keys => serializedValues.Keys;
 
-        public MRubyValue GetOrNil(Symbol key) => serializedValues.GetValueOrDefault(key);
+        public MRubyValue GetAsMRubyValue(Symbol key) => serializedValues.GetValueOrDefault(key);
 
         public T? GetOrDefault<T>(string key) =>
             GetOrDefault<T>(state.Intern(key));
