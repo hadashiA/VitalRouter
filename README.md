@@ -94,6 +94,10 @@ Visit [vitalrouter.hadashikick.jp](https://vitalrouter.hadashikick.jp) to see th
 
 ## Installation
 
+> [!NOTE]
+> Starting with version 2.0, distribution in Unity has been changed to NuGet.
+> For documentation prior to version 1.x, please refer to [v1](https://github.com/hadashiA/VitalRouter/tree/v1) branch.
+
 The following NuGet packages are available.
 
 | Package                                    | Latest version                                                                                                                                                   |
@@ -145,7 +149,7 @@ VitalRouter supports the ability to work with R3.
 
 [Read more](https://vitalrouter.hadashikick.jp/extensions/r3)
 
-## MRuby scripting?
+## MRuby scripting
 
 It is very powerful if the publishing of commands can be controlled by external data.
 
