@@ -7,7 +7,6 @@ using MRubyCS.Serializer;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using ValueTaskSupplement;
 using VitalRouter;
 using VitalRouter.MRuby;
 

@@ -39,10 +39,13 @@ jobs:
         restore-keys: |
           Library-ViralRouter-
           Library-
+          
     - uses: actions/setup-dotnet@v3
       with:
         dotnet-version: |
           9.0.x
+          
+    - run: dotnet build
 
     - name: Resolve NugetForUnity
       working-directory: ./src/VitalRouter.Unity
