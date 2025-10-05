@@ -22,7 +22,7 @@ Appending `[Route]` to a method of this class will cause the command to be deliv
 
 
 ```cs
- [Routes]
+[Routes]
 public partial class FooPresentor
 {
    [Route]
