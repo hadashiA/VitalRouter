@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net9.0;netstandard2.1</TargetFrameworks>
+        <LangVersion>11</LangVersion>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\VitalRouter\VitalRouter.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MRubyCS" Version="0.16.0" />
+<!--      <PackageReference Include="MRubyCS.Compiler" Version="0.15.1-preview" />-->
+      <PackageReference Include="MRubyCS.Serializer" Version="0.16.0" />
+    </ItemGroup>
+</Project>
