@@ -3,7 +3,7 @@ sidebar_label: Introduction
 title: MRuby Scripting
 ---
 
-![VitalRouter.MRuby](../../assets/diagram_mruby.svg)
+![VitalRouter.MRuby](../../assets/diagram_mruby.png)
 
 It is very powerful if the publishing of commands can be controlled by external data.
 
