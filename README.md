@@ -3,9 +3,11 @@
 [![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
 ![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
 
-VitalRouter, is a source-generator powered zero-allocation fast in-memory messaging library for Unity and .NET.
+VitalRouter is a C# library for zero-allocation, in-memory messaging on the client-side.
 
-It can declaratively do async handler/async middleware/sequence control, etc., and could serve as a thin framework to promote unidirectional control flow.
+It works on any platform where C# runs, but is specifically designed for client-side applications, particularly in games with Unity, or where event propagation can become complex.
+
+By simply adding an Attribute, you can achieve asynchronous handlers, asynchronous middleware, sequence control, and more. Roslyn SourceGenerator generates high-performance code with zero allocations. It can function as a thin framework that promotes a unidirectional control flow.
 
 ```csharp
 [Routes]
