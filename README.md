@@ -163,7 +163,7 @@ Fiber in mruby and async/await in C# are fully integrated.
 
 ![MRuby and C# Diagram](./website/docs/assets/diagram_mruby.png)
 
-[Read more](https://vitalrouter.hadashikick.jp/extensions/mruby)
+[Read more](https://vitalrouter.hadashikick.jp/extensions/mruby/intro)
 
 ## LISENCE
 
