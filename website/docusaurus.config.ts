@@ -3,6 +3,10 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
+  markdown: {
+    mermaid: true,
+  },
+  themes: ["@docusaurus/theme-mermaid"],
   title: 'VitalRouter',
   tagline: 'Dinosaurs are cool',
   // favicon: 'img/favicon.ico',
@@ -62,6 +66,9 @@ const config: Config = {
   // ],
 
   themeConfig: {
+    mermaid: {
+      theme: {light: 'neutral', dark: 'forest'},
+    },
     // Replace with your project's social card
     // image: 'img/docusaurus-social-card.jpg',
     navbar: {
@@ -111,7 +118,7 @@ const config: Config = {
       defaultMode: 'light',
       disableSwitch: true,
       respectPrefersColorScheme: false,
-    }
+    },
   } satisfies Preset.ThemeConfig,
 };
 
