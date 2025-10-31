@@ -33,7 +33,7 @@ public static class CommandPublisherExtensions
             }
         }
 
-        var args = CappedArrayPool<object?>.Shared8Limit.Rent(5);
+        var args = CappedArrayPool<object?>.Shared8Limit.Rent(2);
         args[0] = command;
         args[1] = cancellation;
         var result = publishMethod.Invoke(publisher, args);
