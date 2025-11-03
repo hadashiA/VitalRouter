@@ -70,7 +70,7 @@ public class SequentialOrdering : ICommandInterceptor, IDisposable
     public async ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> next)
         where T : ICommand
     {
-        await publishLock.WaitAsync();
+        await publishLock.WaitAsync(context.CancellationToken);
         try
         {
             await next(command, context);
