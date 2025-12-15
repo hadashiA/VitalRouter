@@ -120,7 +120,7 @@ The following NuGet packages are available.
 3. **Optional**
     - The following extensions for Unity are available from the Unity Package Manager:
         - ```
-          https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#2.0.3
+          https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#2.0.4
           ```
         - Install UniTask >= 2.5.5
             - If [UniTask](https://github.com/Cysharp/UniTask) is installed, `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
