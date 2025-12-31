@@ -2,9 +2,10 @@
 
     <PropertyGroup>
         <TargetFrameworks>net8.0;net9.0;netstandard2.1</TargetFrameworks>
-        <LangVersion>11</LangVersion>
+        <LangVersion>13</LangVersion>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Description>VitalRouter extensions for R3 reactive extensions</Description>
     </PropertyGroup>
 
     <ItemGroup>

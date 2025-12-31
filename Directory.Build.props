@@ -8,5 +8,11 @@
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Description>The zero-allocation in-memory message passing library. The very thin layer that encourages decrative routings.</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+        <EmbeddedResource Include="$(MSBuildThisFileDirectory)LICENSE" />
+    </ItemGroup>
 </Project>
