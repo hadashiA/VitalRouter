@@ -2,173 +2,229 @@
 
 [![GitHub license](https://img.shields.io/github/license/hadashiA/VitalRouter)](./LICENSE)
 ![Unity 2022.2+](https://img.shields.io/badge/unity-2022.2+-000.svg)
+![.NET 6.0+](https://img.shields.io/badge/.NET-6.0%2B-512bd4.svg)
 
-VitalRouter is a C# library for zero-allocation, in-memory messaging on the client-side.
+VitalRouter is a high-performance, zero-allocation in-memory messaging library for C#. It is specifically designed for environments where performance and decoupling are critical, such as Unity games or complex .NET applications.
 
-It works on any platform where C# runs, but is specifically designed for client-side applications, particularly in games with Unity, or where event propagation can become complex.
-
-By simply adding an Attribute, you can achieve asynchronous handlers, asynchronous middleware, sequence control, and more. Roslyn SourceGenerator generates high-performance code with zero allocations. It can function as a thin framework that promotes a unidirectional control flow.
-
-```csharp
-[Routes]
-[Filter(typeof(Logging))]
-[Filter(typeof(ExceptionHandling))]
-[Filter(typeof(GameStateUpdating))]
-public partial class ExamplePresenter
-{
-    // Declare event handler
-    [Route]
-    void On(FooCommand cmd)
-    {
-        // Do something ...
-        Console.WriteLine("foo !")
-    }
-
-    // Declare event handler (async)
-    [Route] 
-    async UniTask On(BarCommand cmd)
-    {
-        // Do something for await ...
-    }
-    
-    // Declare event handler with extra filter
-    [Route]
-    [Filter(typeof(ExtraFilter))]
-    async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
-    {
-        // Do something after all filters runs on.
-    }
-       
-    // Declare event handler with specifies behavior when async handlers are executed concurrently
-    [Route(CommandOrdering.Sequential)]
-    async UniTask On(BuzCommand cmd, CancellationToken cancellation = default)
-    {
-        // Do something after all filters runs on.
-    }
-}
-```
-
-```cs
-// Subscribe with async
-var subscription = router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
-
-// lambda interceptors
-router
-    .WithFilter<FooCommand>(async (x, context) =>
-    {
-        if (condition) await next(x, context);
-    })
-    .Subscribe<FooCommand>(cmd => { /* .. */ });
-```
-
-```cs
-var router = new Router();
-
-var presenter = new ExamplePresenter();
-presenter.MapTo(router);
-
-await router.PublishAsync(new FooCommand(/* ... */));
-// foo !
-```
-
-In games, or complex GUI application development, patterns such as central event aggregator/message broker/mediator are powerful patterns to organize N:N relationships.
-Assembling an asynchronous function pipeline can be even more effective.
-
-### Features
-
-- Zero allocation message passing
-- Thread-safe
-- Pub/Sub, Fan-out
-- Async / Non-async handlers
-- Fast declarative routing pattern
-- Naive event handler pattern
-- Async interceptor pipelines
-    - Parallel, queueing, or other sequential control.
-- DI friendly. Also support without DI.
-- **Optional Extensions**
-    - UniTask support
-    - R3 integration
-    - MRuby scripting
+By using simple attributes, you can implement asynchronous handlers, middleware (interceptors), and advanced sequence control. VitalRouter leverages Roslyn Source Generators to produce highly efficient code, promoting a clean, unidirectional control flow with minimal overhead.
 
 ## Documentation
 
 Visit [vitalrouter.hadashikick.jp](https://vitalrouter.hadashikick.jp) to see the full documentation.
 
+## Key Features
+
+- **Zero Allocation**: Optimized for high-frequency messaging without GC pressure.
+- **Thread-Safe**: Designed for safe use across multiple threads.
+- **Unidirectional Flow**: Promotes a predictable data flow through your application.
+- **Declarative Routing**: Use attributes like `[Routes]` and `[Route]` to define handlers.
+- **Async Interceptor Pipeline**: Build sophisticated message processing chains.
+- **Versatile Compatibility**: Works seamlessly in both Unity and standard .NET projects.
+- **DI Integration**: Native support for VContainer (Unity) and Microsoft.Extensions.DependencyInjection.
+
+---
+
+## Core Concepts
+
+VitalRouter follows a simple messaging flow. A **Publisher** sends a **Command** to a **Router**, which then dispatches it through optional **Interceptors** to one or more **Handlers**.
+
+```mermaid
+---
+config:
+  theme: dark
+---
+graph LR
+    Publisher[Publisher] -- PublishAsync --> Router[Router]
+    subgraph Pipeline
+        Router -- next --> Interceptor1[Interceptor A]
+        Interceptor1 -- next --> Interceptor2[Interceptor B]
+    end
+    Interceptor2 -- Invoke --> Handler[Handler/Presenter]
+```
+
+### 1. Define a Command
+Commands are lightweight data structures representing an event or action.
+
+```csharp
+// record structs are recommended for zero-allocation messaging
+public readonly record struct MoveCommand(Vector3 Destination) : ICommand;
+```
+
+> [!TIP]
+> **AOT/HybridCLR Note**: While `record struct` is valid, ensure your AOT metadata is correctly generated for iOS/AOT environments if using tools like HybridCLR.
+
+### 2. Create a Handler (Presenter)
+Use the `[Routes]` attribute on a `partial` class to receive commands.
+
+```csharp
+[Routes]
+public partial class PlayerPresenter
+{
+    // Use ValueTask for pure .NET performance
+    [Route]
+    public void On(MoveCommand cmd)
+    {
+        Console.WriteLine($"Moving to {cmd.Destination}");
+    }
+
+    // Use UniTask for Unity-specific async handling
+    [Route]
+    public async UniTask On(SomeAsyncCommand cmd)
+    {
+        await DoSomethingAsync();
+    }
+}
+```
+
+### 3. Map and Publish
+Connect your handler to a router and start sending commands.
+
+```csharp
+var router = new Router();
+var presenter = new PlayerPresenter();
+
+// MapTo returns a Subscription (IDisposable)
+using var subscription = presenter.MapTo(router);
+
+// Publish a message
+await router.PublishAsync(new MoveCommand(new Vector3(1, 0, 0)));
+
+```
+
+### (Optional) Naive Pub/Sub
+You can also subscribe using lambdas without using the source generator.
+
+```csharp
+// Simple subscription
+router.Subscribe<MoveCommand>(cmd => { /* ... */ });
+
+// Async subscription with ordering
+router.SubscribeAwait<MoveCommand>(async (cmd, ct) => 
+{
+    await DoSomethingAsync();
+}, CommandOrdering.Sequential);
+
+// Inline interceptors (Filters)
+router
+    .WithFilter<MoveCommand>(async (cmd, context, next) =>
+    {
+        Console.WriteLine("Before");
+        await next(cmd, context);
+        Console.WriteLine("After");
+    })
+    .Subscribe(cmd => { /* ... */ });
+```
+
+## Unity Integration
+
+VitalRouter is highly optimized for Unity, especially when combined with UniTask.
+
+### MonoBehaviour Example
+When using `MapTo` in a `MonoBehaviour`, always bind the subscription to the object's lifecycle.
+
+```csharp
+[Routes]
+public partial class CharacterController : MonoBehaviour
+{
+    private void Start()
+    {
+        // Bind the subscription to this GameObject's lifecycle
+        this.MapTo(Router.Default).AddTo(destroyCancellationToken);
+    }
+
+    [Route]
+    public void On(MoveCommand cmd)
+    {
+        transform.position = cmd.Destination;
+    }
+}
+```
+
+> [!IMPORTANT]
+> **Assembly Definition (.asmdef)**: You must reference `VitalRouter` in your `.asmdef` file for the Source Generator to process your `[Routes]` attributes.
+
+---
+
+## UniTask Integration
+UniTask is a fast async/await extension for Unity. VitalRouter actively supports UniTask.
+Requirements: UniTask >= 2.5.5
+
+> [!TIP]
+> If UniTask is installed, the `VITALROUTER_UNITASK_INTEGRATION` flag is automatically turned on, executing optimized GC-free code paths.
+
+[Read more](https://vitalrouter.hadashikick.jp/extensions/unitask)
+
+---
+
 ## Installation
+
+### Requirements
+- Unity 2022.2+ (Uses Incremental Source Generator)
+- .NET 6.0+
+
+### Packages
+
+| Package                                      | Latest version                                                                                                                                                   |
+| :------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VitalRouter`                                | [![NuGet](https://img.shields.io/nuget/v/VitalRouter)](https://www.nuget.org/packages/VitalRouter)                                                               |
+| `VitalRouter.Extensions.DependencyInjection` | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.Extensions.DependencyInjection)](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) |
+| `VitalRouter.R3`                             | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.R3)](https://www.nuget.org/packages/VitalRouter.R3)                                                         |
+| `VitalRouter.MRuby`                          | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.MRuby)](https://www.nuget.org/packages/VitalRouter.MRuby)                                                   |
+
+### Unity Installation
 
 > [!NOTE]
 > Starting with version 2.0, distribution in Unity has been changed to NuGet.
-> For documentation prior to version 1.x, please refer to [v1](https://github.com/hadashiA/VitalRouter/tree/v1) branch.
 
-The following NuGet packages are available.
+1. Install [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity).
+2. Search and install `VitalRouter` packages in the NuGet window.
 
-| Package                                    | Latest version                                                                                                                                                   |
-|:-------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| VitalRouter                                | [![NuGet](https://img.shields.io/nuget/v/VitalRouter)](https://www.nuget.org/packages/VitalRouter)                                                               | 
-| VitalRouter.Extensions.DependencyInjection | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.Extensions.DependencyInjection)](https://www.nuget.org/packages/VitalRouter.Extensions.DependencyInjection) | 
-| VitalRouter.R3                             | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.R3)](https://www.nuget.org/packages/VitalRouter.R3)                                                         |
-| VitalRouter.MRuby                          | [![NuGet](https://img.shields.io/nuget/v/VitalRouter.MRuby)](https://www.nuget.org/packages/VitalRouter.MRuby)                                                   |
+**Optional (UPM)**
 
-### Unity
+If you prefer UPM, you can install the assembly for Unity via Git URL:
+```text
+https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#2.0.5
+```
 
-> [!NOTE]
-> Requirements: Unity 20222.2+
-> This limitation is due to the use of the Incremental Source Generator.
+---
 
-1. Install [NugetForUnity](https://github.com/GlitchEnzo/NuGetForUnity).
-2. Open the NuGet window by going to NuGet > Manage NuGet Packages, after search for the "VitalRouter" packages, and install it.
-3. **Optional**
-    - The following extensions for Unity are available from the Unity Package Manager:
-        - ```
-          https://github.com/hadashiA/VitalRouter.git?path=/src/VitalRouter.Unity/Assets/VitalRouter#2.0.5
-          ```
-        - Install UniTask >= 2.5.5
-            - If [UniTask](https://github.com/Cysharp/UniTask) is installed, `VITALROUTER_UNITASK_INTEGRATION` flag is turned on and the optimized GC-free code is executed.
-            - See [UniTask Integration](./website/docs/extensions/unitask.md) section for more details.
-        - Install VContainer >= 1.16.6
-            - For bringing in DI style, VitalRouter supports Integration with VContainer, a fast and lightweight DI container for Unity.
-            - See [DI](./website/docs/di/vcontainer.md) section for more details.
+## Advanced Features
 
-## Async interceptor pipeline
-
+### Async Interceptor Pipeline
 Pipelining of async interceptors for published messages is possible. This is a general strong pattern for data exchange.
 
 <img src="./website/docs/assets/diagram_interceptors.svg" alt="Interceptor Diagram" width="50%" />
 
 [Read more](https://vitalrouter.hadashikick.jp/pipeline/interceptor)
 
-## UniTask Integration
-
-UniTask is a fast async/await extension for Unity. VitalRouter actively supports UniTask.
-
-[Read more](https://vitalrouter.hadashikick.jp/extensions/unitask)
-
-## R3 Integration
-
-R3 is the next generation Reactive Extensions implementation in the C# world. It is an excellent alternative to asynchronous streams, but also an excellent alternative to local events.
-
-VitalRouter supports the ability to work with R3.
+### R3 Integration
+R3 is the next generation Reactive Extensions implementation in the C# world. VitalRouter supports the ability to work with R3.
 
 [Read more](https://vitalrouter.hadashikick.jp/extensions/r3)
 
-## MRuby scripting
-
-It is very powerful if the publishing of commands can be controlled by external data.
-
-For example, when implementing a game scenario, most of the time we do not implement everything in C# scripts. It is common to express large amounts of text data, branching, flag management, etc. in a simple scripting language or data format.
-
-VitalRouter offers an optional package for this purpose before integrating [mruby](https://github.com/mruby/mruby). ([blog](https://medium.com/@hadashiA/vitalrouter-mruby-generic-ruby-scripting-framework-for-unity-d1b2234a5c33) / [blog (Japanease)](https://hadashikick.land/tech/vitalrouter-mruby)
-
-Fiber in mruby and async/await in C# are fully integrated.
+### MRuby Scripting
+Control command publishing via external MRuby scripts. Fiber in mruby and async/await in C# are fully integrated.
 
 ![MRuby and C# Diagram](./website/docs/assets/diagram_mruby.png)
 
 [Read more](https://vitalrouter.hadashikick.jp/extensions/mruby/intro)
 
-## LISENCE
+---
 
+## Appendix: Best Practices
+
+Based on large-scale production usage (e.g., HybridFrame):
+
+1. **Prefer record structs**: For commands that are pure data, `record struct` provides equality comparison and zero-allocation benefits.
+2. **Explicit Lifecycles**: Always use `.AddTo(destroyCancellationToken)` or manual `Dispose()` to avoid memory leaks and ghost event handling.
+3. **UniTask for Unity**: Use `UniTask` or `UniTaskVoid` as return types in Unity handlers to leverage optimized pooling. Use `ValueTask` for pure .NET projects.
+4. **Contextual Metadata**: Use `PublishContext` for cross-cutting concerns (logging IDs, cancellation tokens, user permissions) rather than polluting your command structs.
+5. **Sequential by Default for UI**: Use `CommandOrdering.Sequential` for UI animations or dialogue sequences to prevent race conditions.
+6. **DI Integration**: In Unity, VContainer (>= 1.16.6) is highly recommended for managing router lifecycles and handler registration.
+
+## License
 MIT
 
-## AUTHOR
-
+## Author
 @hadashiA
+
