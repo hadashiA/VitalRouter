@@ -86,8 +86,8 @@ Up to the Version 1 series, it depended on libmruby native bindings and was limi
 Starting with version 2, any platform where C# runs is supported.
 
 
-- [VitalRouter.MRuby v2 (pure C# implementations)](./v1)
+- [VitalRouter.MRuby v2 (pure C# implementations)](./v2)
   - **Recommended**
-- [VitalRouter.MRuby v1 (libmruby native binding used)](./v2)
+- [VitalRouter.MRuby v1 (libmruby native binding used)](./v1)
   - **No longer supported**
   - Documentation for v1 remains available, but maintenance is no longer ongoing.
