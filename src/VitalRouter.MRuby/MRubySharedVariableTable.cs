@@ -8,10 +8,12 @@ namespace VitalRouter.MRuby
     {
         readonly Dictionary<Symbol, MRubyValue> serializedValues = new();
         readonly MRubyState state;
+        readonly MRubyValueSerializerOptions options;
 
-        public MRubySharedVariableTable(MRubyState state)
+        public MRubySharedVariableTable(MRubyState state, MRubyValueSerializerOptions options)
         {
             this.state = state;
+            this.options = options;
         }
 
         public Dictionary<Symbol, MRubyValue>.KeyCollection Keys => serializedValues.Keys;
@@ -55,7 +57,7 @@ namespace VitalRouter.MRuby
 
         public void Set<T>(Symbol key, T value)
         {
-            var mrubyValue = MRubyValueSerializer.Serialize(value, state);
+            var mrubyValue = MRubyValueSerializer.Serialize(value, state, options);
             serializedValues[key] = mrubyValue;
         }
 

@@ -117,7 +117,13 @@ public static class MRubyStateExtensions
             {
                 sharedStateClass.DefineMethod(mrb.Intern("initialize"u8), (s, self) =>
                 {
-                    var table = new MRubySharedVariableTable(mrb);
+                    var options = MRubyValueSerializerOptions.Default;
+                    if (s.TryGetConst(s.Intern("VITALROUTER_SERIALIZER_OPTIONS"), s.ObjectClass, out var value))
+                    {
+                        options = value.As<RData>().Data as MRubyValueSerializerOptions;
+                    }
+
+                    var table = new MRubySharedVariableTable(mrb, options);
                     var data = new RData(table);
                     s.SetInstanceVariable(self.As<RObject>(), s.Intern("@table"u8), data);
                     return self;
