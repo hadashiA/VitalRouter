@@ -145,6 +145,30 @@ public static class MRubyStateExtensions
                     ((MRubySharedVariableTable)tableValue.As<RData>().Data).Set(key, value);
                     return value;
                 });
+
+                MRubyFunc inspect = (s, self) =>
+                {
+                    var tableValue = s.GetInstanceVariable(self.As<RObject>(), s.Intern("@table"u8));
+                    var table = (MRubySharedVariableTable)tableValue.As<RData>().Data;
+
+                    var result = s.NewString("{"u8);
+                    var first = true;
+                    foreach (var key in table.Keys)
+                    {
+                        if (!first)
+                        {
+                            result.Concat(", "u8);
+                        }
+                        first = false;
+                        result.Concat(s.NameOf(key));
+                        result.Concat(": "u8);
+                        result.Concat(s.Inspect(table.GetAsMRubyValue(key)));
+                    }
+                    result.Concat("}"u8);
+                    return result;
+                };
+                sharedStateClass.DefineMethod(mrb.Intern("to_s"u8), inspect);
+                sharedStateClass.DefineMethod(mrb.Intern("inspect"u8), inspect);
             });
 
             module.DefineMethod(mrb.Intern("state"u8), (s, self) =>

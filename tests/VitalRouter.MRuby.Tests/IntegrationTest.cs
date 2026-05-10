@@ -106,6 +106,52 @@ cmd :test, value: state[:from_csharp]
     }
 
     [Test]
+    public async Task SharedStateToS()
+    {
+        var script = @"
+state[:greeting] = 'hello'
+state[:count] = 99
+cmd :test, value: 0, name: state.to_s
+";
+        var irep = compiler.Compile(script);
+        await mrb.ExecuteAsync(router, irep);
+
+        Assert.That(recorder.Received, Has.Count.EqualTo(1));
+        var cmd = (TestCommand)recorder.Received[0];
+        Assert.That(cmd.Name, Is.EqualTo("{greeting: \"hello\", count: 99}"));
+    }
+
+    [Test]
+    public async Task SharedStateInspect()
+    {
+        var script = @"
+state[:greeting] = 'hello'
+state[:count] = 99
+cmd :test, value: 0, name: state.inspect
+";
+        var irep = compiler.Compile(script);
+        await mrb.ExecuteAsync(router, irep);
+
+        Assert.That(recorder.Received, Has.Count.EqualTo(1));
+        var cmd = (TestCommand)recorder.Received[0];
+        Assert.That(cmd.Name, Is.EqualTo("{greeting: \"hello\", count: 99}"));
+    }
+
+    [Test]
+    public async Task SharedStateToSEmpty()
+    {
+        var script = @"
+cmd :test, value: 0, name: state.to_s
+";
+        var irep = compiler.Compile(script);
+        await mrb.ExecuteAsync(router, irep);
+
+        Assert.That(recorder.Received, Has.Count.EqualTo(1));
+        var cmd = (TestCommand)recorder.Received[0];
+        Assert.That(cmd.Name, Is.EqualTo("{}"));
+    }
+
+    [Test]
     public async Task PublishContextHasMRubyState()
     {
         MRubyState? capturedState = null;

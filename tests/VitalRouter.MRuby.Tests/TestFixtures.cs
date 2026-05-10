@@ -11,6 +11,7 @@ namespace VitalRouter.MRuby.Tests;
 public partial struct TestCommand : ICommand
 {
     public int Value;
+    public string Name;
 }
 
 [MRubyObject]
