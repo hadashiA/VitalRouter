@@ -105,6 +105,11 @@ router.SubscribeAwait<MoveCommand>(async (cmd, ct) =>
 }, CommandOrdering.Sequential);
 
 // Inline interceptors (Filters)
+//
+// `WithFilter(...)` returns a derived child router that owns the given filter.
+// Subscribers registered on the child receive commands published on the parent
+// (with the filter applied), just like an Rx `Where` chain forwards items from
+// its source.
 router
     .WithFilter<MoveCommand>(async (cmd, context, next) =>
     {
@@ -113,6 +118,10 @@ router
         Console.WriteLine("After");
     })
     .Subscribe(cmd => { /* ... */ });
+
+// Publishing on the parent triggers the filter for subscribers on the child:
+await router.PublishAsync(new MoveCommand(...));
+// → "Before" → handler → "After"
 ```
 
 ## Unity Integration

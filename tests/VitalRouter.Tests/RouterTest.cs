@@ -180,6 +180,101 @@ public class RouterTest
         Assert.That(errorHandler.Exception, Is.InstanceOf<TestException>());
     }
 
+    // Regression for https://github.com/hadashiA/VitalRouter/issues/138
+    [Test]
+    public async Task WithFilterSubscribeReceivesPublishFromParent()
+    {
+        var router = new Router();
+        var interceptor = new TestInterceptor();
+        var subscriber = new TestSubscriber();
+
+        router.WithFilter(interceptor).Subscribe(subscriber);
+
+        await router.PublishAsync(new TestCommand1());
+
+        Assert.That(interceptor.Calls, Is.EqualTo(1));
+        Assert.That(subscriber.Calls, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task WithFilterChainedSubscribeReceivesPublishFromParent()
+    {
+        var root = new Router();
+        var interceptor1 = new TestInterceptor();
+        var interceptor2 = new TestInterceptor();
+        var subscriber = new TestSubscriber();
+
+        root.WithFilter(interceptor1)
+            .WithFilter(interceptor2)
+            .Subscribe(subscriber);
+
+        await root.PublishAsync(new TestCommand1());
+
+        Assert.That(interceptor1.Calls, Is.EqualTo(1));
+        Assert.That(interceptor2.Calls, Is.EqualTo(1));
+        Assert.That(subscriber.Calls, Is.EqualTo(1));
+    }
+
+    // Subscribers at multiple depths must not cause ancestor filters to run multiple times.
+    [Test]
+    public async Task WithFilterDoesNotDoubleExecuteAncestorFilters()
+    {
+        var root = new Router();
+        var interceptor1 = new TestInterceptor();
+        var interceptor2 = new TestInterceptor();
+        var subscriberOnV1 = new TestSubscriber();
+        var subscriberOnV2 = new TestSubscriber();
+
+        var v1 = root.WithFilter(interceptor1);
+        var v2 = v1.WithFilter(interceptor2);
+        v1.Subscribe(subscriberOnV1);
+        v2.Subscribe(subscriberOnV2);
+
+        await root.PublishAsync(new TestCommand1());
+
+        Assert.That(interceptor1.Calls, Is.EqualTo(1));
+        Assert.That(interceptor2.Calls, Is.EqualTo(1));
+        Assert.That(subscriberOnV1.Calls, Is.EqualTo(1));
+        Assert.That(subscriberOnV2.Calls, Is.EqualTo(1));
+    }
+
+    // Publishing directly on the chain end runs the cumulative chain (Rx Where-like).
+    [Test]
+    public async Task WithFilterChainedDirectPublishRunsCumulativeChain()
+    {
+        var root = new Router();
+        var interceptor1 = new TestInterceptor();
+        var interceptor2 = new TestInterceptor();
+        var subscriber = new TestSubscriber();
+
+        var v2 = root.WithFilter(interceptor1).WithFilter(interceptor2);
+        v2.Subscribe(subscriber);
+
+        await v2.PublishAsync(new TestCommand1());
+
+        Assert.That(interceptor1.Calls, Is.EqualTo(1));
+        Assert.That(interceptor2.Calls, Is.EqualTo(1));
+        Assert.That(subscriber.Calls, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task WithFilterDisposeRemovesChildFromParent()
+    {
+        var root = new Router();
+        var interceptor = new TestInterceptor();
+        var subscriber = new TestSubscriber();
+
+        var view = root.WithFilter(interceptor);
+        view.Subscribe(subscriber);
+
+        view.Dispose();
+
+        await root.PublishAsync(new TestCommand1());
+
+        Assert.That(interceptor.Calls, Is.Zero);
+        Assert.That(subscriber.Calls, Is.Zero);
+    }
+
     [Test]
     public void ConcurrentPublishing()
     {
