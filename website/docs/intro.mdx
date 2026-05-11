@@ -96,6 +96,10 @@ subscription.Dispose();
 var subscription = router.SubscribeAwait<FooCommand>(async (cmd, cancellationToken) => { /* ... */ }, CommandOrdering.Sequential);
 
 // lambda interceptors
+//
+// `WithFilter(...)` returns a derived child router that owns the filter.
+// Subscribers on the child receive commands published on the parent with
+// the filter applied (Rx `Where`-style chaining).
 router
     .WithFilter<FooCommand>(async (x, context) =>
     {

@@ -44,10 +44,20 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     readonly FreeList<ICommandSubscriber> subscribers = new(8);
     readonly FreeList<IAsyncCommandSubscriber> asyncSubscribers = new(8);
+    // Cumulative interceptor chain from root to this router. Used when this router
+    // is the direct publish entry point (Router.PublishAsync).
     readonly FreeList<ICommandInterceptor> interceptors = new(8);
+    // Interceptors added locally at this node only. Used when this router is reached
+    // via fan-out from its parent (ancestor filters have already been applied by the
+    // parent's pipeline, so we must not re-run them here).
+    readonly FreeList<ICommandInterceptor> localInterceptors = new(8);
+    readonly FreeList<Router> childRouters = new(4);
+
+    Router? parentRouter;
 
     bool disposed;
     bool hasInterceptor;
+    bool hasLocalInterceptor;
 
     readonly PublishCore publishCore;
 
@@ -57,14 +67,52 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
         publishCore = new PublishCore(this);
     }
 
+    Router(Router parent, ICommandInterceptor interceptor)
+    {
+        publishCore = new PublishCore(this);
+        parentRouter = parent;
+
+        foreach (var inherited in parent.interceptors.AsSpan())
+        {
+            if (inherited != null)
+            {
+                interceptors.Add(inherited);
+            }
+        }
+        interceptors.Add(interceptor);
+        hasInterceptor = true;
+
+        localInterceptors.Add(interceptor);
+        hasLocalInterceptor = true;
+    }
+
     public ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default)
+        where T : ICommand
+    {
+        return PublishInternalAsync(command, cancellation, hasInterceptor, interceptors);
+    }
+
+    // Called when this router is reached via fan-out from its parent. The parent's
+    // pipeline has already run ancestor filters, so we apply only the locally added
+    // ones (avoiding double execution of inherited filters).
+    ValueTask FanOutAsync<T>(T command, CancellationToken cancellation)
+        where T : ICommand
+    {
+        return PublishInternalAsync(command, cancellation, hasLocalInterceptor, localInterceptors);
+    }
+
+    ValueTask PublishInternalAsync<T>(
+        T command,
+        CancellationToken cancellation,
+        bool hasFilters,
+        FreeList<ICommandInterceptor> filters)
         where T : ICommand
     {
         ValueTask task;
         PublishContext context;
-        if (hasInterceptor)
+        if (hasFilters)
         {
-            var c = PublishContext<T>.Rent(interceptors, publishCore, cancellation);
+            var c = PublishContext<T>.Rent(filters, publishCore, cancellation);
             context = c;
             task = c.PublishAsync(command);
         }
@@ -128,6 +176,8 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     {
         hasInterceptor = true;
         interceptors.Add(interceptor);
+        hasLocalInterceptor = true;
+        localInterceptors.Add(interceptor);
     }
 
     public void RemoveFilter(ICommandInterceptor interceptor)
@@ -137,33 +187,56 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     public void RemoveFilter(Func<ICommandInterceptor, bool> predicate)
     {
-        var span = interceptors.AsSpan();
+        hasInterceptor = RemoveMatchingInterceptors(interceptors, predicate);
+        hasLocalInterceptor = RemoveMatchingInterceptors(localInterceptors, predicate);
+    }
+
+    static bool RemoveMatchingInterceptors(FreeList<ICommandInterceptor> list, Func<ICommandInterceptor, bool> predicate)
+    {
+        var span = list.AsSpan();
         var count = 0;
         for (var i = span.Length - 1; i >= 0; i--)
         {
-            if (interceptors[i] is { } x)
+            if (list[i] is { } x)
             {
                 count++;
                 if (predicate(x))
                 {
-                    interceptors.RemoveAt(i);
+                    list.RemoveAt(i);
                     count--;
                 }
             }
         }
-        hasInterceptor = count > 0;
+        return count > 0;
     }
 
     public void RemoveAllFilters()
     {
         interceptors.Clear();
+        hasInterceptor = false;
+        localInterceptors.Clear();
+        hasLocalInterceptor = false;
     }
 
+    /// <summary>
+    /// Returns a derived child router that owns the given filter.
+    /// </summary>
+    /// <remarks>
+    /// The returned router represents the chain <c>parent → ... → this → newFilter</c>.
+    /// Publishing directly on the returned router runs the full cumulative chain
+    /// before reaching its subscribers — the same way an Rx <c>Where</c> chain
+    /// applies every predicate from the source down to the subscription site.
+    /// Commands published on the parent also reach subscribers registered on the
+    /// child (each filter in the tree is invoked exactly once per publish).
+    /// Note: the parent's filter list is snapshotted at this call; subsequent
+    /// <c>AddFilter</c> on an ancestor will not retroactively affect existing
+    /// children's cumulative chain.
+    /// </remarks>
     public Router WithFilter(ICommandInterceptor interceptor)
     {
-        var filtered = Clone();
-        filtered.AddFilter(interceptor);
-        return filtered;
+        var child = new Router(this, interceptor);
+        childRouters.Add(child);
+        return child;
     }
 
     // TODO:
@@ -232,20 +305,18 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             disposed = true;
             UnsubscribeAll();
             RemoveAllFilters();
+            var parent = parentRouter;
+            if (parent != null)
+            {
+                parent.RemoveChildRouter(this);
+                parentRouter = null;
+            }
         }
     }
 
-    Router Clone()
+    void RemoveChildRouter(Router child)
     {
-        var result = new Router();
-        foreach (var interceptor in interceptors.AsSpan())
-        {
-            if (interceptor != null)
-            {
-                result.AddFilter(interceptor);
-            }
-        }
-        return result;
+        childRouters.Remove(child);
     }
 
     readonly struct PublishCore : IAsyncCommandSubscriber
@@ -275,26 +346,48 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
             }
 
             var asyncSubscribersLastIndex = source.asyncSubscribers.LastIndex;
-            if (asyncSubscribersLastIndex < 0) return default;
+            var childRoutersLastIndex = source.childRouters.LastIndex;
+            if (asyncSubscribersLastIndex < 0 && childRoutersLastIndex < 0) return default;
 
-            var asyncSubscribers = source.asyncSubscribers.Values;
             var whenAll = ContextPool<ReusableWhenAllSource>.Rent();
-            whenAll.Reset(asyncSubscribersLastIndex + 1);
-            for (var i = asyncSubscribersLastIndex; i >= 0; i--)
+            whenAll.Reset((asyncSubscribersLastIndex + 1) + (childRoutersLastIndex + 1));
+
+            if (asyncSubscribersLastIndex >= 0)
             {
-                switch (asyncSubscribers[i])
+                var asyncSubscribers = source.asyncSubscribers.Values;
+                for (var i = asyncSubscribersLastIndex; i >= 0; i--)
                 {
-                    case AsyncAnonymousSubscriber<T> x: // Devirtualization
-                        whenAll.AddTask(x.ReceiveInternalAsync(command, context));
-                        break;
-                    case { } x:
-                        whenAll.AddTask(x.ReceiveAsync(command, context));
-                        break;
-                    default:
-                        whenAll.IncrementSuccessfully();
-                        break;
+                    switch (asyncSubscribers[i])
+                    {
+                        case AsyncAnonymousSubscriber<T> x: // Devirtualization
+                            whenAll.AddTask(x.ReceiveInternalAsync(command, context));
+                            break;
+                        case { } x:
+                            whenAll.AddTask(x.ReceiveAsync(command, context));
+                            break;
+                        default:
+                            whenAll.IncrementSuccessfully();
+                            break;
+                    }
                 }
             }
+
+            if (childRoutersLastIndex >= 0)
+            {
+                var children = source.childRouters.Values;
+                for (var i = childRoutersLastIndex; i >= 0; i--)
+                {
+                    if (children[i] is { } child)
+                    {
+                        whenAll.AddTask(child.FanOutAsync(command, context.CancellationToken));
+                    }
+                    else
+                    {
+                        whenAll.IncrementSuccessfully();
+                    }
+                }
+            }
+
             return new ValueTask(whenAll, whenAll.Version);
         }
     }

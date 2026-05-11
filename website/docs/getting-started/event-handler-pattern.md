@@ -69,5 +69,24 @@ Router.Default
    .Subscribe((cmd, context) => { /* ... */ });
 ```
 
+`WithFilter(...)` returns a derived child router that carries the given filter.
+Subscribers registered on the child receive commands published on the parent
+with the filter applied — the same way an Rx `Where` chain forwards items
+from its source.
+
+```cs
+await Router.Default.PublishAsync(new FooCommand());
+// The filter runs, then the handler is invoked (if `condition` was true).
+```
+
+Publishing directly on the returned child runs the cumulative filter chain
+from the root down to that child. Each filter in the tree is invoked exactly
+once per publish — there is no duplicate filter execution even when
+subscribers exist at multiple depths.
+
+Note: The cumulative chain is snapshotted when `WithFilter` is called.
+`AddFilter` invoked on an ancestor after the child was created does not
+retroactively apply to the existing child's cumulative chain.
+
 WithFilter, you can add common processing, and you can also ignore commands based on conditions.
 For details about Filters, see the [Interceptor](../pipeline/interceptor) section.

@@ -65,6 +65,8 @@ public partial class FooPresenter
 
 All of these are executed in the order in which they are registered, from top to bottom.
 
+You can also scope an interceptor to a derived child router using `WithFilter(...)`. This creates a sub-branch that carries the given filter; subscribers registered on the child receive commands published on the parent with the filter applied. See [`WithFilter` in the event handler pattern](../getting-started/event-handler-pattern#filter) for details.
+
 If you take the way of 2 or 3, the Interceptor instance is resolved as follows.
 
 - If you are using DI, the DI container will resolve this automatically.
