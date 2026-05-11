@@ -96,7 +96,7 @@ const config: Config = {
         },
         {
           href: 'https://github.com/hadashiA/VitalRouter/releases',
-          'label': 'v2.0.0',
+          'label': 'v2.4.0',
           position: 'right',
         },
       ],
