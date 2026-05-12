@@ -61,29 +61,32 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
 
     readonly PublishCore publishCore;
 
+    // This class is intended to be resolved via Dependency Injection (DI).
+    // Please note that adding constructors may break the DI functionality.
     [Preserve]
     public Router()
     {
         publishCore = new PublishCore(this);
     }
 
-    Router(Router parent, ICommandInterceptor interceptor)
+    /// <summary>
+    /// Wires this router as a child of `parent` and snapshots the parent's cumulative
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <remarks>
+    /// filter chain into this router's `interceptors`.
+    /// </remarks>
+    void AttachToParent(Router parent)
     {
-        publishCore = new PublishCore(this);
         parentRouter = parent;
-
         foreach (var inherited in parent.interceptors.AsSpan())
         {
             if (inherited != null)
             {
                 interceptors.Add(inherited);
+                hasInterceptor = true;
             }
         }
-        interceptors.Add(interceptor);
-        hasInterceptor = true;
-
-        localInterceptors.Add(interceptor);
-        hasLocalInterceptor = true;
     }
 
     public ValueTask PublishAsync<T>(T command, CancellationToken cancellation = default)
@@ -234,7 +237,9 @@ public sealed partial class Router : ICommandPublisher, ICommandSubscribable, ID
     /// </remarks>
     public Router WithFilter(ICommandInterceptor interceptor)
     {
-        var child = new Router(this, interceptor);
+        var child = new Router();
+        child.AttachToParent(this);
+        child.AddFilter(interceptor);
         childRouters.Add(child);
         return child;
     }
