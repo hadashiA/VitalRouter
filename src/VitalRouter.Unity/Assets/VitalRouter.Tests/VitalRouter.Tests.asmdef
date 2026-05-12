@@ -5,6 +5,7 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "UniTask",
+        "VContainer",
         "VitalRouter.Unity"
     ],
     "includePlatforms": [],
