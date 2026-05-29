@@ -80,7 +80,7 @@ It should work effectively even in single-threaded environments like Unity WebGL
 
 The mruby extension is a completely separate package.
 
-Starting with version 2, we have migrated from VitalRouter.MRubyCS to [MRubyCS](https://github.com/hadashiA/MRubyCS), a pure C# implementation.
+Starting with version 2, we have migrated to [ChibiRuby](https://github.com/hadashiA/ChibiRuby) (formerly MRubyCS), a pure C# implementation.
 
 Up to the Version 1 series, it depended on libmruby native bindings and was limited to certain platforms. 
 Starting with version 2, any platform where C# runs is supported.

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using MRubyCS;
-using MRubyCS.Internals;
+using ChibiRuby;
+using ChibiRuby.Internals;
 
 namespace VitalRouter.MRuby
 {

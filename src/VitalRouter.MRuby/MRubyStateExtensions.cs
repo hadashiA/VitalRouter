@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using MRubyCS;
-using MRubyCS.Serializer;
+using ChibiRuby;
+using ChibiRuby.Serializer;
 
 namespace VitalRouter.MRuby;
 
