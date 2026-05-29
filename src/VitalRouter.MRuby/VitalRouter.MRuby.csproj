@@ -13,8 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MRubyCS" Version="0.16.0" />
-<!--      <PackageReference Include="MRubyCS.Compiler" Version="0.15.1-preview" />-->
-      <PackageReference Include="MRubyCS.Serializer" Version="0.16.0" />
+      <PackageReference Include="ChibiRuby" Version="1.2.1" />
+<!--      <PackageReference Include="ChibiRuby.Compiler" Version="1.2.1" />-->
+      <PackageReference Include="ChibiRuby.Serializer" Version="1.2.1" />
     </ItemGroup>
 </Project>

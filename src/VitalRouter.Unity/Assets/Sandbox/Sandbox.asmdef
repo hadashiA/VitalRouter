@@ -15,8 +15,9 @@
     "precompiledReferences": [
         "VitalRouter.dll",
         "VitalRouter.MRuby.dll",
-        "MRubyCS.dll",
-        "MRubyCS.Serializer.dll",
+        "ChibiRuby.dll",
+        "ChibiRuby.Compiler.dll",
+        "ChibiRuby.Serializer.dll",
         "Utf8StringInterpolation.dll"
     ],
     "autoReferenced": true,

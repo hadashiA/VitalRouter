@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MRubyCS;
-using MRubyCS.Compiler;
+using ChibiRuby;
+using ChibiRuby.Compiler;
 using NUnit.Framework;
 
 namespace VitalRouter.MRuby.Tests;
@@ -43,8 +43,8 @@ public class IntegrationTest
     [Test]
     public async Task ExecuteSingleCommand()
     {
-        var irep = compiler.Compile("cmd :test, value: 42");
-        await mrb.ExecuteAsync(router, irep);
+        using var compilation = compiler.Compile("cmd :test, value: 42");
+        await mrb.ExecuteAsync(router, compilation.ToIrep());
 
         Assert.That(recorder.Received, Has.Count.EqualTo(1));
         var cmd = (TestCommand)recorder.Received[0];
@@ -59,8 +59,8 @@ cmd :test, value: 1
 cmd :move, id: 'hero', x: 10, y: 20
 cmd :test, value: 2
 ";
-        var irep = compiler.Compile(script);
-        await mrb.ExecuteAsync(router, irep);
+        using var compilation = compiler.Compile(script);
+        await mrb.ExecuteAsync(router, compilation.ToIrep());
 
         Assert.That(recorder.Received, Has.Count.EqualTo(3));
 
@@ -84,8 +84,10 @@ cmd :test, value: 2
 state[:greeting] = 'hello'
 state[:count] = 99
 ";
-        var irep = compiler.Compile(writeScript);
-        await mrb.ExecuteAsync(router, irep);
+        using (var writeCompilation = compiler.Compile(writeScript))
+        {
+            await mrb.ExecuteAsync(router, writeCompilation.ToIrep());
+        }
 
         var sharedVars = mrb.GetSharedVariables();
         Assert.That(sharedVars.GetOrDefault<string>("greeting"), Is.EqualTo("hello"));
@@ -97,8 +99,8 @@ state[:count] = 99
         var readScript = @"
 cmd :test, value: state[:from_csharp]
 ";
-        var irep2 = compiler.Compile(readScript);
-        await mrb.ExecuteAsync(router, irep2);
+        using var readCompilation = compiler.Compile(readScript);
+        await mrb.ExecuteAsync(router, readCompilation.ToIrep());
 
         Assert.That(recorder.Received, Has.Count.EqualTo(1));
         var cmd = (TestCommand)recorder.Received[0];
@@ -118,8 +120,8 @@ cmd :test, value: state[:from_csharp]
         });
         router.Subscribe(contextCapture);
 
-        var irep = compiler.Compile("cmd :test, value: 1");
-        await mrb.ExecuteAsync(router, irep);
+        using var compilation = compiler.Compile("cmd :test, value: 1");
+        await mrb.ExecuteAsync(router, compilation.ToIrep());
 
         Assert.That(capturedState, Is.Not.Null);
         Assert.That(capturedState, Is.SameAs(mrb));
@@ -129,7 +131,8 @@ cmd :test, value: state[:from_csharp]
     [Test]
     public void CommandNotFound()
     {
-        var irep = compiler.Compile("cmd :unknown_command, value: 1");
+        using var compilation = compiler.Compile("cmd :unknown_command, value: 1");
+        var irep = compilation.ToIrep();
 
         var ex = Assert.ThrowsAsync<MRubyRoutingException>(async () =>
         {
@@ -152,7 +155,8 @@ cmd :test, value: 1
 cmd :test, value: 2
 cmd :test, value: 3
 ";
-        var irep = compiler.Compile(script);
+        using var compilation = compiler.Compile(script);
+        var irep = compilation.ToIrep();
 
         Assert.ThrowsAsync<TaskCanceledException>(async () =>
         {
@@ -172,19 +176,19 @@ cmd :test, value: 3
             x.AddCommand<MoveCommand>("move");
         });
 
-        var irep1 = compiler.Compile(@"
+        using var compilation1 = compiler.Compile(@"
 cmd :test, value: 1
 cmd :test, value: 2
 cmd :test, value: 3
 ");
-        var irep2 = compiler2.Compile(@"
+        using var compilation2 = compiler2.Compile(@"
 cmd :move, id: 'npc', x: 100, y: 200
 cmd :test, value: 99
 ");
 
         await Task.WhenAll(
-            mrb.ExecuteAsync(router, irep1).AsTask(),
-            mrb2.ExecuteAsync(router, irep2).AsTask()
+            mrb.ExecuteAsync(router, compilation1.ToIrep()).AsTask(),
+            mrb2.ExecuteAsync(router, compilation2.ToIrep()).AsTask()
         );
 
         var received = recorder.Received;
@@ -209,12 +213,12 @@ cmd :test, value: 99
         var asyncSubscriber = new AsyncOrderRecorder(order);
         router.Subscribe(asyncSubscriber);
 
-        var irep = compiler.Compile(@"
+        using var compilation = compiler.Compile(@"
 cmd :test, value: 1
 cmd :test, value: 2
 cmd :test, value: 3
 ");
-        await mrb.ExecuteAsync(router, irep);
+        await mrb.ExecuteAsync(router, compilation.ToIrep());
 
         Assert.That(order.ToArray(), Is.EqualTo(new[] { 1, 2, 3 }));
     }
@@ -228,11 +232,11 @@ cmd :test, value: 3
         var asyncWriter = new AsyncSharedStateWriter(sharedVars);
         router.Subscribe(asyncWriter);
 
-        var irep = compiler.Compile(@"
+        using var compilation = compiler.Compile(@"
 cmd :test, value: 0
 cmd :test, value: state[:counter]
 ");
-        await mrb.ExecuteAsync(router, irep);
+        await mrb.ExecuteAsync(router, compilation.ToIrep());
 
         var received = recorder.Received;
         Assert.That(received, Has.Count.EqualTo(2));
@@ -264,17 +268,17 @@ cmd :test, value: state[:counter]
         router.Subscribe(subscriberA);
         router.Subscribe(subscriberB);
 
-        var irep1 = compiler.Compile(@"
+        using var compilation1 = compiler.Compile(@"
 cmd :test, value: 1
 cmd :test, value: 2
 ");
-        var irep2 = compiler2.Compile(@"
+        using var compilation2 = compiler2.Compile(@"
 cmd :move, id: 'b', x: 0, y: 0
 cmd :move, id: 'b', x: 1, y: 1
 ");
 
-        var task1 = mrb.ExecuteAsync(router, irep1).AsTask();
-        var task2 = mrb2.ExecuteAsync(router, irep2).AsTask();
+        var task1 = mrb.ExecuteAsync(router, compilation1.ToIrep()).AsTask();
+        var task2 = mrb2.ExecuteAsync(router, compilation2.ToIrep()).AsTask();
 
         await Task.WhenAll(task1, task2);
 

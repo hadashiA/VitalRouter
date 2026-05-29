@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using MRubyCS;
-using MRubyCS.Compiler;
-using MRubyCS.Serializer;
+using ChibiRuby;
+using ChibiRuby.Compiler;
+using ChibiRuby.Serializer;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -102,7 +102,7 @@ namespace Sandbox
                 "  CharacterContext.new(id).instance_eval(&block)\n" +
                 "end\n");
 
-            var irep = compiler.Compile(
+            using var compilation = compiler.Compile(
                 "3.times do\n" +
                 "  c = state[:counter].to_i\n" +
                 "  with(:Bob) do\n" +
@@ -114,7 +114,7 @@ namespace Sandbox
 
             MapTo(Router.Default);
 
-            await mrb.ExecuteAsync(Router.Default, irep, destroyCancellationToken);
+            await mrb.ExecuteAsync(Router.Default, compilation.ToIrep(), destroyCancellationToken);
             UnityEngine.Debug.Log("End Script");
         }
 

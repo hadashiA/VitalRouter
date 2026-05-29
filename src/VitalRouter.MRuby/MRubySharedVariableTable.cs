@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using MRubyCS;
-using MRubyCS.Serializer;
+using ChibiRuby;
+using ChibiRuby.Serializer;
 
 namespace VitalRouter.MRuby
 {

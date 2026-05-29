@@ -136,12 +136,12 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
-    "jp.hadashikick.mrubycs-compiler": {
-      "version": "https://github.com/hadashiA/MRubyCS.git?path=src/MRubyCS.Compiler.Unity/Assets/MRubyCS.Compiler#0.15.2",
+    "jp.hadashikick.chibiruby-compiler": {
+      "version": "https://github.com/hadashiA/ChibiRuby.git?path=src/ChibiRuby.Unity/Assets/ChibiRuby.Compiler.Unity#1.2.1",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "79c1ce40d33965f30edae64d319c66d8e7d10cb4"
+      "hash": "7760e42a5bb59450e8ee433fa6f9c7fcc6a2b99a"
     },
     "jp.hadashikick.vcontainer": {
       "version": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.15.1",

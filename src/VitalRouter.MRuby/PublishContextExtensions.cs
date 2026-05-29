@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using MRubyCS;
+using ChibiRuby;
 
 namespace VitalRouter.MRuby;
 
