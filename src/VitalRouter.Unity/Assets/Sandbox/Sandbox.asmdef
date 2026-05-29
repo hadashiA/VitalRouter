@@ -16,6 +16,7 @@
         "VitalRouter.dll",
         "VitalRouter.MRuby.dll",
         "ChibiRuby.dll",
+        "ChibiRuby.Compiler.dll",
         "ChibiRuby.Serializer.dll",
         "Utf8StringInterpolation.dll"
     ],
