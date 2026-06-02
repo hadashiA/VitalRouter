@@ -7,7 +7,7 @@ using ChibiRuby.Internals;
 
 namespace VitalRouter.MRuby
 {
-    public class MRubyRoutingScript : IDisposable
+    public class MRubyRoutingScript(RFiber fiber, Router router) : IDisposable
     {
         public static bool TryFindScript(RFiber fiber, out MRubyRoutingScript script)
         {
@@ -16,17 +16,10 @@ namespace VitalRouter.MRuby
 
         static readonly ConcurrentDictionary<RFiber, MRubyRoutingScript> scriptTable = new();
 
-        public Router Router { get; }
+        public Router Router { get; } = router;
         public CancellationToken CancellationToken { get; private set; }
 
         TaskCompletionSource<bool>? completionSource;
-        readonly RFiber fiber;
-
-        public MRubyRoutingScript(RFiber fiber, Router router)
-        {
-            this.fiber = fiber;
-            Router = router;
-        }
 
         public ValueTask RunAsync(CancellationToken cancellation = default)
         {
