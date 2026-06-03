@@ -30,6 +30,12 @@ public class VitalRouterDefinition(MRubyState mrb)
         return this;
     }
 
+    public VitalRouterDefinition AddSerializerOptions(MRubyValueSerializerOptions options)
+    {
+        mrb.AddSerializerOptions(options);
+        return this;
+    }
+
     public VitalRouterDefinition ExportRbsTo(string filePath)
     {
         var rbs = MRubyRbsGenerator.Generate(commandTypes);
