@@ -22,6 +22,7 @@ public delegate void MRubyLoggingDelegate(
 public class VitalRouterDefinition(MRubyState mrb)
 {
     readonly List<KeyValuePair<string, Type>> commandTypes = [];
+    readonly List<string> rbsExportPaths = [];
 
     public VitalRouterDefinition AddCommand<TCommand>(string name) where TCommand : ICommand
     {
@@ -36,16 +37,31 @@ public class VitalRouterDefinition(MRubyState mrb)
         return this;
     }
 
+    /// <summary>
+    /// Requests an RBS (Ruby Signature) for the <c>cmd</c> method to be written to <paramref name="filePath"/>.
+    /// The export is deferred until the <c>DefineVitalRouter</c> block completes, so every command registered
+    /// in the block is included regardless of the order relative to this call.
+    /// </summary>
     public VitalRouterDefinition ExportRbsTo(string filePath)
     {
-        var rbs = MRubyRbsGenerator.Generate(commandTypes);
-        var directory = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-        File.WriteAllText(filePath, rbs);
+        rbsExportPaths.Add(filePath);
         return this;
+    }
+
+    internal void FlushRbsExports()
+    {
+        if (rbsExportPaths.Count <= 0) return;
+
+        var rbs = MRubyRbsGenerator.Generate(commandTypes);
+        foreach (var filePath in rbsExportPaths)
+        {
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            File.WriteAllText(filePath, rbs);
+        }
     }
 }
 
@@ -54,7 +70,9 @@ public static class MRubyStateExtensions
     public static void DefineVitalRouter(this MRubyState mrb, Action<VitalRouterDefinition> configure)
     {
         TryDefineVitalRouter(mrb, out _);
-        configure(new VitalRouterDefinition(mrb));
+        var definition = new VitalRouterDefinition(mrb);
+        configure(definition);
+        definition.FlushRbsExports();
     }
 
     public static MRubyState AddSerializerOptions(this MRubyState mrb, MRubyValueSerializerOptions options)

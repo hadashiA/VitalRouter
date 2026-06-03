@@ -76,6 +76,22 @@ public class RbsGeneratorTest
     }
 
     [Test]
+    public void ExportRbs_IncludesCommandsRegisteredAfterExportCall()
+    {
+        // ExportRbsTo is called first, but the export is deferred until the block completes,
+        // so commands added afterwards must still be present.
+        var rbs = ExportRbs(x =>
+        {
+            x.ExportRbsTo(path);
+            x.AddCommand<TestCommand>("test");
+            x.AddCommand<MoveCommand>("move");
+        });
+
+        Assert.That(rbs, Does.Contain("def cmd: (:test, ?value: Integer) -> void"));
+        Assert.That(rbs, Does.Contain("| (:move, ?id: String, ?x: Integer, ?y: Integer) -> void"));
+    }
+
+    [Test]
     public void ExportRbsTo_CreatesMissingDirectory()
     {
         var nested = Path.Combine(Path.GetTempPath(), $"vitalrouter_{Guid.NewGuid():N}", "sig", "vitalrouter.rbs");
