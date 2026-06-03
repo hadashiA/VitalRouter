@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ChibiRuby;
@@ -18,12 +19,36 @@ public delegate void MRubyLoggingDelegate(
     MRubyState mrb,
     MRubyValue message);
 
+public class VitalRouterDefinition(MRubyState mrb)
+{
+    readonly List<KeyValuePair<string, Type>> commandTypes = [];
+
+    public VitalRouterDefinition AddCommand<TCommand>(string name) where TCommand : ICommand
+    {
+        mrb.AddCommand<TCommand>(name);
+        commandTypes.Add(new KeyValuePair<string, Type>(name, typeof(TCommand)));
+        return this;
+    }
+
+    public VitalRouterDefinition ExportRbsTo(string filePath)
+    {
+        var rbs = MRubyRbsGenerator.Generate(commandTypes);
+        var directory = Path.GetDirectoryName(filePath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        File.WriteAllText(filePath, rbs);
+        return this;
+    }
+}
+
 public static class MRubyStateExtensions
 {
-    public static void DefineVitalRouter(this MRubyState mrb, Action<MRubyState> configure)
+    public static void DefineVitalRouter(this MRubyState mrb, Action<VitalRouterDefinition> configure)
     {
         TryDefineVitalRouter(mrb, out _);
-        configure(mrb);
+        configure(new VitalRouterDefinition(mrb));
     }
 
     public static MRubyState AddSerializerOptions(this MRubyState mrb, MRubyValueSerializerOptions options)

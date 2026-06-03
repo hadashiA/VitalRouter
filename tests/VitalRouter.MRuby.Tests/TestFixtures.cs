@@ -21,6 +21,32 @@ public partial struct MoveCommand : ICommand
     public int Y;
 }
 
+public enum Facing
+{
+    North,
+    South,
+}
+
+[MRubyObject]
+public partial struct RichCommand : ICommand
+{
+    public int IntValue;
+    public float FloatValue;
+    public bool BoolFlag;
+    public string Name;
+    public Facing Facing;
+    public int[] Numbers;
+    public List<string> Tags;
+    public Dictionary<string, int> Scores;
+    public int? Nullable;
+
+    [MRubyMember("aliased_key")]
+    public int Renamed;
+
+    [MRubyIgnore]
+    public int Ignored;
+}
+
 public class TestCommandRecorder : IAsyncCommandSubscriber
 {
     readonly ConcurrentQueue<ICommand> received = new();
