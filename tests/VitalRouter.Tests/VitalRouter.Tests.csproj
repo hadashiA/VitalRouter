@@ -23,7 +23,7 @@
       <ProjectReference Include="..\..\src\VitalRouter\VitalRouter.csproj" />
       <ProjectReference Include="..\..\src\VitalRouter.SourceGenerator\VitalRouter.SourceGenerator.csproj">
           <OutputItemType>Analyzer</OutputItemType>
-          <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
       </ProjectReference>
     </ItemGroup>
 
