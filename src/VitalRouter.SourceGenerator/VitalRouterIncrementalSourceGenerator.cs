@@ -12,153 +12,54 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        // The transform reduces each [Routes] type to a fully value-equatable TypeModel.
+        // Crucially we do NOT .Combine(CompilationProvider) and do NOT .Collect():
+        // - Combining with the compilation would invalidate every keystroke anywhere.
+        // - Collect would re-run all types whenever any one of them changes.
+        // ReferenceSymbols is resolved here, from the per-node semantic model, so the
+        // compilation dependency stays inside the transform and never reaches the output.
         var provider = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 context,
                 "VitalRouter.RoutesAttribute",
-                static (node, cancellation) => node is ClassDeclarationSyntax,
-                static (context, cancellation) => context)
-            .Combine(context.CompilationProvider);
-
-        // Generate the source code.
-        context.RegisterSourceOutput(
-            context.CompilationProvider.Combine(provider.Collect()),
-            (sourceProductionContext, t) =>
-            {
-                var (compilation, list) = t;
-                var references = ReferenceSymbols.Create(compilation);
-                if (references is null)
+                static (node, _) => node is ClassDeclarationSyntax,
+                static (context, _) =>
                 {
-                    return;
-                }
+                    var references = ReferenceSymbols.Create(context.SemanticModel.Compilation);
+                    return references is null ? null : Parser.Parse(context, references);
+                })
+            .Where(static model => model is not null)
+            .WithTrackingName("VitalRouter.RoutesProvider");
 
-                var stringBuilder = new StringBuilder();
-
-                foreach (var (x, _) in list)
-                {
-                    var typeMeta = new TypeMeta(
-                        (TypeDeclarationSyntax)x.TargetNode,
-                        (INamedTypeSymbol)x.TargetSymbol,
-                        x.Attributes.First(),
-                        references);
-
-                    if (TryEmit(typeMeta, references, stringBuilder, sourceProductionContext))
-                    {
-                        var fullType = typeMeta.FullTypeName
-                            .Replace("global::", "")
-                            .Replace("<", "_")
-                            .Replace(">", "_");
-
-                        sourceProductionContext.AddSource($"{fullType}.g.cs", stringBuilder.ToString());
-                    }
-                    stringBuilder.Clear();
-                }
-            });
+        // Per-type source output. Re-runs only when that type's TypeModel changes
+        // by value, i.e. when a [Route] signature (name, command type, async-ness,
+        // parameters, interceptors) changes — not when a method body is edited.
+        context.RegisterSourceOutput(provider, static (sourceProductionContext, model) =>
+        {
+            Emit(model!, sourceProductionContext);
+        });
     }
 
-    static bool TryEmit(TypeMeta typeMeta, ReferenceSymbols references, StringBuilder builder, in SourceProductionContext context)
+    static void Emit(TypeModel model, in SourceProductionContext context)
     {
+        foreach (var diagnostic in model.Diagnostics)
+        {
+            context.ReportDiagnostic(diagnostic.ToDiagnostic());
+        }
+
+        if (model.HasError)
+        {
+            return;
+        }
+
+        if (model.Routes.Count <= 0)
+        {
+            return;
+        }
+
         try
         {
-            var error = false;
-
-            // verify is partial
-            if (!typeMeta.IsPartial())
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.MustBePartial,
-                    typeMeta.Syntax.Identifier.GetLocation(),
-                    typeMeta.Symbol.Name));
-                error = true;
-            }
-
-            // nested is not allowed
-            if (typeMeta.IsNested())
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.NestedNotAllow,
-                    typeMeta.Syntax.Identifier.GetLocation(),
-                    typeMeta.Symbol.Name));
-                error = true;
-            }
-
-            // check duplicates of the command argument
-            foreach (var methodMeta in typeMeta.RouteMethodMetas)
-            {
-                if (typeMeta.RouteMethodMetas.Any(x => x != methodMeta &&
-                                                       SymbolEqualityComparer.Default.Equals(x.CommandTypeSymbol, methodMeta.CommandTypeSymbol)))
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        DiagnosticDescriptors.DuplicateRouteMethodDefined,
-                        methodMeta.Symbol.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
-                        methodMeta.Symbol.Name));
-                    error = true;
-                }
-            }
-
-            // check interceptor type
-            foreach (var interceptorMeta in typeMeta.AllInterceptorMetas)
-            {
-                if (!interceptorMeta.TypeSymbol.Interfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, references.InterceptorInterface)))
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        DiagnosticDescriptors.InvalidInterceptorType,
-                        interceptorMeta.AttributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? typeMeta.Syntax.GetLocation(),
-                        interceptorMeta.TypeSymbol.Name));
-                    error = true;
-                }
-            }
-
-            // check redundant
-            foreach (var interceptorMeta in typeMeta.DefaultInterceptorMetas)
-            {
-                var redundant = typeMeta.AllInterceptorMetas
-                    .Where(x => interceptorMeta != x &&
-                                SymbolEqualityComparer.Default.Equals(interceptorMeta.TypeSymbol, x.TypeSymbol));
-                foreach (var x in redundant)
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        DiagnosticDescriptors.RedundantInterceptorType,
-                        x.AttributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? typeMeta.Syntax.GetLocation(),
-                        x.TypeSymbol.Name));
-                    error = true;
-                }
-            }
-            foreach (var method in typeMeta.RouteMethodMetas)
-            {
-                foreach (var interceptorMeta in method.InterceptorMetas)
-                {
-                    var redundant = typeMeta.DefaultInterceptorMetas
-                        .Where(x => SymbolEqualityComparer.Default.Equals(interceptorMeta.TypeSymbol, x.TypeSymbol));
-                    foreach (var x in redundant)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(
-                            DiagnosticDescriptors.RedundantInterceptorType,
-                            x.AttributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? typeMeta.Syntax.GetLocation(),
-                            x.TypeSymbol.Name));
-                        error = true;
-                    }
-                }
-            }
-
-
-            if (error)
-            {
-                return false;
-            }
-
-            // foreach (var nonRoutableMethod in typeMeta.NonRoutableMethodSymbols)
-            // {
-            //     context.ReportDiagnostic(Diagnostic.Create(
-            //         DiagnosticDescriptors.NoRoutablePublicMethodDefined,
-            //         nonRoutableMethod.Locations.FirstOrDefault() ?? typeMeta.Syntax.GetLocation(),
-            //         nonRoutableMethod.Name));
-            // }
-
-            if (typeMeta.RouteMethodMetas.Count <= 0)
-            {
-                return false;
-            }
+            var builder = new StringBuilder();
 
             builder.AppendLine("""
 // <auto-generated />
@@ -180,40 +81,27 @@ using VitalRouter.Internal;
 
 """);
 
-            var ns = typeMeta.Symbol.ContainingNamespace;
-            if (!ns.IsGlobalNamespace)
+            if (model.Namespace is not null)
             {
                 builder.AppendLine($$"""
-namespace {{ns}} 
+namespace {{model.Namespace}}
 {
 """);
             }
 
             builder.AppendLine($$"""
-partial class {{typeMeta.TypeName}}
+partial class {{model.TypeName}}
 {
 """);
-            if (!TryEmitMappingMethod(typeMeta, references, builder))
-            {
-                return false;
-            }
-            if (!TryEmitSubscriber(typeMeta, builder))
-            {
-                return false;
-            }
-            if (!TryEmitAsyncSubscriber(typeMeta, builder))
-            {
-                return false;
-            }
-            if (!TryEmitAsyncSubscriberCore(typeMeta, builder))
-            {
-                return false;
-            }
+            TryEmitMappingMethod(model, builder);
+            TryEmitSubscriber(model, builder);
+            TryEmitAsyncSubscriber(model, builder);
+            TryEmitAsyncSubscriberCore(model, builder);
 
             builder.AppendLine("""
 }
 """);
-            if (!ns.IsGlobalNamespace)
+            if (model.Namespace is not null)
             {
                 builder.AppendLine("}");
             }
@@ -227,7 +115,8 @@ partial class {{typeMeta.TypeName}}
 #pragma warning restore CS8604 // Possible null reference argument for parameter
 #pragma warning restore CS8631 // The type cannot be used as type parameter in the generic type or method
 """);
-            return true;
+
+            context.AddSource($"{model.HintName}.g.cs", builder.ToString());
         }
         catch (Exception ex)
         {
@@ -235,14 +124,13 @@ partial class {{typeMeta.TypeName}}
                 DiagnosticDescriptors.UnexpectedErrorDescriptor,
                 Location.None,
                 ex.ToString()));
-            return false;
         }
     }
 
-    static bool TryEmitMappingMethod(TypeMeta typeMeta, ReferenceSymbols references, StringBuilder builder)
+    static void TryEmitMappingMethod(TypeModel model, StringBuilder builder)
     {
         var parameters = new[] { "ICommandSubscribable subscribable" }
-            .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}"))
+            .Concat(model.AllInterceptors.Select(x => $"{x.FullTypeName} {x.VariableName}"))
             .Distinct();
 
         builder.AppendLine($$"""
@@ -254,10 +142,10 @@ partial class {{typeMeta.TypeName}}
         UnmapRoutes();
 
 """);
-        var hasSubscriber = typeMeta.DefaultInterceptorMetas.Length <= 0 &&
-                            typeMeta.RouteMethodMetas.Any(x => !x.IsAsync && x.InterceptorMetas.Length <= 0);
-        var hasAsyncSubscriber = typeMeta.DefaultInterceptorMetas.Length > 0 ||
-                                 typeMeta.RouteMethodMetas.Any(x => x.IsAsync || x.InterceptorMetas.Length > 0);
+        var hasSubscriber = model.DefaultInterceptors.Count <= 0 &&
+                            model.Routes.Any(x => !x.IsAsync && x.Interceptors.Count <= 0);
+        var hasAsyncSubscriber = model.DefaultInterceptors.Count > 0 ||
+                                 model.Routes.Any(x => x.IsAsync || x.Interceptors.Count > 0);
         if (hasSubscriber)
         {
             builder.AppendLine($$"""
@@ -268,7 +156,7 @@ partial class {{typeMeta.TypeName}}
         if (hasAsyncSubscriber)
         {
             var asyncSubscriberArgs = new[] { "this" }
-                .Concat(typeMeta.AllInterceptorMetas.Select(x => $"{x.VariableName}"))
+                .Concat(model.AllInterceptors.Select(x => $"{x.VariableName}"))
                 .Distinct();
 
             builder.AppendLine($$"""
@@ -289,10 +177,10 @@ partial class {{typeMeta.TypeName}}
         var subscription = new Subscription(subscribable, {{subscriptionArgs}});
 """);
 
-        if (references.MonoBehaviourType != null && typeMeta.Symbol.InheritsFrom(references.MonoBehaviourType))
+        if (model.InheritsMonoBehaviour)
         {
             builder.AppendLine($$"""
-        
+
         if (!gameObject.TryGetComponent(typeof(VitalRouter.Unity.SubscriptionHandle), out var handle))
         {
             handle = gameObject.AddComponent<VitalRouter.Unity.SubscriptionHandle>();
@@ -305,7 +193,7 @@ partial class {{typeMeta.TypeName}}
         {
             vitalRouterGeneratedSubscriptions.Add(subscription);
         }
-        return subscription; 
+        return subscription;
     }
 
     [global::VitalRouter.Preserve]
@@ -318,27 +206,26 @@ partial class {{typeMeta.TypeName}}
                 subscription.Dispose();
             }
             vitalRouterGeneratedSubscriptions.Clear();
-        }        
+        }
     }
 
 """);
-        return true;
     }
 
-    static bool TryEmitSubscriber(TypeMeta typeMeta, StringBuilder builder)
+    static void TryEmitSubscriber(TypeModel model, StringBuilder builder)
     {
-        if (typeMeta.DefaultInterceptorMetas.Length > 0)
+        if (model.DefaultInterceptors.Count > 0)
         {
-            return true;
+            return;
         }
 
-        var methods = typeMeta.RouteMethodMetas
-            .Where(x => x is { IsAsync: false, InterceptorMetas.Length: <= 0 })
+        var methods = model.Routes
+            .Where(x => x is { IsAsync: false } && x.Interceptors.Count <= 0)
             .ToArray();
 
         if (!methods.Any())
         {
-            return true;
+            return;
         }
 
         builder.AppendLine($$"""
@@ -346,9 +233,9 @@ partial class {{typeMeta.TypeName}}
     {
         static class MethodTable<T> where T : ICommand
         {
-            public static Action<{{typeMeta.TypeName}}, T, PublishContext>? Value;
+            public static Action<{{model.TypeName}}, T, PublishContext>? Value;
         }
-        
+
         static VitalRouterGeneratedSubscriber()
         {
 """);
@@ -357,29 +244,29 @@ partial class {{typeMeta.TypeName}}
             if (method.TakePublishContext)
             {
                 builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, ctx) => source.{{method.Symbol.Name}}(command, ctx);
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, ctx) => source.{{method.MethodName}}(command, ctx);
 """);
             }
             else if (method.TakeCancellationToken)
             {
                 builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, ctx) => source.{{method.Symbol.Name}}(command, ctx.CancellationToken);
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, ctx) => source.{{method.MethodName}}(command, ctx.CancellationToken);
 """);
             }
             else
             {
                 builder.AppendLine($$"""
-            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, ctx) => source.{{method.Symbol.Name}}(command);
+            MethodTable<{{method.CommandFullTypeName}}>.Value = static (source, command, ctx) => source.{{method.MethodName}}(command);
 """);
             }
         }
 
         builder.AppendLine($$"""
         }
-        
-        readonly {{typeMeta.TypeName}} source;
-    
-        public VitalRouterGeneratedSubscriber({{typeMeta.TypeName}} source)
+
+        readonly {{model.TypeName}} source;
+
+        public VitalRouterGeneratedSubscriber({{model.TypeName}} source)
         {
             this.source = source;
         }
@@ -391,44 +278,43 @@ partial class {{typeMeta.TypeName}}
     }
 
 """);
-        return true;
     }
 
-    static bool TryEmitAsyncSubscriber(TypeMeta typeMeta, StringBuilder builder)
+    static void TryEmitAsyncSubscriber(TypeModel model, StringBuilder builder)
     {
-        var methods = typeMeta.DefaultInterceptorMetas.Length > 0
-            ? typeMeta.RouteMethodMetas
-            : typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0 || x.IsAsync).ToArray();
+        var methods = model.DefaultInterceptors.Count > 0
+            ? model.Routes.ToArray()
+            : model.Routes.Where(x => x.Interceptors.Count > 0 || x.IsAsync).ToArray();
 
         if (!methods.Any())
         {
-            return true;
+            return;
         }
 
-        var interceptorParams = typeMeta.AllInterceptorMetas.Select(x => $"{x.FullTypeName} {x.VariableName}");
-        var constructorParams = new[] { $"{typeMeta.TypeName} source" }.Concat(interceptorParams);
+        var interceptorParams = model.AllInterceptors.Select(x => $"{x.FullTypeName} {x.VariableName}");
+        var constructorParams = new[] { $"{model.TypeName} source" }.Concat(interceptorParams);
 
          builder.AppendLine($$"""
     class VitalRouterGeneratedAsyncSubscriber : IAsyncCommandSubscriber
     {
         static class MethodTable<T> where T : ICommand
         {
-            public static Func<{{typeMeta.FullTypeName}}, T, PublishContext, ValueTask>? Value;
+            public static Func<{{model.FullTypeName}}, T, PublishContext, ValueTask>? Value;
             public static Func<VitalRouterGeneratedAsyncSubscriber, ICommandInterceptor[]>? InterceptorFinder;
         }
-        
+
         static VitalRouterGeneratedAsyncSubscriber()
         {
 """);
         foreach (var method in methods)
         {
-            if (method.InterceptorMetas.Length > 0)
+            if (method.Interceptors.Count > 0)
             {
                 builder.AppendLine($$"""
             MethodTable<{{method.CommandFullTypeName}}>.InterceptorFinder = static self => self.interceptorStack{{method.CommandTypePrefix}};
 """);
             }
-            else if (typeMeta.DefaultInterceptorMetas.Length > 0)
+            else if (model.DefaultInterceptors.Count > 0)
             {
                 builder.AppendLine($$"""
             MethodTable<{{method.CommandFullTypeName}}>.InterceptorFinder = static self => self.interceptorStackDefault;
@@ -443,29 +329,26 @@ partial class {{typeMeta.TypeName}}
         }
         builder.AppendLine($$"""
         }
-    
-        readonly {{typeMeta.TypeName}} source;
+
+        readonly {{model.TypeName}} source;
 """);
-         if (typeMeta.AllInterceptorMetas.Count > 0)
+         if (model.AllInterceptors.Count > 0)
          {
              builder.AppendLine($"""
         readonly VitalRouterGeneratedAsyncSubscriberCore core;
 """);
          }
-         if (typeMeta.DefaultInterceptorMetas.Length > 0)
+         if (model.DefaultInterceptors.Count > 0)
          {
              builder.AppendLine($$"""
         readonly ICommandInterceptor[] interceptorStackDefault;
 """);
          }
-         foreach (var method in typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0))
+         foreach (var method in model.Routes.Where(x => x.Interceptors.Count > 0))
          {
-             if (method.InterceptorMetas.Length > 0)
-             {
-                 builder.AppendLine($$"""
+             builder.AppendLine($$"""
         readonly ICommandInterceptor[] interceptorStack{{method.CommandTypePrefix}};
 """);
-             }
          }
 
         builder.AppendLine($$"""
@@ -474,32 +357,32 @@ partial class {{typeMeta.TypeName}}
         {
             this.source = source;
 """);
-        if (typeMeta.AllInterceptorMetas.Count > 0)
+        if (model.AllInterceptors.Count > 0)
         {
             builder.AppendLine("""
             this.core = new VitalRouterGeneratedAsyncSubscriberCore(source);
 """);
         }
 
-        if (typeMeta.DefaultInterceptorMetas.Length > 0)
+        if (model.DefaultInterceptors.Count > 0)
         {
             builder.AppendLine($$"""
-            interceptorStackDefault = new ICommandInterceptor[] { {{string.Join(", ", typeMeta.DefaultInterceptorMetas.Select(x => x.VariableName))}}, core };
+            interceptorStackDefault = new ICommandInterceptor[] { {{string.Join(", ", model.DefaultInterceptors.Select(x => x.VariableName))}}, core };
 """);
         }
-        foreach (var method in typeMeta.RouteMethodMetas)
+        foreach (var method in model.Routes)
         {
-            if (method.InterceptorMetas.Length > 0)
+            if (method.Interceptors.Count > 0)
             {
                 builder.AppendLine($$"""
-            interceptorStack{{method.CommandTypePrefix}} = new ICommandInterceptor[] { {{string.Join(", ", typeMeta.DefaultInterceptorMetas.Concat(method.InterceptorMetas).Select(x => x.VariableName))}}, core };
+            interceptorStack{{method.CommandTypePrefix}} = new ICommandInterceptor[] { {{string.Join(", ", model.DefaultInterceptors.Concat(method.Interceptors).Select(x => x.VariableName))}}, core };
 """);
             }
         }
 
         builder.AppendLine($$"""
         }
-        
+
         public ValueTask ReceiveAsync<T>(T command, PublishContext context) where T : ICommand
         {
             if (MethodTable<T>.Value is { } method)
@@ -515,18 +398,17 @@ partial class {{typeMeta.TypeName}}
         }
     }
 """);
-        return true;
     }
 
-    static bool TryEmitAsyncSubscriberCore(TypeMeta typeMeta, StringBuilder builder)
+    static void TryEmitAsyncSubscriberCore(TypeModel model, StringBuilder builder)
     {
-        var methods = typeMeta.DefaultInterceptorMetas.Length > 0
-            ? typeMeta.RouteMethodMetas
-            : typeMeta.RouteMethodMetas.Where(x => x.InterceptorMetas.Length > 0).ToArray();
+        var methods = model.DefaultInterceptors.Count > 0
+            ? model.Routes.ToArray()
+            : model.Routes.Where(x => x.Interceptors.Count > 0).ToArray();
 
-        if (methods.Count <= 0)
+        if (methods.Length <= 0)
         {
-            return true;
+            return;
         }
 
         builder.AppendLine($$"""
@@ -534,9 +416,9 @@ partial class {{typeMeta.TypeName}}
     {
         static class MethodTable<T> where T : ICommand
         {
-            public static Func<{{typeMeta.TypeName}}, T, PublishContext, ValueTask>? Value;
+            public static Func<{{model.TypeName}}, T, PublishContext, ValueTask>? Value;
         }
-        
+
         static VitalRouterGeneratedAsyncSubscriberCore()
         {
 """);
@@ -549,59 +431,58 @@ partial class {{typeMeta.TypeName}}
 
         builder.AppendLine($$"""
         }
-        
-        readonly {{typeMeta.TypeName}} source;
-    
-        public VitalRouterGeneratedAsyncSubscriberCore({{typeMeta.TypeName}} source)
+
+        readonly {{model.TypeName}} source;
+
+        public VitalRouterGeneratedAsyncSubscriberCore({{model.TypeName}} source)
         {
             this.source = source;
         }
-    
+
         public ValueTask InvokeAsync<T>(T command, PublishContext context, PublishContinuation<T> _) where T : ICommand
         {
             return MethodTable<T>.Value?.Invoke(source, command, context) ?? default;
         }
     }
 """);
-        return true;
     }
 
-    static string GetMethodTableEntry(RouteMethodMeta method)
+    static string GetMethodTableEntry(RouteModel method)
     {
         if (method.IsAsync)
         {
             if (method.TakePublishContext)
             {
-                if (method.IsValueTask())
+                if (method.IsValueTask)
                 {
-                    return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command, context)";
+                    return $"static (source, command, context) => (ValueTask)source.{method.MethodName}(command, context)";
                 }
-                return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context)";
+                return $"static async (source, command, context) => await source.{method.MethodName}(command, context)";
             }
             if (method.TakeCancellationToken)
             {
-                if (method.IsValueTask() || method.IsUniTask())
+                if (method.IsValueTask || method.IsUniTask)
                 {
-                    return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command, context.CancellationToken)";
+                    return $"static (source, command, context) => (ValueTask)source.{method.MethodName}(command, context.CancellationToken)";
                 }
-                return $"static async (source, command, context) => await source.{method.Symbol.Name}(command, context.CancellationToken)";
+                return $"static async (source, command, context) => await source.{method.MethodName}(command, context.CancellationToken)";
             }
-            if (method.IsValueTask() || method.IsUniTask())
+            if (method.IsValueTask || method.IsUniTask)
             {
-                return $"static (source, command, context) => (ValueTask)source.{method.Symbol.Name}(command)";
+                return $"static (source, command, context) => (ValueTask)source.{method.MethodName}(command)";
             }
-            return $"static async (source, command, context) => await source.{method.Symbol.Name}(command)";
+            return $"static async (source, command, context) => await source.{method.MethodName}(command)";
         }
 
         if (method.TakePublishContext)
         {
-            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context); return default; }}";
+            return $"static (source, command, context) => {{ source.{method.MethodName}(command, context); return default; }}";
         }
 
         if (method.TakeCancellationToken)
         {
-            return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command, context.CancellationToken); return default; }}";
+            return $"static (source, command, context) => {{ source.{method.MethodName}(command, context.CancellationToken); return default; }}";
         }
-        return $"static (source, command, context) => {{ source.{method.Symbol.Name}(command); return default; }}";
+        return $"static (source, command, context) => {{ source.{method.MethodName}(command); return default; }}";
     }
 }
