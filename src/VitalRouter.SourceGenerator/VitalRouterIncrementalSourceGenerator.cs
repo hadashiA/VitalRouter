@@ -52,10 +52,8 @@ public class VitalRouterIncrementalSourceGenerator : IIncrementalGenerator
             return;
         }
 
-        if (model.Routes.Count <= 0)
-        {
-            return;
-        }
+        // Note: a [Routes] class with no route methods still emits MapTo/UnmapRoutes
+        // so that user code calling `.MapTo(...)` keeps compiling (the mapping is a no-op).
 
         try
         {
@@ -144,8 +142,9 @@ partial class {{model.TypeName}}
 """);
         var hasSubscriber = model.DefaultInterceptors.Count <= 0 &&
                             model.Routes.Any(x => !x.IsAsync && x.Interceptors.Count <= 0);
-        var hasAsyncSubscriber = model.DefaultInterceptors.Count > 0 ||
-                                 model.Routes.Any(x => x.IsAsync || x.Interceptors.Count > 0);
+        var hasAsyncSubscriber = model.Routes.Count > 0 &&
+                                 (model.DefaultInterceptors.Count > 0 ||
+                                  model.Routes.Any(x => x.IsAsync || x.Interceptors.Count > 0));
         if (hasSubscriber)
         {
             builder.AppendLine($$"""
@@ -167,14 +166,14 @@ partial class {{model.TypeName}}
 
         var subscriptionArgs = (hasSubscriber, hasAsyncSubscriber) switch
         {
-            (true, true) => "subscriber, asyncSubscriber",
-            (true, false) => "subscriber",
-            (false, true) => "asyncSubscriber",
-            _ => throw new InvalidOperationException()
+            (true, true) => "subscribable, subscriber, asyncSubscriber",
+            (true, false) => "subscribable, subscriber",
+            (false, true) => "subscribable, asyncSubscriber",
+            (false, false) => "subscribable"
         };
 
         builder.AppendLine($$"""
-        var subscription = new Subscription(subscribable, {{subscriptionArgs}});
+        var subscription = new Subscription({{subscriptionArgs}});
 """);
 
         if (model.InheritsMonoBehaviour)
