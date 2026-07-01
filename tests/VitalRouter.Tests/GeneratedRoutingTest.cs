@@ -181,6 +181,25 @@ public class GeneratedRoutingTest
 
         Assert.That(x.Receives.Dequeue(), Is.InstanceOf<CommandA>());
     }
+
+    [Test]
+    public async Task NoRoutes()
+    {
+        var x = new NoRoutesPresenter();
+        // MapTo must still be generated even without any [Route] methods.
+        using var subscription = x.MapTo(router);
+
+        // Publishing anything is just a no-op for this presenter.
+        await router.PublishAsync(new CommandA(1));
+
+        x.UnmapRoutes();
+        Assert.Pass();
+    }
+}
+
+[Routes]
+partial class NoRoutesPresenter
+{
 }
 
 [Routes]

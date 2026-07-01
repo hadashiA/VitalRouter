@@ -8,6 +8,13 @@ public struct Subscription : IDisposable
     ICommandSubscriber? subscriber;
     IAsyncCommandSubscriber? asyncSubscriber;
 
+    public Subscription(ICommandSubscribable commandBus)
+    {
+        this.commandBus = commandBus;
+        this.subscriber = null;
+        this.asyncSubscriber = null;
+    }
+
     public Subscription(ICommandSubscribable commandBus, ICommandSubscriber subscriber)
     {
         this.commandBus = commandBus;
