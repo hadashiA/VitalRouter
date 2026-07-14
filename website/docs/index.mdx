@@ -195,19 +195,6 @@ So it could be used for very granular messaging in games.
 Below are simple Publish benchmarks (8 subscribers per message; BenchmarkDotNet v0.14.0, .NET 9.0.5, Apple M4).
 Although this benchmark is different from the actual use case, it shows that the performance is very simple, fast, and on the same level as event substitution.
 
-Synchronous subscribers:
-
-| Method                              | Mean         | Error      | StdDev     | Gen0   | Allocated |
-|------------------------------------ |-------------:|-----------:|-----------:|-------:|----------:|
-| 'Publish (ZeroMessenger)'           |     5.756 ns |  0.0889 ns |  0.1303 ns |      - |         - |
-| 'Publish (MessagePipe)'             |     8.900 ns |  0.1506 ns |  0.3177 ns |      - |         - |
-| 'Publish (R3 Subject)'              |    12.827 ns |  0.1719 ns |  0.2573 ns |      - |         - |
-| 'Publish (VitalRouter)'             |    12.869 ns |  0.1298 ns |  0.1943 ns |      - |         - |
-| 'Publish (System.Reactive Subject)' |    14.598 ns |  0.0940 ns |  0.1348 ns |      - |         - |
-| 'Publish (MediatR)'                 |    36.204 ns |  0.5601 ns |  1.1937 ns | 0.0076 |      64 B |
-| 'Publish (PubSub)'                  |    88.976 ns |  1.2425 ns |  3.9084 ns | 0.0229 |     192 B |
-| 'Publish (Prism)'                   | 1,087.741 ns | 13.0565 ns | 21.8145 ns | 0.1850 |    1552 B |
-
 Asynchronous subscribers (awaiting until all subscribers complete):
 
 | Method                    | Mean      | Error    | StdDev   | Gen0   | Allocated |
