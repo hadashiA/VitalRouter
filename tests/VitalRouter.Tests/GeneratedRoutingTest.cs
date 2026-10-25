@@ -23,6 +23,19 @@ public class GeneratedRoutingTest
     }
 
     [Test]
+    public async Task MapToWorksOnInstanceCreatedWithoutConstructor()
+    {
+        // Deserializers skip field initializers
+        var x = (UninitializedPresenter)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(UninitializedPresenter));
+        x.UnmapRoutes();
+        x.MapTo(router);
+
+        await router.PublishAsync(new CommandA(111));
+
+        Assert.That(x.ReceiveCount, Is.EqualTo(1));
+    }
+
+    [Test]
     public async Task SimpleAsyncRoutes()
     {
         var x = new SimpleAsyncPresenter();
@@ -200,6 +213,17 @@ public class GeneratedRoutingTest
 [Routes]
 partial class NoRoutesPresenter
 {
+}
+
+[Routes]
+partial class UninitializedPresenter
+{
+    public int ReceiveCount;
+
+    public void On(CommandA cmd)
+    {
+        ReceiveCount++;
+    }
 }
 
 [Routes]

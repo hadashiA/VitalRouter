@@ -132,7 +132,8 @@ partial class {{model.TypeName}}
             .Distinct();
 
         builder.AppendLine($$"""
-    readonly List<Subscription> vitalRouterGeneratedSubscriptions = new List<Subscription>();
+    // Not a field initializer: it is skipped when the instance is created by deserialization.
+    List<Subscription> vitalRouterGeneratedSubscriptions;
 
     [global::VitalRouter.Preserve]
     public Subscription MapTo({{string.Join(", ", parameters)}})
@@ -188,9 +189,10 @@ partial class {{model.TypeName}}
 """);
         }
         builder.AppendLine($$"""
-        lock (vitalRouterGeneratedSubscriptions)
+        var subscriptions = global::System.Threading.LazyInitializer.EnsureInitialized(ref vitalRouterGeneratedSubscriptions, () => new List<Subscription>());
+        lock (subscriptions)
         {
-            vitalRouterGeneratedSubscriptions.Add(subscription);
+            subscriptions.Add(subscription);
         }
         return subscription;
     }
@@ -198,13 +200,15 @@ partial class {{model.TypeName}}
     [global::VitalRouter.Preserve]
     public void UnmapRoutes()
     {
-        lock (vitalRouterGeneratedSubscriptions)
+        var subscriptions = vitalRouterGeneratedSubscriptions;
+        if (subscriptions == null) return;
+        lock (subscriptions)
         {
-            foreach (var subscription in vitalRouterGeneratedSubscriptions)
+            foreach (var subscription in subscriptions)
             {
                 subscription.Dispose();
             }
-            vitalRouterGeneratedSubscriptions.Clear();
+            subscriptions.Clear();
         }
     }
 
